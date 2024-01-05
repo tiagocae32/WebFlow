@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Formulario con steps</title>
+    <style>
+      .step {
+        display: none;
+      }
+      .step.active {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="formulario" method="post">
+      <div class="step active" id="step1">
+        <h2>step 1</h2>
+        <div data-license-type="auto">Image 1</div>
+        <div data-license-type="scooter">Image 2</div>
+        <div data-license-type="motor">Image 3</div>
+      </div>
+
+      <div class="step" id="step2">
+        <h2>step 2</h2>
+        <div data-course-type="offline">Image 1</div>
+        <div data-course-type="online">Image 2</div>
+      </div>
+
+      <div class="step" id="step3">
+        <h2>step 3</h2>
+        <div id="test">Image 1</div>
+        <div id="test1">Image 2</div>
+      </div>
+    </form>
+
+    <div>
+      <button type="button" id="btn-next">Siguiente</button>
+      <button type="button" id="btn-prev" disabled>Antes</button>
+    </div>
+
+    <script src="../js/script.js"></script>
+  </body>
+</html>
