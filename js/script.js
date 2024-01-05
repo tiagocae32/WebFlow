@@ -3,7 +3,7 @@ class FormHandler {
     this.steps = document.querySelectorAll(".step");
     this.btnNext = document.getElementById("btn-next");
     this.btnPrevious = document.getElementById("btn-prev");
-    this.current = 0;
+    this.currentStep = 0;
     this.formData = {};
     this.LicenseTypesEnum = Object.freeze({
       AUTO: "auto",
@@ -28,9 +28,9 @@ class FormHandler {
     this.bindData();
   }
 
-  showCurrentStep() {
+  showcurrentStepStep() {
     this.steps.forEach((step, index) => {
-      if (index === this.current) {
+      if (index === this.currentStep) {
         step.classList.add("active");
       } else {
         step.classList.remove("active");
@@ -39,9 +39,9 @@ class FormHandler {
   }
 
   nextStep() {
-    if (this.current < this.steps.length - 1) {
-      this.current = this.current + 1;
-      this.showCurrentStep();
+    if (this.currentStep < this.steps.length - 1) {
+      this.currentStep = this.currentStep + 1;
+      this.showcurrentStepStep();
       this.bindData();
     } else {
       this.formData = this.getData();
@@ -51,10 +51,10 @@ class FormHandler {
   }
 
   previousStep() {
-    console.log(this.current);
-    if (this.current > 0) {
-      this.current = this.current - 1;
-      this.showCurrentStep();
+    console.log(this.currentStep);
+    if (this.currentStep > 0) {
+      this.currentStep = this.currentStep - 1;
+      this.showcurrentStepStep();
       this.bindData();
     }
   }
@@ -66,7 +66,7 @@ class FormHandler {
       this.previousStep();
     }
 
-    this.btnPrevious.disabled = this.current === 0;
+    this.btnPrevious.disabled = this.currentStep === 0;
   }
 
   getData() {
@@ -103,7 +103,7 @@ class FormHandler {
           let valor = elemento.getAttribute(atributoDatos);
           this.formData[propiedadObjeto] = valor;
 
-          if (this.current === 2) {
+          if (this.currentStep === 2) {
             const product = this.getProduct();
             const is_mijn_reservation = this.is_mijn_reservation();
             this.formData.product = product;
@@ -115,7 +115,7 @@ class FormHandler {
   }
 
   async bindData() {
-    if (this.current === 0) {
+    if (this.currentStep === 0) {
       this.configurarEventoClick.call(
         this,
         "step1",
@@ -124,7 +124,7 @@ class FormHandler {
       );
     }
 
-    if (this.current === 1) {
+    if (this.currentStep === 1) {
       this.configurarEventoClick.call(
         this,
         "step2",
@@ -133,7 +133,7 @@ class FormHandler {
       );
     }
 
-    if (this.current === 2) {
+    if (this.currentStep === 2) {
       this.configurarEventoClick.call(
         this,
         "step3",
