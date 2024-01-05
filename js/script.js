@@ -27,7 +27,7 @@ class FormHandler {
       this.bindData();
     } else {
       this.collectedData = this.getData();
-      console.log(this.collectedData);
+      //this.enviarDatosAlBackend(this.collectedData);
     }
   }
 
@@ -106,6 +106,27 @@ class FormHandler {
         "course_type"
       );
     }
+  }
+
+  enviarDatosAlBackend(datos) {
+    const url = "https://tu-backend.com/api";
+
+    const opciones = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(datos),
+    };
+
+    fetch(url, opciones)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Respuesta del backend:", data);
+      })
+      .catch((error) => {
+        console.error("Error al enviar datos al backend:", error);
+      });
   }
 }
 
