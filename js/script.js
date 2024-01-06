@@ -26,7 +26,7 @@ class FormHandler {
 
     this.nextButton = document.getElementById("btn-next");
 
-    this.setupStepSpecificLogic(this.currentStep, this.nextButton);
+    //this.setupStepSpecificLogic(this.currentStep, this.nextButton);
 
     this.bindEvents();
     this.bindData();
@@ -150,11 +150,12 @@ class FormHandler {
   ////
 
   // General
-  showCurrentStep() {
+  showCurrentStep(direction = "next") {
     this.steps.forEach((step, index) => {
       step.classList.toggle("active", index === this.currentStep);
     });
-    this.nextButton.classList.add("disabledButton");
+    if (direction === "next") this.nextButton.classList.add("disabled-button");
+    else this.nextButton.classList.remove("disabled-button");
   }
 
   nextStep() {
@@ -172,7 +173,7 @@ class FormHandler {
   previousStep() {
     if (this.currentStep > 0) {
       this.currentStep = this.currentStep - 1;
-      this.showCurrentStep();
+      this.showCurrentStep("back");
       this.bindData();
     }
   }
@@ -184,7 +185,10 @@ class FormHandler {
       this.previousStep();
     }
 
-    this.btnPrevious.classList.toggle("disabledButton", this.currentStep === 0);
+    this.btnPrevious.classList.toggle(
+      "disabled-button",
+      this.currentStep === 0
+    );
   }
 
   getData() {
@@ -266,20 +270,20 @@ class FormHandler {
     switch (step) {
       case 0:
         if (this.formData.license_type)
-          this.enableButton(button, "disabledButton");
+          this.enableButton(button, "disabled-button");
         break;
       case 1:
         if (this.formData.course_type)
-          this.enableButton(button, "disabledButton");
+          this.enableButton(button, "disabled-button");
         break;
       case 2:
         if (this.formData.course_type)
-          this.enableButton(button, "disabledButton");
+          this.enableButton(button, "disabled-button");
         break;
       case 3:
         if (this.formData.cities && this.formData.cities.length > 0)
-          this.enableButton(button, "disabledButton");
-        else this.disableButton(button, "disabledButton");
+          this.enableButton(button, "disabled-button");
+        else this.disableButton(button, "disabled-button");
         break;
     }
   }
