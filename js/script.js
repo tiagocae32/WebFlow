@@ -140,10 +140,15 @@ class FormHandler {
         "exam_type"
       );
     }
-    console.log(this.currentStep);
 
-    if (this.currentStep === 3) {
+    if (
+      this.currentStep === 3 &&
+      (Number(this.formData.exam_type === 1) ||
+        Number(this.formData.exam_type === 2))
+    ) {
       this.loadCities();
+    } else {
+      this.cleanContenedor("step4");
     }
   }
 
@@ -198,7 +203,7 @@ class FormHandler {
       city.license_types.includes(this.formData.license_type)
     );
     let contenedor = document.getElementById("step4");
-    contenedor.innerHTML = "";
+    this.cleanContenedor("step4");
 
     for (let i = 0; i < this.citiesList.length; i++) {
       let objeto = this.citiesList[i];
@@ -207,8 +212,6 @@ class FormHandler {
       contenedor.appendChild(parrafo);
     }
   }
-
-  /// Step 5
 
   async getCities() {
     try {
@@ -220,6 +223,16 @@ class FormHandler {
       console.log(error);
     }
   }
+
+  cleanContenedor(contenedor) {
+    document.getElementById(contenedor).innerHTML = "";
+  }
+
+  ///
+
+  /// Step 5
+
+  ////
 
   enviarDatosAlBackend(datos) {
     const url = "https://tu-backend.com/api";
