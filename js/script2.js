@@ -7,6 +7,14 @@ class FormManager {
     this.nextButton = document.getElementById("nextButton");
   }
 
+  getData() {
+    return this.formData;
+  }
+
+  setData(key, value) {
+    this.formData[key] = value;
+  }
+
   hideAllForms() {
     const forms = document.querySelectorAll(".form-step");
     forms.forEach((form) => {
