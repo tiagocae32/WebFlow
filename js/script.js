@@ -28,6 +28,123 @@ class FormHandler {
     this.bindData();
   }
 
+  // Step 2
+
+  handleStep2() {
+    const product = this.getProduct();
+    const isMijnReservation = this.isMijnReservation();
+    this.formData.product = product;
+    this.formData.is_mijn_reservation = isMijnReservation;
+  }
+
+  ///
+
+  // Step 3
+
+  getProduct() {
+    this.formData.exam_type = Number(this.formData.exam_type);
+
+    const licenseType = this.formData.license_type;
+    const examType = this.formData.exam_type;
+
+    const PRODUCTS_LIST = this.PRODUCTS_LIST;
+
+    let product;
+
+    switch (licenseType) {
+      case this.LicenseTypesEnum.MOTOR:
+        product =
+          examType === 1 || examType === 3
+            ? PRODUCTS_LIST.ATH
+            : PRODUCTS_LIST.ATH_VE;
+        break;
+
+      case this.LicenseTypesEnum.SCOOTER:
+        product =
+          examType === 1 || examType === 3
+            ? PRODUCTS_LIST.AMTH
+            : PRODUCTS_LIST.AMTH_VE;
+        break;
+
+      default:
+        // AUTO
+        product =
+          examType === 1 || examType === 3
+            ? PRODUCTS_LIST.BTH
+            : PRODUCTS_LIST.BTH_VE;
+    }
+
+    return product;
+  }
+
+  isMijnReservation() {
+    return this.formData.exam_type === 3;
+  }
+
+  /////
+
+  // Step 4
+  async loadCities() {
+    const cities = await this.getCities();
+    this.citiesList = cities.filter((city) =>
+      city.license_types.includes(this.formData.license_type)
+    );
+    const container = document.getElementById("step4");
+    this.cleanContainer("step4");
+
+    const idsCities = [];
+
+    this.citiesList.forEach((city) => {
+      const divElement = document.createElement("div");
+      divElement.className = "aanmelden_step4-checkbox-item";
+      divElement.setAttribute("btn-cities", city.id);
+
+      divElement.addEventListener("click", () => {
+        const cityId = city.id;
+        const index = idsCities.indexOf(cityId);
+
+        if (index === -1) {
+          idsCities.push(cityId);
+          divElement.classList.toggle("active");
+        } else {
+          idsCities.splice(index, 1);
+          divElement.classList.remove("active");
+        }
+        this.formData.cities = idsCities;
+        console.log(this.formData);
+      });
+
+      const paragraph = document.createElement("p");
+      paragraph.className = "text-weight-bold";
+      paragraph.textContent = `${city.name}`;
+
+      divElement.appendChild(paragraph);
+      container.appendChild(divElement);
+    });
+  }
+
+  async getCities() {
+    try {
+      const resServer = await fetch(
+        "https://api.develop.nutheorie.be/api/cities/"
+      );
+      return await resServer.json();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  cleanContainer(contenedor) {
+    document.getElementById(contenedor).innerHTML = "";
+  }
+
+  ///
+
+  /// Step 5
+
+  ////
+
+  // General
   showCurrentStep() {
     this.steps.forEach((step, index) => {
       step.classList.toggle("active", index === this.currentStep);
@@ -106,13 +223,6 @@ class FormHandler {
     );
   }
 
-  handleStep2() {
-    const product = this.getProduct();
-    const isMijnReservation = this.isMijnReservation();
-    this.formData.product = product;
-    this.formData.is_mijn_reservation = isMijnReservation;
-  }
-
   async bindData() {
     switch (this.currentStep) {
       case 0:
@@ -139,87 +249,6 @@ class FormHandler {
         break;
     }
   }
-
-  // Step 3
-
-  getProduct() {
-    this.formData.exam_type = Number(this.formData.exam_type);
-
-    const licenseType = this.formData.license_type;
-    const examType = this.formData.exam_type;
-
-    const PRODUCTS_LIST = this.PRODUCTS_LIST;
-
-    let product;
-
-    switch (licenseType) {
-      case this.LicenseTypesEnum.MOTOR:
-        product =
-          examType === 1 || examType === 3
-            ? PRODUCTS_LIST.ATH
-            : PRODUCTS_LIST.ATH_VE;
-        break;
-
-      case this.LicenseTypesEnum.SCOOTER:
-        product =
-          examType === 1 || examType === 3
-            ? PRODUCTS_LIST.AMTH
-            : PRODUCTS_LIST.AMTH_VE;
-        break;
-
-      default:
-        // AUTO
-        product =
-          examType === 1 || examType === 3
-            ? PRODUCTS_LIST.BTH
-            : PRODUCTS_LIST.BTH_VE;
-    }
-
-    return product;
-  }
-
-  isMijnReservation() {
-    return this.formData.exam_type === 3;
-  }
-
-  /////
-
-  // Step 4
-  async loadCities() {
-    const cities = await this.getCities();
-    this.citiesList = cities.filter((city) =>
-      city.license_types.includes(this.formData.license_type)
-    );
-    const container = document.getElementById("step4");
-    this.cleanContainer("step4");
-
-    this.citiesList.forEach((city) => {
-      const paragraph = document.createElement("p");
-      paragraph.textContent = `Nombre: ${city.name}`;
-      container.appendChild(paragraph);
-    });
-  }
-
-  async getCities() {
-    try {
-      const resServer = await fetch(
-        "https://api.develop.nutheorie.be/api/cities/"
-      );
-      return await resServer.json();
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  cleanContainer(contenedor) {
-    document.getElementById(contenedor).innerHTML = "";
-  }
-
-  ///
-
-  /// Step 5
-
-  ////
 
   enviarDatosAlBackend(datos) {
     const url = "https://tu-backend.com/api";
