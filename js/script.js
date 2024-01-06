@@ -145,6 +145,8 @@ class FormHandler {
 
   /// Step 5
 
+  // COURSE-CATEGORIES
+
   ////
 
   // General
@@ -231,6 +233,7 @@ class FormHandler {
   }
 
   configureClickEvent(contenedorId, atributoDatos, propiedadObjeto) {
+    console.log("oooo");
     let contenedor = document.getElementById(contenedorId);
 
     contenedor.addEventListener(
@@ -246,6 +249,7 @@ class FormHandler {
             this.handleStep2();
           }
         }
+        console.log(this.currentStep);
         this.setupStepSpecificLogic(this.currentStep, this.nextButton);
       }.bind(this)
     );
@@ -276,11 +280,24 @@ class FormHandler {
           this.loadCbrLocationsPage();
         }
         break;
+      case 4:
+        this.configureClickEvent(
+          "step5",
+          "data-course-category",
+          "course_category"
+        );
+        break;
     }
   }
 
   setupStepSpecificLogic(step, button) {
-    const fieldNames = ["license_type", "course_type", "exam_type", "cities"];
+    const fieldNames = [
+      "license_type",
+      "course_type",
+      "exam_type",
+      "cities",
+      "course_category",
+    ];
     const fieldName = fieldNames[step];
 
     const isFieldValid =
