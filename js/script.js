@@ -169,6 +169,86 @@ class FormHandler {
       step.classList.toggle("active", index === this.currentStep);
     });
     this.setupStepSpecificLogic(this.currentStep, this.nextButton);
+
+    this.handleSteps();
+  }
+
+  handleSteps() {
+    if (this.currentStep === 5) {
+      const categoryToElementMap = {
+        per_dates: "stepTime",
+        per_month: "stepMonths",
+        calendar: "stepDatePicker",
+      };
+
+      const category = this.formData.course_category;
+      const elementId = categoryToElementMap[category];
+
+      for (const key in categoryToElementMap) {
+        const currentElement = document.getElementById(
+          categoryToElementMap[key]
+        );
+        if (currentElement) {
+          currentElement.classList.remove("active");
+        }
+      }
+
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.add("active");
+
+        if (elementId === "stepMonths") {
+          this.generateMonths();
+        }
+      }
+    }
+  }
+
+  generateMonths() {
+    const course_names = [];
+    this.cleanContainer("stepMonths");
+    let element = document.getElementById("stepMonths");
+    const currentDate = new Date();
+
+    for (let i = 0; i < 6; i++) {
+      const monthDiv = document.createElement("div");
+      monthDiv.className = "aanmelden_step4-checkbox-item";
+
+      const monthValue = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + i
+      ).toLocaleDateString("nl-NL", { month: "long" });
+
+      // Asegura que la primera letra del mes esté en mayúscula
+      const formattedMonth =
+        monthValue.charAt(0).toUpperCase() + monthValue.slice(1);
+
+      monthDiv.value = formattedMonth;
+
+      const label = document.createElement("label");
+      label.textContent = formattedMonth;
+      label.setAttribute("data-course-name", formattedMonth);
+
+      label.addEventListener("click", function (event) {
+        const value = event.target.getAttribute("data-course-name");
+        const index = course_names.indexOf(value);
+
+        if (index === -1) {
+          course_names.push(value);
+        } else {
+          course_names.splice(index, 1);
+        }
+        console.log(course_names);
+        console.log(this.formData);
+        this.formData.course_names = course_names;
+        console.log(this.formData);
+        this.setupStepSpecificLogic(this.currentStep, this.nextButton);
+      });
+
+      // Agrega el checkbox y la etiqueta al contenedor principal
+      element.appendChild(monthDiv);
+      element.appendChild(label);
+    }
   }
 
   nextStep() {
@@ -233,9 +313,8 @@ class FormHandler {
   }
 
   configureClickEvent(contenedorId, atributoDatos, propiedadObjeto) {
-    console.log("oooo");
     let contenedor = document.getElementById(contenedorId);
-
+    console.log("vfdfd");
     contenedor.addEventListener(
       "click",
       function (event) {
@@ -249,13 +328,14 @@ class FormHandler {
             this.handleStep2();
           }
         }
-        console.log(this.currentStep);
         this.setupStepSpecificLogic(this.currentStep, this.nextButton);
       }.bind(this)
     );
+    console.log(this.formData);
   }
 
   async bindData() {
+    console.log("aaaa");
     switch (this.currentStep) {
       case 0:
         this.configureClickEvent("step1", "data-license-type", "license_type");
@@ -287,6 +367,11 @@ class FormHandler {
           "course_category"
         );
         break;
+      case 5:
+        if (this.formData.course_category === "per_month")
+          this.generateMonths();
+        else
+          this.configureClickEvent("step6", "data-course-name", "course_names");
     }
   }
 
@@ -297,6 +382,7 @@ class FormHandler {
       "exam_type",
       "cities",
       "course_category",
+      "course_names",
     ];
     const fieldName = fieldNames[step];
 

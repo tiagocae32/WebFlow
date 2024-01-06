@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Formulario con Botones Únicos</title>
+    <style>
+      .form-step {
+        display: none;
+      }
+
+      .form-step.active {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Formulario 1 -->
+
+    <div class="form-step" data-step-id="1">
+      <h2>step 1</h2>
+      <div data-license-type="auto">Auto</div>
+      <div data-license-type="scooter">Scooter</div>
+      <div data-license-type="motor">Motor</div>
+    </div>
+
+    <!-- Formulario 2 -->
+
+    <div class="form-step" data-step-id="2">
+      <h2>step 2</h2>
+      <div data-course-type="offline">Offline</div>
+      <div data-course-type="online">Online</div>
+    </div>
+
+    <!-- Formulario 3 -->
+    <div class="form-step" data-step-id="3">
+      <h2>step 3</h2>
+      <div data-exam-type="1">Standaard examen</div>
+      <div data-exam-type="2">Verlengd examen</div>
+      <div data-exam-type="3">Zelf al examen gereserveerd</div>
+    </div>
+
+    <!-- Botones Siguiente y Anterior -->
+    <div>
+      <button id="prevButton">Anterior</button>
+      <button id="nextButton">Siguiente</button>
+    </div>
+
+    <script src="../js/script2.js"></script>
+  </body>
+</html>

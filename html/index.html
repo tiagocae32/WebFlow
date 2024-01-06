@@ -11,6 +11,13 @@
       .step.active {
         display: block;
       }
+
+      .form {
+        display: none;
+      }
+      .form.active {
+        display: block;
+      }
       .disabled-button {
         pointer-events: none;
         opacity: 0.5;
@@ -65,6 +72,22 @@
         <div data-course-category="per_dates">Per dates</div>
         <div data-course-category="per_month">Per month</div>
         <div data-course-category="calendar">Calendar</div>
+      </div>
+
+      <div class="step" id="step6">
+        <h2>Step 6</h2>
+        <!--Course names -->
+        <div class="form" id="stepTime">
+          <div data-course-name="Binnen een maand">ee</div>
+          <div data-course-name="Binnen 1.5 maand">1.5</div>
+          <div data-course-name="Binnen 2 maanden">2</div>
+        </div>
+        <!--Meses -->
+        <div class="form" id="stepMonths"></div>
+        <!--Date picker -->
+        <div class="form" id="stepDatePicker">
+          <h3 data-course-dates="test">Date picker</h3>
+        </div>
       </div>
     </form>
 
