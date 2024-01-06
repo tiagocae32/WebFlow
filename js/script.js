@@ -148,12 +148,24 @@ class FormHandler {
   ////
 
   // General
-  showCurrentStep(direction = "next") {
+
+  calculateProgressPercentage() {
+    const basePercentage = 15;
+    return Math.round(
+      basePercentage + (this.currentStep / 8) * (100 - basePercentage)
+    );
+  }
+
+  updateProgressBar() {
+    const progressBar = document.getElementById("progress-bar");
+    const percentage = this.calculateProgressPercentage();
+    progressBar.style.width = `${percentage}%`;
+  }
+
+  showCurrentStep() {
     this.steps.forEach((step, index) => {
       step.classList.toggle("active", index === this.currentStep);
     });
-    //if (direction === "next") this.nextButton.classList.add("disabled-button");
-    //else this.nextButton.classList.remove("disabled-button");
     this.setupStepSpecificLogic(this.currentStep, this.nextButton);
   }
 
@@ -167,6 +179,7 @@ class FormHandler {
       console.log(this.formData);
       //this.enviarDatosAlBackend(this.formData);
     }
+    this.updateProgressBar();
   }
 
   previousStep() {
@@ -175,6 +188,7 @@ class FormHandler {
       this.showCurrentStep("back");
       this.bindData();
     }
+    this.updateProgressBar();
   }
 
   handleStepChange(direction) {

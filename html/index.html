@@ -15,9 +15,26 @@
         pointer-events: none;
         opacity: 0.5;
       }
+      #progress-bar-container {
+        width: 100%;
+        background-color: #ddd;
+      }
+
+      #progress-bar {
+        height: 30px;
+        background-color: #4caf50;
+        color: white;
+        text-align: center;
+        line-height: 30px;
+        width: 15%;
+      }
     </style>
   </head>
   <body>
+    <div id="progress-bar-container">
+      <div id="progress-bar"></div>
+    </div>
+
     <form id="formulario" method="post">
       <div class="step active" id="step1">
         <h2>step 1</h2>
