@@ -115,7 +115,7 @@ class FormHandler {
           divElement.classList.remove("active");
         }
         this.formData.cities = idsCities;
-        console.log(this.formData);
+        this.setupStepSpecificLogic(this.currentStep, this.btnNext);
       });
 
       const paragraph = document.createElement("p");
@@ -270,6 +270,11 @@ class FormHandler {
         break;
       case 2:
         if (this.formData.course_type) button.disabled = false;
+        break;
+      case 3:
+        if (this.formData.cities && this.formData.cities.length > 0)
+          button.disabled = false;
+        else button.disabled = true;
         break;
     }
   }
