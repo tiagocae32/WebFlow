@@ -51,7 +51,6 @@ class FormHandler {
   }
 
   previousStep() {
-    console.log(this.currentStep);
     if (this.currentStep > 0) {
       this.currentStep = this.currentStep - 1;
       this.showcurrentStepStep();
@@ -140,12 +139,11 @@ class FormHandler {
         "data-exam-type",
         "exam_type"
       );
+    }
+    console.log(this.currentStep);
 
-      const cities = await this.getCities();
-      this.citiesList = cities.filter((city) =>
-        city.license_types.includes(this.formData.license_type)
-      );
-      console.log(this.citiesList);
+    if (this.currentStep === 3) {
+      this.loadCities();
     }
   }
 
@@ -192,6 +190,23 @@ class FormHandler {
   }
 
   /////
+
+  // Step 4
+  async loadCities() {
+    const cities = await this.getCities();
+    this.citiesList = cities.filter((city) =>
+      city.license_types.includes(this.formData.license_type)
+    );
+    let contenedor = document.getElementById("step4");
+    contenedor.innerHTML = "";
+
+    for (let i = 0; i < this.citiesList.length; i++) {
+      let objeto = this.citiesList[i];
+      let parrafo = document.createElement("p");
+      parrafo.textContent = "Nombre: " + objeto.name;
+      contenedor.appendChild(parrafo);
+    }
+  }
 
   /// Step 5
 
