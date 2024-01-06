@@ -26,8 +26,6 @@ class FormHandler {
 
     this.nextButton = document.getElementById("btn-next");
 
-    //this.setupStepSpecificLogic(this.currentStep, this.nextButton);
-
     this.bindEvents();
     this.bindData();
   }
@@ -154,8 +152,9 @@ class FormHandler {
     this.steps.forEach((step, index) => {
       step.classList.toggle("active", index === this.currentStep);
     });
-    if (direction === "next") this.nextButton.classList.add("disabled-button");
-    else this.nextButton.classList.remove("disabled-button");
+    //if (direction === "next") this.nextButton.classList.add("disabled-button");
+    //else this.nextButton.classList.remove("disabled-button");
+    this.setupStepSpecificLogic(this.currentStep, this.nextButton);
   }
 
   nextStep() {
@@ -267,25 +266,17 @@ class FormHandler {
   }
 
   setupStepSpecificLogic(step, button) {
-    switch (step) {
-      case 0:
-        if (this.formData.license_type)
-          this.enableButton(button, "disabled-button");
-        break;
-      case 1:
-        if (this.formData.course_type)
-          this.enableButton(button, "disabled-button");
-        break;
-      case 2:
-        if (this.formData.course_type)
-          this.enableButton(button, "disabled-button");
-        break;
-      case 3:
-        if (this.formData.cities && this.formData.cities.length > 0)
-          this.enableButton(button, "disabled-button");
-        else this.disableButton(button, "disabled-button");
-        break;
-    }
+    const fieldNames = ["license_type", "course_type", "exam_type", "cities"];
+    const fieldName = fieldNames[step];
+
+    const isFieldValid =
+      fieldName === "cities"
+        ? this.formData[fieldName] && this.formData[fieldName].length > 0
+        : !!this.formData[fieldName];
+
+    isFieldValid
+      ? this.enableButton(button, "disabled-button")
+      : this.disableButton(button, "disabled-button");
   }
 
   enviarDatosAlBackend(datos) {
