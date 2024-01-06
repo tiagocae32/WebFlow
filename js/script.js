@@ -25,7 +25,6 @@ class FormHandler {
     this.citiesList = [];
 
     this.nextButton = document.getElementById("btn-next");
-    this.nextButton.disabled = true;
 
     this.setupStepSpecificLogic(this.currentStep, this.nextButton);
 
@@ -115,7 +114,7 @@ class FormHandler {
           divElement.classList.remove("active");
         }
         this.formData.cities = idsCities;
-        this.setupStepSpecificLogic(this.currentStep, this.btnNext);
+        this.setupStepSpecificLogic(this.currentStep, this.nextButton);
       });
 
       const paragraph = document.createElement("p");
@@ -155,8 +154,7 @@ class FormHandler {
     this.steps.forEach((step, index) => {
       step.classList.toggle("active", index === this.currentStep);
     });
-    const nextButton = document.getElementById("btn-next");
-    nextButton.disabled = true;
+    this.nextButton.classList.add("disabledButton");
   }
 
   nextStep() {
@@ -186,15 +184,19 @@ class FormHandler {
       this.previousStep();
     }
 
-    this.btnPrevious.disabled = this.currentStep === 0;
+    this.btnPrevious.classList.toggle("disabledButton", this.currentStep === 0);
   }
 
   getData() {
     return this.formData;
   }
 
-  disableButton() {
-    this.btnNext.disabled = true;
+  enableButton(button, className) {
+    button.classList.remove(className);
+  }
+
+  disableButton(button, className) {
+    button.classList.add(className);
   }
 
   bindEvents() {
@@ -227,7 +229,7 @@ class FormHandler {
             this.handleStep2();
           }
         }
-        this.setupStepSpecificLogic(this.currentStep, this.btnNext);
+        this.setupStepSpecificLogic(this.currentStep, this.nextButton);
       }.bind(this)
     );
   }
@@ -263,18 +265,21 @@ class FormHandler {
   setupStepSpecificLogic(step, button) {
     switch (step) {
       case 0:
-        if (this.formData.license_type) button.disabled = false;
+        if (this.formData.license_type)
+          this.enableButton(button, "disabledButton");
         break;
       case 1:
-        if (this.formData.course_type) button.disabled = false;
+        if (this.formData.course_type)
+          this.enableButton(button, "disabledButton");
         break;
       case 2:
-        if (this.formData.course_type) button.disabled = false;
+        if (this.formData.course_type)
+          this.enableButton(button, "disabledButton");
         break;
       case 3:
         if (this.formData.cities && this.formData.cities.length > 0)
-          button.disabled = false;
-        else button.disabled = true;
+          this.enableButton(button, "disabledButton");
+        else this.disableButton(button, "disabledButton");
         break;
     }
   }

@@ -11,6 +11,10 @@
       .step.active {
         display: block;
       }
+      .disabledButton {
+        pointer-events: none;
+        opacity: 0.5;
+      }
     </style>
   </head>
   <body>
@@ -41,8 +45,8 @@
     </form>
 
     <div>
-      <button type="button" id="btn-next">Siguiente</button>
-      <button type="button" id="btn-prev" disabled>Antes</button>
+      <a href="#" id="btn-next" class="disabledButton">Siguiente</a>
+      <a href="#" id="btn-prev" class="disabledButton">Antes</a>
     </div>
 
     <script src="../js/script.js"></script>
