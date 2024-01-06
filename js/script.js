@@ -24,6 +24,11 @@ class FormHandler {
     // Step 5
     this.citiesList = [];
 
+    this.nextButton = document.getElementById("btn-next");
+    this.nextButton.disabled = true;
+
+    this.setupStepSpecificLogic(this.currentStep, this.nextButton);
+
     this.bindEvents();
     this.bindData();
   }
@@ -97,7 +102,6 @@ class FormHandler {
     this.citiesList.forEach((city) => {
       const divElement = document.createElement("div");
       divElement.className = "aanmelden_step4-checkbox-item";
-      divElement.setAttribute("btn-cities", city.id);
 
       divElement.addEventListener("click", () => {
         const cityId = city.id;
@@ -134,6 +138,8 @@ class FormHandler {
     }
   }
 
+  loadCbrLocationsPage() {}
+
   cleanContainer(contenedor) {
     document.getElementById(contenedor).innerHTML = "";
   }
@@ -149,6 +155,8 @@ class FormHandler {
     this.steps.forEach((step, index) => {
       step.classList.toggle("active", index === this.currentStep);
     });
+    const nextButton = document.getElementById("btn-next");
+    nextButton.disabled = true;
   }
 
   nextStep() {
@@ -219,6 +227,7 @@ class FormHandler {
             this.handleStep2();
           }
         }
+        this.setupStepSpecificLogic(this.currentStep, this.btnNext);
       }.bind(this)
     );
   }
@@ -245,7 +254,22 @@ class FormHandler {
           this.loadCities();
         } else {
           this.cleanContainer("step4");
+          this.loadCbrLocationsPage();
         }
+        break;
+    }
+  }
+
+  setupStepSpecificLogic(step, button) {
+    switch (step) {
+      case 0:
+        if (this.formData.license_type) button.disabled = false;
+        break;
+      case 1:
+        if (this.formData.course_type) button.disabled = false;
+        break;
+      case 2:
+        if (this.formData.course_type) button.disabled = false;
         break;
     }
   }
