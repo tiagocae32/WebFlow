@@ -28,20 +28,16 @@ class FormHandler {
     this.bindData();
   }
 
-  showcurrentStepStep() {
+  showCurrentStep() {
     this.steps.forEach((step, index) => {
-      if (index === this.currentStep) {
-        step.classList.add("active");
-      } else {
-        step.classList.remove("active");
-      }
+      step.classList.toggle("active", index === this.currentStep);
     });
   }
 
   nextStep() {
     if (this.currentStep < this.steps.length - 1) {
       this.currentStep = this.currentStep + 1;
-      this.showcurrentStepStep();
+      this.showCurrentStep();
       this.bindData();
     } else {
       this.formData = this.getData();
@@ -53,7 +49,7 @@ class FormHandler {
   previousStep() {
     if (this.currentStep > 0) {
       this.currentStep = this.currentStep - 1;
-      this.showcurrentStepStep();
+      this.showCurrentStep();
       this.bindData();
     }
   }
