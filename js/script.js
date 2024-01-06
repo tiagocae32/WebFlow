@@ -86,7 +86,7 @@ class FormHandler {
     }
   }
 
-  configurarEventoClick(contenedorId, atributoDatos, propiedadObjeto) {
+  configureClickEvent(contenedorId, atributoDatos, propiedadObjeto) {
     let contenedor = document.getElementById(contenedorId);
 
     contenedor.addEventListener(
@@ -99,52 +99,44 @@ class FormHandler {
           this.formData[propiedadObjeto] = valor;
 
           if (this.currentStep === 2) {
-            const product = this.getProduct();
-            const is_mijn_reservation = this.is_mijn_reservation();
-            this.formData.product = product;
-            this.formData.is_mijn_reservation = is_mijn_reservation;
+            this.handleStep2();
           }
         }
       }.bind(this)
     );
   }
 
+  handleStep2() {
+    const product = this.getProduct();
+    const isMijnReservation = this.isMijnReservation();
+    this.formData.product = product;
+    this.formData.is_mijn_reservation = isMijnReservation;
+  }
+
   async bindData() {
-    if (this.currentStep === 0) {
-      this.configurarEventoClick.call(
-        this,
-        "step1",
-        "data-license-type",
-        "license_type"
-      );
-    }
+    switch (this.currentStep) {
+      case 0:
+        this.configureClickEvent("step1", "data-license-type", "license_type");
+        break;
 
-    if (this.currentStep === 1) {
-      this.configurarEventoClick.call(
-        this,
-        "step2",
-        "data-course-type",
-        "course_type"
-      );
-    }
+      case 1:
+        this.configureClickEvent("step2", "data-course-type", "course_type");
+        break;
 
-    if (this.currentStep === 2) {
-      this.configurarEventoClick.call(
-        this,
-        "step3",
-        "data-exam-type",
-        "exam_type"
-      );
-    }
+      case 2:
+        this.configureClickEvent("step3", "data-exam-type", "exam_type");
+        break;
 
-    if (
-      this.currentStep === 3 &&
-      (Number(this.formData.exam_type === 1) ||
-        Number(this.formData.exam_type === 2))
-    ) {
-      this.loadCities();
-    } else {
-      this.cleanContenedor("step4");
+      case 3:
+        if (
+          Number(this.formData.exam_type === 1) ||
+          Number(this.formData.exam_type === 2)
+        ) {
+          this.loadCities();
+        } else {
+          this.cleanContainer("step4");
+        }
+        break;
     }
   }
 
@@ -186,7 +178,7 @@ class FormHandler {
     return product;
   }
 
-  is_mijn_reservation() {
+  isMijnReservation() {
     return this.formData.exam_type === 3;
   }
 
@@ -198,15 +190,14 @@ class FormHandler {
     this.citiesList = cities.filter((city) =>
       city.license_types.includes(this.formData.license_type)
     );
-    let contenedor = document.getElementById("step4");
-    this.cleanContenedor("step4");
+    const container = document.getElementById("step4");
+    this.cleanContainer("step4");
 
-    for (let i = 0; i < this.citiesList.length; i++) {
-      let objeto = this.citiesList[i];
-      let parrafo = document.createElement("p");
-      parrafo.textContent = "Nombre: " + objeto.name;
-      contenedor.appendChild(parrafo);
-    }
+    this.citiesList.forEach((city) => {
+      const paragraph = document.createElement("p");
+      paragraph.textContent = `Nombre: ${city.name}`;
+      container.appendChild(paragraph);
+    });
   }
 
   async getCities() {
@@ -220,7 +211,7 @@ class FormHandler {
     }
   }
 
-  cleanContenedor(contenedor) {
+  cleanContainer(contenedor) {
     document.getElementById(contenedor).innerHTML = "";
   }
 
