@@ -54,11 +54,11 @@ class FormManager {
   checkIsLastStep() {
     //console.log(this.getTotalSteps(), this.steps[this.currentStepIndex].id);
     if (this.steps[this.currentStepIndex].id === 8) {
-      this.changeBtn("Enviar");
+      this.changeBtn("Verzenden");
       this.handleProductMijnReservation();
       const data = this.getData();
       console.log(data);
-    } else this.changeBtn("Siguiente");
+    } else this.changeBtn("Volgende");
   }
 
   changeBtn(text) {
