@@ -286,10 +286,10 @@ class FormManager {
   // RESUME
   completeResume(formData) {
     console.log(formData);
-    this.completeLicenseType(formData);
-    this.completeCourseType(formData);
+    this.completeLicenseType("license_type");
+    this.completeCourseType("course_type");
   }
-  completeLicenseType(formData) {
+  completeLicenseType(key) {
     const licenseTypeTextMap = {
       motor: "Motortheorie",
       auto: "Autotheorie",
@@ -297,9 +297,9 @@ class FormManager {
     };
 
     document.getElementById("licenseText").textContent =
-      licenseTypeTextMap[formData.license_type] || "";
+      licenseTypeTextMap[this.formData[key]] || "";
   }
-  completeCourseType(formData) {
+  completeCourseType(key) {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
 
@@ -309,7 +309,7 @@ class FormManager {
       offline: "Dagcursus met aansluitend het examen: 99,-",
     };
     document.getElementById("courseTypeText").textContent =
-      courseTypeTextMap[formData.course_type] || "";
+      courseTypeTextMap[this.formData[key]] || "";
   }
   //END RESUME
 }
