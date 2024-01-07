@@ -3,8 +3,8 @@ class FormManager {
     this.steps = steps;
     this.currentStepIndex = 0;
     this.formData = {};
-    this.nextButton = document.getElementById("nextButton");
-    this.prevButton = document.getElementById("prevButton");
+    this.nextButton = document.getElementById("btn-next");
+    this.prevButton = document.getElementById("btn-prev");
     this.citiesList = [];
     this.LicenseTypesEnum = Object.freeze({
       AUTO: "auto",
@@ -163,7 +163,7 @@ class FormManager {
   }
 
   updateProgressBar() {
-    const progressBar = document.getElementById("progress-bar");
+    const progressBar = document.getElementById("progressFill");
     const percentage = this.calculateProgressPercentage();
     progressBar.style.width = `${percentage}%`;
   }

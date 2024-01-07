@@ -18,7 +18,7 @@
         background-color: #ddd;
       }
 
-      #progress-bar {
+      #progressFill {
         height: 30px;
         background-color: #4caf50;
         color: white;
@@ -30,7 +30,7 @@
   </head>
   <body>
     <div id="progress-bar-container">
-      <div id="progress-bar"></div>
+      <div id="progressFill"></div>
     </div>
     <!-- Type Car -->
 
@@ -55,6 +55,8 @@
       <div data-exam-type="1">Standaard examen</div>
       <div data-exam-type="2">Verlengd examen</div>
       <div data-exam-type="3">Zelf al examen gereserveerd</div>
+
+      <div></div>
     </div>
 
     <!-- Cities -->
@@ -78,8 +80,8 @@
 
     <!--Inputs finales -->
     <div class="form-step" data-step-id="7">
-      <input type="text" data-key-back="first_name" name="first_name" />
-      <input type="text" data-key-back="last_name" name="last_name" />
+      <input type="text" data-key-back="first_name" />
+      <input type="text" data-key-back="last_name" />
       <input type="text" data-key-back="nickname" />
       <input type="text" data-key-back="birth_date" />
       <input type="text" data-key-back="email" />
@@ -96,8 +98,8 @@
 
     <!-- Botones Siguiente y Anterior -->
     <div>
-      <button id="prevButton">Anterior</button>
-      <button id="nextButton">Siguiente</button>
+      <button id="btn-prev">Anterior</button>
+      <button id="btn-next">Siguiente</button>
     </div>
 
     <script src="../js/script2.js"></script>
