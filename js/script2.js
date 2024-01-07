@@ -23,6 +23,7 @@ class FormManager {
     };
   }
 
+  //INITIALIZE
   initialize() {
     this.nextButton.addEventListener("click", () => this.nextStep());
     this.prevButton.addEventListener("click", () => this.prevStep());
@@ -217,7 +218,7 @@ class FormManager {
   //END
 
   // CITIES
-  async getCities(form) {
+  async getCities() {
     try {
       const resServer = await fetch(
         "https://api.develop.nutheorie.be/api/cities/"
@@ -226,15 +227,16 @@ class FormManager {
       this.citiesList = data.filter((city) =>
         city.license_types.includes(this.formData.license_type)
       );
-      this.createCities(this.citiesList, form);
+      this.createCities(this.citiesList);
     } catch (error) {
       console.log(error);
     }
   }
 
-  createCities(cities, container) {
+  createCities(cities) {
     const idsCities = [];
-    this.cleanInterface(container);
+    const newContainer = document.getElementById("step4");
+    this.cleanInterface(newContainer);
     cities.forEach((city) => {
       const divElement = document.createElement("div");
       divElement.className = "aanmelden_step4-checkbox-item";
@@ -248,7 +250,7 @@ class FormManager {
       paragraph.textContent = city.name;
 
       divElement.appendChild(paragraph);
-      container.appendChild(divElement);
+      newContainer.appendChild(divElement);
     });
   }
   toggleCitySelection(city, divElement, idsCities) {
