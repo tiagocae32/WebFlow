@@ -337,11 +337,8 @@ class FormManager {
       per_month: "maand",
       calendar: "specifieke",
     };
-
-    const valueFormData = this.formData[key];
-
     document
-      .getElementById(courseCategoryTypeTextMap[valueFormData])
+      .getElementById(courseCategoryTypeTextMap[this.formData[key]])
       .classList.add("active");
   }
   //END RESUME
