@@ -26,6 +26,8 @@ class FormManager {
   initialize() {
     this.nextButton.addEventListener("click", () => this.nextStep());
     this.prevButton.addEventListener("click", () => this.prevStep());
+    document.addEventListener("click", (event) => this.handleFormClick(event));
+    document.addEventListener("input", (event) => this.handleFormInput(event));
     this.showFormForStep(this.currentStepIndex);
   }
 
@@ -49,6 +51,20 @@ class FormManager {
     element.innerHTML = "";
   }
 
+  checkIsLastStep() {
+    //console.log(this.getTotalSteps(), this.steps[this.currentStepIndex].id);
+    if (this.steps[this.currentStepIndex].id === 8) {
+      this.changeBtn("Enviar");
+      this.handleProductMijnReservation();
+      const data = this.getData();
+      console.log(data);
+    } else this.changeBtn("Siguiente");
+  }
+
+  changeBtn(text) {
+    this.nextButton.innerText = text;
+  }
+
   hideAllForms() {
     const forms = document.querySelectorAll(".form-step");
     forms.forEach((form) => {
@@ -64,26 +80,39 @@ class FormManager {
     );
     if (form) {
       form.classList.add("active");
-      this.attachClickEvent(form);
       this.updateNextButtonState();
     }
     this.handleSideEffects(form);
     this.updateProgressBar();
-    console.log(this.getData());
+    this.checkIsLastStep();
   }
 
-  attachClickEvent(form) {
-    const clickableElements = form.querySelectorAll("div");
+  handleFormClick(event) {
+    const clickedElement = event.target;
+    const formStep = clickedElement.closest(".form-step");
 
-    clickableElements.forEach((element) => {
-      element.addEventListener("click", () => {
-        const value = element.getAttribute(
-          this.steps[this.currentStepIndex].attribute
-        );
+    if (formStep) {
+      const value = clickedElement.getAttribute(
+        this.steps[this.currentStepIndex].attribute
+      );
+
+      if (value) {
         this.formData[this.steps[this.currentStepIndex].keyBack] = value;
-        this.updateNextButtonState();
-      });
-    });
+      }
+    }
+    this.updateNextButtonState();
+  }
+
+  handleFormInput(event) {
+    const inputElement = event.target;
+    const formStep = inputElement.closest(".form-step");
+    const textInputs = formStep.querySelectorAll('input[type="text"]');
+    const allInputsHaveValue = Array.from(textInputs).every(
+      (input) => input.value.trim() !== ""
+    );
+    this.nextButton.disabled = !allInputsHaveValue;
+    const keyBack = inputElement.getAttribute("data-key-back");
+    this.formData[keyBack] = inputElement.value;
   }
 
   isStepInvalid() {
@@ -105,7 +134,6 @@ class FormManager {
 
   handleSideEffects(form) {
     if (this.currentStepIndex === 3) {
-      //this.handleProductMijnReservation();
       this.getCities(form);
     }
   }
@@ -199,7 +227,6 @@ class FormManager {
         city.license_types.includes(this.formData.license_type)
       );
       this.createCities(this.citiesList, form);
-      console.log(this.citiesList);
     } catch (error) {
       console.log(error);
     }
@@ -245,6 +272,10 @@ const steps = [
   { id: 2, keyBack: "course_type", attribute: "data-course-type" },
   { id: 3, keyBack: "exam_type", attribute: "data-exam-type" },
   { id: 4, keyBack: "cities" },
+  { id: 5, keyBack: "course_category", attribute: "data-course-category" },
+  { id: 6, keyBack: "course_names", attribute: "data-course-name" },
+  { id: 7, form: "allInputs" },
+  { id: 8, form: "Resume" },
   //{
   //id: 4,
   //possibleSteps: [{ id: 5, keyBack: "cities" }],
