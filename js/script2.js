@@ -67,8 +67,8 @@ class FormManager {
     if (this.steps[this.currentStepIndex].id === 8) {
       this.changeBtn("Verzenden");
       this.handleProductMijnReservation();
-      const data = this.getData();
-      console.log(data);
+      delete this.formData["exam_type"];
+      this.completeResume(this.formData);
     } else this.changeBtn("Volgende");
   }
 
@@ -281,7 +281,37 @@ class FormManager {
 
     this.setData("cities", idsCities);
   }
-  // END
+  // END CITIES
+
+  // RESUME
+  completeResume(formData) {
+    console.log(formData);
+    this.completeLicenseType(formData);
+    this.completeCourseType(formData);
+  }
+  completeLicenseType(formData) {
+    const licenseTypeTextMap = {
+      motor: "Motortheorie",
+      auto: "Autotheorie",
+      scooter: "Scootertheorie",
+    };
+
+    document.getElementById("licenseText").textContent =
+      licenseTypeTextMap[formData.license_type] || "";
+  }
+  completeCourseType(formData) {
+    const courseTypeTextMap = {
+      online: ` Volledige online cursus
+
+      Videocursus
+      CBR oefenexamens
+      E-book `,
+      offline: "Dagcursus met aansluitend het examen: 99,-",
+    };
+    document.getElementById("courseTypeText").textContent =
+      courseTypeTextMap[formData.course_type] || "";
+  }
+  //END RESUME
 }
 const steps = [
   { id: 1, keyBack: "license_type", attribute: "data-license-type" },
