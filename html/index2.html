@@ -12,13 +12,30 @@
       .form-step.active {
         display: block;
       }
+
+      #progress-bar-container {
+        width: 100%;
+        background-color: #ddd;
+      }
+
+      #progress-bar {
+        height: 30px;
+        background-color: #4caf50;
+        color: white;
+        text-align: center;
+        line-height: 30px;
+        width: 15%;
+      }
     </style>
   </head>
   <body>
+    <div id="progress-bar-container">
+      <div id="progress-bar"></div>
+    </div>
     <!-- Formulario 1 -->
 
     <div class="form-step" data-step-id="1">
-      <h2>step 1</h2>
+      <h2>Step 1</h2>
       <div data-license-type="auto">Auto</div>
       <div data-license-type="scooter">Scooter</div>
       <div data-license-type="motor">Motor</div>
@@ -27,17 +44,21 @@
     <!-- Formulario 2 -->
 
     <div class="form-step" data-step-id="2">
-      <h2>step 2</h2>
+      <h2>Step 2</h2>
       <div data-course-type="offline">Offline</div>
       <div data-course-type="online">Online</div>
     </div>
 
     <!-- Formulario 3 -->
     <div class="form-step" data-step-id="3">
-      <h2>step 3</h2>
+      <h2>Step 3</h2>
       <div data-exam-type="1">Standaard examen</div>
       <div data-exam-type="2">Verlengd examen</div>
       <div data-exam-type="3">Zelf al examen gereserveerd</div>
+    </div>
+
+    <div id="step4" class="form-step" data-step-id="4">
+      <h2>Step 4 cities</h2>
     </div>
 
     <!-- Botones Siguiente y Anterior -->
