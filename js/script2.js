@@ -67,7 +67,6 @@ class FormManager {
     if (this.steps[this.currentStepIndex].id === 8) {
       this.changeBtn("Verzenden");
       this.handleProductMijnReservation();
-      delete this.formData["exam_type"];
       this.completeResume(this.formData);
     } else this.changeBtn("Volgende");
   }
@@ -288,6 +287,7 @@ class FormManager {
     console.log(formData);
     this.completeLicenseType("license_type");
     this.completeCourseType("course_type");
+    this.completeTypeExam("exam_type");
   }
   completeLicenseType(key) {
     const licenseTypeTextMap = {
@@ -310,6 +310,16 @@ class FormManager {
     };
     document.getElementById("courseTypeText").textContent =
       courseTypeTextMap[this.formData[key]] || "";
+  }
+
+  completeTypeExam(key) {
+    const examTypeTextMap = {
+      1: "Standaard CBR examen (30 min): 48,-",
+      2: "Verlengd CBR examen (45 min): 61,-",
+      3: "Ik heb zelf al een examen gereserveerd",
+    };
+    document.getElementById("examTypeText").textContent =
+      examTypeTextMap[Number(this.formData[key])] || "";
   }
   //END RESUME
 }
