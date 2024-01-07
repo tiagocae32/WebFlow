@@ -124,12 +124,12 @@ class FormManager {
         this.formData[this.steps[this.currentStepIndex].keyBack].length > 0
       );
     }
-
-    return this.formData[this.steps[this.currentStepIndex].keyBack];
+    return !!this.formData[this.steps[this.currentStepIndex].keyBack];
   }
 
   updateNextButtonState() {
-    this.nextButton.disabled = !this.isStepInvalid();
+    if (!this.isStepInvalid()) this.nextButton.classList.add("disabled-button");
+    else this.nextButton.classList.remove("disabled-button");
   }
 
   handleSideEffects(form) {

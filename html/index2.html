@@ -13,6 +13,10 @@
         display: block;
       }
 
+      .disabled-button {
+        pointer-events: none;
+        opacity: 0.5;
+      }
       #progress-bar-container {
         width: 100%;
         background-color: #ddd;
@@ -98,8 +102,8 @@
 
     <!-- Botones Siguiente y Anterior -->
     <div>
-      <button id="btn-prev">Terug</button>
-      <button id="btn-next">Volgende</button>
+      <a href="#" id="btn-prev">Terug</a>
+      <a href="#" id="btn-next" class="disabled-button">Volgende</a>
     </div>
 
     <script src="../js/script2.js"></script>
