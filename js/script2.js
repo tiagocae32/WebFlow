@@ -111,7 +111,8 @@ class FormManager {
     const allInputsHaveValue = Array.from(textInputs).every(
       (input) => input.value.trim() !== ""
     );
-    this.nextButton.disabled = !allInputsHaveValue;
+    if (!allInputsHaveValue) this.nextButton.classList.add("disabled-button");
+    else this.nextButton.classList.remove("disabled-button");
     const keyBack = inputElement.getAttribute("data-key-back");
     this.formData[keyBack] = inputElement.value;
   }
