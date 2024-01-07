@@ -22,6 +22,59 @@ class FormManager {
       MIJN: "mijn",
     };
     this.citiesNameSelected = [];
+
+    this.sectionRules = {
+      license_type: {
+        auto: "step2",
+        motor: "step2",
+        scooter: "step2",
+      },
+      course_type: {
+        offline: "step3",
+        online: "step3",
+      },
+      exam_type: {
+        offline: {
+          1: "step4Cities",
+          2: "step4Cities",
+          3: "step4Mijn",
+        },
+        online: {
+          1: "step4Cbr",
+          2: "step4Cbr",
+          3: "step4Mijn",
+        },
+      },
+      course_category: {
+        per_dates: "step6",
+        per_month: "stepMonths",
+        calendar: "stepCalendar",
+      },
+    };
+    this.nextStepRules = {
+      step4Cities: "step5",
+      step4Cbr: "step5",
+      step4Mijn: {
+        offline: "stepInputs",
+        online: "stepOnlinePackage",
+      },
+      step5: {
+        common: "stepInputs",
+      },
+      step6: {
+        offline: "stepInputs",
+        online: "stepOnlinePackage",
+      },
+      stepMonths: {
+        offline: "stepInputs",
+        online: "stepOnlinePackage",
+      },
+      stepCalendar: {
+        offline: "stepInputs",
+        online: "stepOnlinePackage",
+      },
+      stepInputs: "overzicht",
+    };
   }
 
   //INITIALIZE
@@ -45,6 +98,18 @@ class FormManager {
     if (this.currentStepIndex > 0) {
       this.currentStepIndex--;
       this.showFormForStep(this.currentStepIndex);
+    }
+  }
+
+  getNextStep(currentStep) {
+    const nextStepRule = this.nextStepRules[currentStep];
+
+    if (typeof nextStepRule === "string") {
+      return nextStepRule;
+    } else if (typeof nextStepRule === "object") {
+      // Selecciona el siguiente paso basado en las condiciones
+      const courseType = this.formData["course_type"];
+      return nextStepRule[courseType] || nextStepRule["common"];
     }
   }
   // END

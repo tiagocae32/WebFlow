@@ -42,57 +42,63 @@
     <div id="progress-bar-container">
       <div id="progressFill"></div>
     </div>
-    <!-- Type Car -->
-
-    <div class="form-step" data-step-id="1">
+    <!-- Step 1: License Type -->
+    <div class="form-step" data-step-id="1" id="step1">
       <h2>Step 1</h2>
       <div data-license-type="auto">Auto</div>
       <div data-license-type="scooter">Scooter</div>
       <div data-license-type="motor">Motor</div>
     </div>
 
-    <!-- Type Course -->
-
-    <div class="form-step" data-step-id="2">
+    <!-- Step 2: Course Type -->
+    <div class="form-step" data-step-id="2" id="step2">
       <h2>Step 2</h2>
       <div data-course-type="offline">Offline</div>
       <div data-course-type="online">Online</div>
     </div>
 
-    <!-- Exam Type -->
-    <div class="form-step" data-step-id="3">
+    <!-- Step 3: Exam Type -->
+    <div class="form-step" data-step-id="3" id="step3">
       <h2>Step 3</h2>
       <div data-exam-type="1">Standaard examen</div>
       <div data-exam-type="2">Verlengd examen</div>
       <div data-exam-type="3">Zelf al examen gereserveerd</div>
-
-      <div></div>
     </div>
 
-    <!-- Cities -->
-    <div class="form-step" data-step-id="4">
-      <div></div>
-      <div></div>
-      <div></div>
+    <!-- Step 4: Cities / CBR / Mijn -->
+    <div class="form-step" data-step-id="4" id="step4Cities">
       <div id="step4"></div>
     </div>
+    <div class="form-step" data-step-id="4" id="step4Cbr">
+      <!-- CBR para el tipo de examen online (1 o 2) -->
+    </div>
+    <div class="form-step" data-step-id="4" id="step4Mijn">
+      <!-- Mijn para el tipo de examen (3) -->
+    </div>
 
-    <div class="form-step" data-step-id="5">
+    <!-- Step 5: Course Category -->
+    <div class="form-step" data-step-id="5" id="step5">
       <h2>Step 5</h2>
       <div data-course-category="per_dates">Zo snel mogelijk</div>
       <div data-course-category="per_month">Maand</div>
       <div data-course-category="calendar">Specifieke datums</div>
     </div>
 
-    <!--Course names -->
-    <div class="form-step" data-step-id="6">
+    <!-- Step 6: Course Names / Months / Calendar -->
+    <div class="form-step" data-step-id="6" id="step6">
       <div data-course-name="Binnen een maand">Binnen een maand</div>
       <div data-course-name="Binnen 1.5 maand">Binnen 1.5 maand</div>
       <div data-course-name="Binnen 2 maanden">Binnen 2 maanden</div>
     </div>
+    <div class="form-step" data-step-id="6" id="stepMonths">
+      <!-- Meses para 'per_month' -->
+    </div>
+    <div class="form-step" data-step-id="6" id="stepCalendar">
+      <!-- Calendario para 'calendar' -->
+    </div>
 
-    <!--Inputs finales -->
-    <div class="form-step" data-step-id="7">
+    <!-- Step Inputs / Online Package -->
+    <div class="form-step" data-step-id="7" id="stepInputs">
       <input type="text" data-key-back="first_name" />
       <input type="text" data-key-back="last_name" />
       <input
@@ -108,9 +114,12 @@
       <input type="text" data-key-back="address_2" />
       <input type="text" data-key-back="address_3" />
     </div>
+    <div class="form-step" data-step-id="7" id="stepOnlinePackage">
+      <!-- Paquete Online -->
+    </div>
 
-    <!--Resume -->
-    <div class="form-step" data-step-id="8">
+    <!-- Step 8: Resume (Overzicht) -->
+    <div class="form-step" data-step-id="8" id="overzicht">
       <h2>Resume</h2>
 
       <p id="licenseText"></p>
@@ -144,7 +153,7 @@
       </div>
     </div>
 
-    <!-- Botones Siguiente y Anterior -->
+    <!-- Navigation Buttons -->
     <div>
       <a href="#" id="btn-prev">Terug</a>
       <a href="#" id="btn-next" class="disabled-button">Volgende</a>
