@@ -21,6 +21,7 @@ class FormManager {
       AMTH_VE: "amth_ve", //scooter
       MIJN: "mijn",
     };
+    this.citiesNameSelected = [];
   }
 
   //INITIALIZE
@@ -272,9 +273,11 @@ class FormManager {
 
     if (index === -1) {
       idsCities.push(cityId);
+      this.citiesNameSelected.push(city.name);
       divElement.classList.add("active");
     } else {
       idsCities.splice(index, 1);
+      this.citiesNameSelected.splice(index, 1);
       divElement.classList.remove("active");
     }
 
@@ -288,6 +291,7 @@ class FormManager {
     this.completeLicenseType("license_type");
     this.completeCourseType("course_type");
     this.completeTypeExam("exam_type");
+    this.completeCities();
   }
   completeLicenseType(key) {
     const licenseTypeTextMap = {
@@ -320,6 +324,11 @@ class FormManager {
     };
     document.getElementById("examTypeText").textContent =
       examTypeTextMap[Number(this.formData[key])] || "";
+  }
+
+  completeCities() {
+    const container = document.getElementById("citiesText");
+    container.textContent = this.citiesNameSelected.join(", ");
   }
   //END RESUME
 }
