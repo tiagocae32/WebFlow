@@ -30,6 +30,12 @@
         line-height: 30px;
         width: 15%;
       }
+      .overzicht_info-dates {
+        display: none;
+      }
+      .overzicht_info-dates.active {
+        display: flex;
+      }
     </style>
   </head>
   <body>
@@ -73,16 +79,16 @@
 
     <div class="form-step" data-step-id="5">
       <h2>Step 5</h2>
-      <div data-course-category="per_dates">Per dates</div>
-      <div data-course-category="per_month">Per month</div>
-      <div data-course-category="calendar">Calendar</div>
+      <div data-course-category="per_dates">Zo snel mogelijk</div>
+      <div data-course-category="per_month">Maand</div>
+      <div data-course-category="calendar">Specifieke datums</div>
     </div>
 
     <!--Course names -->
     <div class="form-step" data-step-id="6">
-      <div data-course-name="Binnen een maand">ee</div>
-      <div data-course-name="Binnen 1.5 maand">1.5</div>
-      <div data-course-name="Binnen 2 maanden">2</div>
+      <div data-course-name="Binnen een maand">Binnen een maand</div>
+      <div data-course-name="Binnen 1.5 maand">Binnen 1.5 maand</div>
+      <div data-course-name="Binnen 2 maanden">Binnen 2 maanden</div>
     </div>
 
     <!--Inputs finales -->
@@ -111,6 +117,20 @@
       <p id="courseTypeText"></p>
       <p id="examTypeText"></p>
       <div id="citiesText"></div>
+      <div>
+        <div id="zo-snel" class="overzicht_info-dates">
+          <p>Zo snel mogelijk</p>
+          <p id="courseNameBinnenText"></p>
+        </div>
+        <div id="maand" class="overzicht_info-dates">
+          <p>Maand</p>
+          <p id="courseNameMaandText"></p>
+        </div>
+        <div id="specifieke" class="overzicht_info-dates">
+          <p>Specifieke datums</p>
+          <p id="courseDateText"></p>
+        </div>
+      </div>
     </div>
 
     <!-- Botones Siguiente y Anterior -->

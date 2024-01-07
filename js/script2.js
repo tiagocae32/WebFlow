@@ -292,6 +292,7 @@ class FormManager {
     this.completeCourseType("course_type");
     this.completeTypeExam("exam_type");
     this.completeCities();
+    this.completeCourseCategory("course_category");
   }
   completeLicenseType(key) {
     const licenseTypeTextMap = {
@@ -329,6 +330,19 @@ class FormManager {
   completeCities() {
     const container = document.getElementById("citiesText");
     container.textContent = this.citiesNameSelected.join(", ");
+  }
+  completeCourseCategory(key) {
+    const courseCategoryTypeTextMap = {
+      per_dates: "zo-snel",
+      per_month: "maand",
+      calendar: "specifieke",
+    };
+
+    const valueFormData = this.formData[key];
+
+    document
+      .getElementById(courseCategoryTypeTextMap[valueFormData])
+      .classList.add("active");
   }
   //END RESUME
 }
