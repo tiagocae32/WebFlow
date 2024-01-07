@@ -286,13 +286,14 @@ class FormManager {
   // END CITIES
 
   // RESUME
-  completeResume(formData) {
-    console.log(formData);
+  completeResume() {
     this.completeLicenseType("license_type");
     this.completeCourseType("course_type");
     this.completeTypeExam("exam_type");
     this.completeCities();
     this.completeCourseCategory("course_category");
+    // Falta un step
+    this.completeDataInputs();
   }
   completeLicenseType(key) {
     const licenseTypeTextMap = {
@@ -340,6 +341,24 @@ class FormManager {
     document
       .getElementById(courseCategoryTypeTextMap[this.formData[key]])
       .classList.add("active");
+  }
+  completeDataInputs() {
+    const dataMapping = {
+      firstNameText: "first_name",
+      lastNameText: "last_name",
+      nicknameText: "nickname",
+      birthDateText: "birth_date",
+      emailText: "email",
+      phoneText: "phone",
+      address1Text: "address_1",
+      address2Text: "address_2",
+      address3Text: "address_3",
+    };
+
+    Object.entries(dataMapping).forEach(([key, value]) => {
+      const element = document.getElementById(key);
+      element.textContent = this.formData[value] ?? "-";
+    });
   }
   //END RESUME
 }
