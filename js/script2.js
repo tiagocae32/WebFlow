@@ -48,9 +48,19 @@ class FormManager {
   }
   // END
 
+  ///
   cleanInterface(element) {
     element.innerHTML = "";
   }
+
+  enableButton() {
+    this.nextButton.classList.remove("disabled-button");
+  }
+  disableButton() {
+    this.nextButton.classList.add("disabled-button");
+  }
+
+  //END
 
   checkIsLastStep() {
     //console.log(this.getTotalSteps(), this.steps[this.currentStepIndex].id);
@@ -108,11 +118,14 @@ class FormManager {
     const inputElement = event.target;
     const formStep = inputElement.closest(".form-step");
     const textInputs = formStep.querySelectorAll('input[type="text"]');
-    const allInputsHaveValue = Array.from(textInputs).every(
+    const requiredInputs = Array.from(textInputs).filter(
+      (input) => !input.hasAttribute("data-not-required")
+    );
+    const allInputsHaveValue = requiredInputs.every(
       (input) => input.value.trim() !== ""
     );
-    if (!allInputsHaveValue) this.nextButton.classList.add("disabled-button");
-    else this.nextButton.classList.remove("disabled-button");
+    if (!allInputsHaveValue) this.disableButton();
+    else this.enableButton();
     const keyBack = inputElement.getAttribute("data-key-back");
     this.formData[keyBack] = inputElement.value;
   }
@@ -130,8 +143,8 @@ class FormManager {
   }
 
   updateNextButtonState() {
-    if (!this.isStepInvalid()) this.nextButton.classList.add("disabled-button");
-    else this.nextButton.classList.remove("disabled-button");
+    if (!this.isStepInvalid()) this.disableButton();
+    else this.enableButton();
   }
 
   handleSideEffects(form) {
