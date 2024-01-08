@@ -182,6 +182,10 @@ class FormManager {
     this.changeBtn("Verzenden");
     this.handleProductMijnReservation();
     this.completeResume(this.formData);
+    //this.formData["course_names"] = ["jsjjsjsjsjs"];
+    this.nextButton.addEventListener("click", () => {
+      this.sendDataBack(this.formData);
+    });
   }
 
   changeBtn(text) {
@@ -478,6 +482,30 @@ class FormManager {
     });
   }
   //END RESUME
+
+  //SEND DATA
+  sendDataBack(data) {
+    console.log(data);
+    const url = "https://api.develop.nutheorie.be/api/applications/";
+
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    };
+
+    fetch(url, options)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Respuesta del backend:", data);
+      })
+      .catch((error) => {
+        console.error("Error al enviar datos al backend:", error);
+      });
+  }
+  // END SEND DATA
 }
 
 const steps = [
