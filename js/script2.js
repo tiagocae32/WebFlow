@@ -231,6 +231,7 @@ class FormManager {
   }
 
   handleFormInput(event) {
+    let validationResult = false;
     const inputElement = event.target;
     const formStep = inputElement.closest(".form-step");
     const textInputs = formStep.querySelectorAll('input[type="text"]');
@@ -246,6 +247,7 @@ class FormManager {
     if (keyBack === "email") {
       if (!this.isValidEmail(inputElement.value)) {
         this.disableButton();
+        validationResult = false;
         return;
       }
     }
@@ -254,9 +256,14 @@ class FormManager {
 
     if (!allInputsHaveValue) {
       this.disableButton();
+      validationResult = false;
     } else {
       this.enableButton();
+      validationResult = true;
     }
+    const isCheckboxChecked = document.getElementById("checkbox").checked;
+    if (validationResult && isCheckboxChecked) this.enableButton();
+    else this.disableButton();
   }
 
   isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
