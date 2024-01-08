@@ -337,10 +337,6 @@ class FormManager {
     const keyBack = currentStep.keyBack;
     const value = this.formData[keyBack];
 
-    if (keyBack === "cbr_locations") {
-      return !value || value.length === 0;
-    }
-
     if (Array.isArray(value)) {
       return value.length === 0;
     } else {
