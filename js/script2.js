@@ -324,7 +324,6 @@ class FormManager {
 
   updateNextButtonState() {
     if (this.isLastStep()) {
-      console.log("fdfdfd");
       this.enableButton();
       this.applyLastStepChanges();
     } else {
@@ -551,7 +550,6 @@ class FormManager {
 
   //SEND DATA
   sendDataBack(data) {
-    console.log(data);
     const url = "https://api.develop.nutheorie.be/api/applications/";
 
     const options = {
