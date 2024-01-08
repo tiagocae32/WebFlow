@@ -85,6 +85,7 @@ class FormManager {
 
   //INITIALIZE
   initialize() {
+    this.updateStepIndexText();
     this.setInitialLicenseTypeFromURL();
     this.setInitialCourseTypeFromURL();
     this.nextButton.addEventListener("click", () => this.nextStep());
@@ -153,6 +154,7 @@ class FormManager {
       this.stepHistory.push(nextStepId);
       this.showFormForStep(this.currentStepIndex);
     }
+    this.updateStepIndexText();
   }
 
   prevStep() {
@@ -166,6 +168,7 @@ class FormManager {
 
       this.showFormForStep(this.currentStepIndex);
     }
+    this.updateStepIndexText();
   }
 
   getCurrentStepId() {
@@ -344,6 +347,43 @@ class FormManager {
     }
   }
 
+  updateStepIndexText() {
+    const stepIndexTextElement = document.getElementById('stepIndexText');
+    if (stepIndexTextElement) {
+      let currentStepNumber = this.stepHistory.length;
+      console.log(this.stepHistory);
+      if (this.stepHistory.length === 0) {
+        currentStepNumber = 1
+      }
+      const totalSteps = this.calculateTotalSteps();
+
+      stepIndexTextElement.textContent = `${currentStepNumber} van ${totalSteps}`;
+    }
+  }
+
+  calculateTotalSteps() {
+    let totalSteps = 8;
+
+    const examType = this.formData["exam_type"];
+    const courseType = this.formData["course_type"];
+
+    if (courseType === "offline" && this.isMijnReservation()) {
+      totalSteps = 5;
+    }
+    else if (courseType === "online" && this.isMijnReservation()) {
+      totalSteps = 6;
+    }
+    else if (courseType === "offline" && !this.isMijnReservation()) {
+      totalSteps = 7;
+    }
+
+    return totalSteps;
+  }
+
+  isMijnReservation() {
+    return this.formData.exam_type === "3";
+  }
+
   updateNextButtonState() {
     if (this.isLastStep()) {
       this.enableButton();
@@ -390,7 +430,7 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-        (this.currentStepIndex / this.getTotalSteps()) * (100 - basePercentage)
+      (this.currentStepIndex / this.getTotalSteps()) * (100 - basePercentage)
     );
   }
 
