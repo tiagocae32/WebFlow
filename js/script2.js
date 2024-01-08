@@ -80,6 +80,8 @@ class FormManager {
 
   //INITIALIZE
   initialize() {
+    this.setInitialLicenseTypeFromURL();
+    this.setInitialCourseTypeFromURL();
     this.nextButton.addEventListener("click", () => this.nextStep());
     this.prevButton.addEventListener("click", () => this.prevStep());
     document.addEventListener("click", (event) => this.handleFormClick(event));
@@ -87,6 +89,35 @@ class FormManager {
     this.stepHistory.push(this.steps[this.currentStepIndex].id);
     this.showFormForStep(this.currentStepIndex);
   }
+
+  //URL
+  setInitialLicenseTypeFromURL() {
+    const queryParams = new URLSearchParams(window.location.search);
+    const licenseType = queryParams.get("license_type");
+    if (licenseType) {
+      this.formData["license_type"] = licenseType;
+      this.stepHistory.push(this.steps[0].id);
+      this.stepHistory.push(this.steps[1].id);
+      this.currentStepIndex = this.steps.findIndex(
+        (step) => step.id === this.steps[1].id
+      );
+    }
+  }
+
+  setInitialCourseTypeFromURL() {
+    const queryParams = new URLSearchParams(window.location.search);
+    const courseType = queryParams.get("course_type");
+    if (courseType) {
+      this.formData["course_type"] = courseType;
+      if (this.formData["license_type"]) {
+        this.stepHistory.push(this.steps[2].id);
+        this.currentStepIndex = this.steps.findIndex(
+          (step) => step.id === this.steps[2].id
+        );
+      }
+    }
+  }
+  // END URL
 
   // NEXT/PREV STEP
 
@@ -123,7 +154,6 @@ class FormManager {
   }
 
   getCurrentStepId() {
-    console.log(this.stepHistory[this.stepHistory.length - 1]);
     return this.stepHistory[this.stepHistory.length - 1];
   }
 
