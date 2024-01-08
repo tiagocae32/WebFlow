@@ -44,6 +44,7 @@ class FormManager {
           2: "step4Cbr",
           3: "step4Mijn",
         },
+        common: "step4Mijn",
       },
       course_category: {
         per_dates: "step6",
@@ -164,6 +165,7 @@ class FormManager {
   }
 
   getCurrentStepId() {
+    console.log(this.stepHistory[this.stepHistory.length - 1]);
     return this.stepHistory[this.stepHistory.length - 1];
   }
 
@@ -174,12 +176,23 @@ class FormManager {
     const currentStepKey = currentStepData.keyBack;
     const currentStepValue = this.formData[currentStepKey];
 
-    // Si el paso actual tiene reglas en sectionRules
-    if (this.sectionRules[currentStepKey]) {
-      const sectionRule = this.sectionRules[currentStepKey];
+    const sectionRuleKey = this.sectionRules[currentStepKey];
 
-      if (typeof sectionRule === "object" && sectionRule[currentStepValue]) {
-        return sectionRule[currentStepValue];
+    if (
+      sectionRuleKey &&
+      sectionRuleKey[currentStepValue] &&
+      typeof sectionRuleKey[currentStepValue] !== "object"
+    ) {
+      return sectionRuleKey[currentStepValue];
+    } else {
+      if (currentStepKey === "exam_type") {
+        const courseTypeValue = this.formData["course_type"];
+        return (
+          (sectionRuleKey &&
+            sectionRuleKey[courseTypeValue] &&
+            sectionRuleKey[courseTypeValue][currentStepValue]) ||
+          this.nextStepRules["common"]
+        );
       }
     }
 
