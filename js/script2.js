@@ -90,6 +90,21 @@ class FormManager {
     this.showFormForStep(this.currentStepIndex);
   }
 
+  // HELPERS
+
+  convertDate() {
+    const change = this.convertDateToISO(this.formData["birth_date"]);
+    this.formData["birth_date"] = change;
+  }
+
+  convertDateToISO(dateString) {
+    const parts = dateString.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateString;
+  }
+
   //URL
   setInitialLicenseTypeFromURL() {
     const queryParams = new URLSearchParams(window.location.search);
@@ -137,18 +152,13 @@ class FormManager {
 
   prevStep() {
     if (this.stepHistory.length > 1) {
-      // Eliminar el paso actual del historial
       this.stepHistory.pop();
-
-      // Obtener el ID del paso anterior
       const previousStepId = this.stepHistory[this.stepHistory.length - 1];
 
-      // Actualizar currentStepIndex al índice del paso anterior
       this.currentStepIndex = this.steps.findIndex(
         (step) => step.id === previousStepId
       );
 
-      // Mostrar el paso anterior
       this.showFormForStep(this.currentStepIndex);
     }
   }
@@ -210,11 +220,13 @@ class FormManager {
 
   applyLastStepChanges() {
     this.changeBtn("Verzenden");
+    this.convertDate();
     this.handleProductMijnReservation();
-    this.completeResume(this.formData);
-    //this.formData["course_names"] = ["jsjjsjsjsjs"];
+    const data = this.getData();
+    this.completeResume(data);
+
     this.nextButton.addEventListener("click", () => {
-      this.sendDataBack(this.formData);
+      this.sendDataBack(data);
     });
   }
 
@@ -257,7 +269,7 @@ class FormManager {
       }
     }
 
-    this.updateNextButtonState();
+    if (!this.isLastStep()) this.updateNextButtonState();
   }
 
   handleFormInput(event) {
@@ -312,6 +324,7 @@ class FormManager {
 
   updateNextButtonState() {
     if (this.isLastStep()) {
+      console.log("fdfdfd");
       this.enableButton();
       this.applyLastStepChanges();
     } else {
