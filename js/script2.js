@@ -218,14 +218,15 @@ class FormManager {
     const formStep = clickedElement.closest(".form-step");
 
     if (formStep) {
-      const value = clickedElement.getAttribute(
-        this.steps[this.currentStepIndex].attribute
-      );
+      const { keyBack, attribute, keyArray } =
+        this.steps[this.currentStepIndex];
+      const value = clickedElement.getAttribute(attribute);
 
       if (value) {
-        this.formData[this.steps[this.currentStepIndex].keyBack] = value;
+        this.formData[keyBack] = keyArray ? [value] : value;
       }
     }
+
     this.updateNextButtonState();
   }
 
@@ -239,11 +240,26 @@ class FormManager {
     const allInputsHaveValue = requiredInputs.every(
       (input) => input.value.trim() !== ""
     );
-    if (!allInputsHaveValue) this.disableButton();
-    else this.enableButton();
+
     const keyBack = inputElement.getAttribute("data-key-back");
+
+    if (keyBack === "email") {
+      if (!this.isValidEmail(inputElement.value)) {
+        this.disableButton();
+        return;
+      }
+    }
+
     this.formData[keyBack] = inputElement.value;
+
+    if (!allInputsHaveValue) {
+      this.disableButton();
+    } else {
+      this.enableButton();
+    }
   }
+
+  isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   isStepInvalid() {
     const typeKey =
@@ -520,15 +536,26 @@ const steps = [
     keyBack: "course_category",
     attribute: "data-course-category",
   },
-  { id: "step6", keyBack: "course_names", attribute: "data-course-name" }, // step6 genérico
+  {
+    id: "step6",
+    keyBack: "course_names",
+    attribute: "data-course-name",
+    keyArray: true,
+  }, // step6 genérico
   { id: "stepMonths", keyBack: "course_names", attribute: "data-course-name" }, // step para course_category per_month
   {
     id: "stepCalendar",
     keyBack: "course_dates",
     attribute: "data-course-name",
   }, // step para course_category calendar
-  { id: "stepInputs", form: "allInputs" }, // paso final para datos de entrada
-  { id: "stepOnlinePackage", form: "package_name" }, // paso adicional para paquetes en línea
+  {
+    id: "stepInputs",
+    form: "allInputs",
+    validations: {
+      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    },
+  }, // paso final para datos de entrada
+  { id: "stepOnlinePackage", form: "package_name", keyBack: "package_name" }, // paso adicional para paquetes en línea
   { id: "overzicht", form: "Resume" }, // paso final de resumen
 ];
 
