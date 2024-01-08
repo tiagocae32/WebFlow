@@ -478,7 +478,7 @@ class FormManager {
     this.completeTypeExam("exam_type");
     this.completeCities();
     this.completeCourseCategory("course_category");
-    // Falta un step
+    this.completeCourseDates("course_dates");
     this.completeDataInputs();
   }
   completeLicenseType(key) {
@@ -527,6 +527,44 @@ class FormManager {
     document
       .getElementById(courseCategoryTypeTextMap[this.formData[key]])
       .classList.add("active");
+  }
+  completeCourseDates(key) {
+    const container = document.getElementById("specifiekeDates");
+    container.innerHTML = "";
+
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mrt",
+      "Apr",
+      "Mei",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Dec",
+    ];
+
+    this.formData[key].forEach((courseDate) => {
+      const date = new Date(courseDate);
+
+      const dayElement = document.createElement("div");
+      dayElement.id = "daySelected";
+      dayElement.textContent = date.getDate();
+
+      const monthElement = document.createElement("div");
+      monthElement.id = "monthSelected";
+      monthElement.textContent = monthNames[date.getMonth()];
+
+      const dateElement = document.createElement("div");
+      dateElement.classList.add("overzicht_info-date");
+      dateElement.appendChild(dayElement);
+      dateElement.appendChild(monthElement);
+
+      container.appendChild(dateElement);
+    });
   }
   completeDataInputs() {
     const dataMapping = {
