@@ -21,6 +21,9 @@ class FormManager {
       AMTH_VE: "amth_ve", //scooter
       MIJN: "mijn",
     };
+    this.sideEffects = false;
+    this.citiesList = [];
+    this.cities = [];
     this.citiesNameSelected = [];
     this.cbr_locations = [];
 
@@ -166,7 +169,7 @@ class FormManager {
   }
 
   getCurrentStepId() {
-    console.log(this.stepHistory[this.stepHistory.length - 1]);
+    //console.log(this.stepHistory[this.stepHistory.length - 1]);
     return this.stepHistory[this.stepHistory.length - 1];
   }
 
@@ -283,57 +286,66 @@ class FormManager {
       }
     }
 
-    if (!this.isLastStep()) this.updateNextButtonState();
+    if (!this.isLastStep() && !this.noSideEffects) {
+      this.updateNextButtonState();
+    }
   }
 
   handleFormInput(event) {
-    let validationResult = false;
-    const inputElement = event.target;
-    const formStep = inputElement.closest(".form-step");
-    const textInputs = formStep.querySelectorAll('input[type="text"]');
-    const requiredInputs = Array.from(textInputs).filter(
-      (input) => !input.hasAttribute("data-not-required")
-    );
-    const allInputsHaveValue = requiredInputs.every(
-      (input) => input.value.trim() !== ""
-    );
+    if (this.getCurrentStepId() === "stepInputs") {
+      let validationResult = false;
+      const inputElement = event.target;
+      const formStep = inputElement.closest(".form-step");
+      const textInputs = formStep.querySelectorAll('input[type="text"]');
+      const requiredInputs = Array.from(textInputs).filter(
+        (input) => !input.hasAttribute("data-not-required")
+      );
+      const allInputsHaveValue = requiredInputs.every(
+        (input) => input.value.trim() !== ""
+      );
 
-    const keyBack = inputElement.getAttribute("data-key-back");
+      const keyBack = inputElement.getAttribute("data-key-back");
 
-    if (keyBack === "email") {
-      if (!this.isValidEmail(inputElement.value)) {
+      if (keyBack === "email") {
+        if (!this.isValidEmail(inputElement.value)) {
+          console.log("fdfdfdfdf");
+          this.disableButton();
+          validationResult = false;
+          return;
+        }
+      }
+
+      this.formData[keyBack] = inputElement.value;
+
+      if (!allInputsHaveValue) {
         this.disableButton();
         validationResult = false;
-        return;
+      } else {
+        this.enableButton();
+        validationResult = true;
       }
+      const isCheckboxChecked = document.getElementById("checkbox").checked;
+      if (validationResult && isCheckboxChecked) this.enableButton();
+      else this.disableButton();
     }
-
-    this.formData[keyBack] = inputElement.value;
-
-    if (!allInputsHaveValue) {
-      this.disableButton();
-      validationResult = false;
-    } else {
-      this.enableButton();
-      validationResult = true;
-    }
-    const isCheckboxChecked = document.getElementById("checkbox").checked;
-    if (validationResult && isCheckboxChecked) this.enableButton();
-    else this.disableButton();
   }
 
   isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   isStepInvalid() {
-    const typeKey =
-      typeof this.formData[this.steps[this.currentStepIndex].keyBack];
+    const currentStep = this.steps[this.currentStepIndex];
+    const keyBack = currentStep.keyBack;
+    const value = this.formData[keyBack];
 
-    if (typeKey === "object") {
-      return (
-        this.formData[this.steps[this.currentStepIndex].keyBack].length > 0
-      );
+    if (keyBack === "cbr_locations") {
+      return !value || value.length === 0;
     }
-    return !!this.formData[this.steps[this.currentStepIndex].keyBack];
+
+    if (Array.isArray(value)) {
+      return value.length === 0;
+    } else {
+      return !value;
+    }
   }
 
   updateNextButtonState() {
@@ -342,18 +354,23 @@ class FormManager {
       this.applyLastStepChanges();
     } else {
       this.changeBtn("Volgende");
-      if (!this.isStepInvalid()) this.disableButton();
-      else this.enableButton();
+      const isInvalid = this.isStepInvalid();
+      this.isStepInvalid() ? this.disableButton() : this.enableButton();
     }
   }
 
   handleSideEffects(form) {
     if (this.getCurrentStepId() === "step4Cities") {
       this.getCities(form);
+      this.sideEffects = true;
+      return;
     }
     if (this.getCurrentStepId() === "step4Cbr") {
       this.getCbrLocations();
+      this.sideEffects = true;
+      return;
     }
+    this.sideEffects = false;
   }
   //END
 
@@ -452,14 +469,13 @@ class FormManager {
   }
 
   createCities(cities) {
-    const idsCities = [];
     const newContainer = document.getElementById("step4");
     this.cleanInterface(newContainer);
     cities.forEach((city) => {
       const divElement = document.createElement("div");
       divElement.className = "aanmelden_step4-checkbox-item";
       divElement.addEventListener("click", () => {
-        this.toggleCitySelection(city, divElement, idsCities);
+        this.toggleCitySelection(city, divElement);
         this.updateNextButtonState();
       });
 
@@ -471,21 +487,21 @@ class FormManager {
       newContainer.appendChild(divElement);
     });
   }
-  toggleCitySelection(city, divElement, idsCities) {
+  toggleCitySelection(city, divElement) {
     const cityId = city.id;
-    const index = idsCities.indexOf(cityId);
+    const index = this.cities.indexOf(cityId);
 
     if (index === -1) {
-      idsCities.push(cityId);
+      this.cities.push(cityId);
       this.citiesNameSelected.push(city.name);
       divElement.classList.add("active");
     } else {
-      idsCities.splice(index, 1);
+      this.cities.splice(index, 1);
       this.citiesNameSelected.splice(index, 1);
       divElement.classList.remove("active");
     }
 
-    this.setData("cities", idsCities);
+    this.setData("cities", this.cities);
   }
   // END CITIES
 
@@ -497,7 +513,6 @@ class FormManager {
       const resServer = await fetch(url);
       const data = await resServer.json();
       this.createCbrElements(data);
-      console.log(data);
     } catch (error) {
       console.log(error);
     }
@@ -526,6 +541,7 @@ class FormManager {
 
       checkbox.addEventListener("click", () => {
         this.toggleCbrSelection(element);
+        this.updateNextButtonState();
       });
 
       const span = document.createElement("span");
@@ -544,7 +560,6 @@ class FormManager {
 
   toggleCbrSelection(element) {
     const index = this.cbr_locations.indexOf(element);
-    console.log(index);
 
     if (index === -1) {
       this.cbr_locations.push(element);
