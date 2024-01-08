@@ -3,21 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Formulario con steps</title>
+    <title>Formulario con Botones Únicos</title>
     <style>
-      .step {
+      .form-step {
         display: none;
       }
-      .step.active {
+
+      .form-step.active {
         display: block;
       }
 
-      .form {
-        display: none;
-      }
-      .form.active {
-        display: block;
-      }
       .disabled-button {
         pointer-events: none;
         opacity: 0.5;
@@ -27,7 +22,7 @@
         background-color: #ddd;
       }
 
-      #progress-bar {
+      #progressFill {
         height: 30px;
         background-color: #4caf50;
         color: white;
@@ -35,65 +30,136 @@
         line-height: 30px;
         width: 15%;
       }
+      .overzicht_info-dates {
+        display: none;
+      }
+      .overzicht_info-dates.active {
+        display: flex;
+      }
     </style>
   </head>
   <body>
     <div id="progress-bar-container">
-      <div id="progress-bar"></div>
+      <div id="progressFill"></div>
+    </div>
+    <!-- Step 1: License Type -->
+    <div class="form-step" data-step-id="step1" id="step1">
+      <h2>Step 1</h2>
+      <div data-license-type="auto">Auto</div>
+      <div data-license-type="scooter">Scooter</div>
+      <div data-license-type="motor">Motor</div>
     </div>
 
-    <form id="formulario" method="post">
-      <div class="step active" id="step1">
-        <h2>step 1</h2>
-        <div data-license-type="auto">Auto</div>
-        <div data-license-type="scooter">Scooter</div>
-        <div data-license-type="motor">Motor</div>
-      </div>
+    <!-- Step 2: Course Type -->
+    <div class="form-step" data-step-id="step2" id="step2">
+      <h2>Step 2</h2>
+      <div data-course-type="offline">Offline</div>
+      <div data-course-type="online">Online</div>
+    </div>
 
-      <div class="step" id="step2">
-        <h2>step 2</h2>
-        <div data-course-type="offline">Offline</div>
-        <div data-course-type="online">Online</div>
-      </div>
+    <!-- Step 3: Exam Type -->
+    <div class="form-step" data-step-id="step3" id="step3">
+      <h2>Step 3</h2>
+      <div data-exam-type="1">Standaard examen</div>
+      <div data-exam-type="2">Verlengd examen</div>
+      <div data-exam-type="3">Zelf al examen gereserveerd</div>
+    </div>
 
-      <div class="step" id="step3">
-        <h2>step 3</h2>
-        <div data-exam-type="1">Standaard examen</div>
-        <div data-exam-type="2">Verlengd examen</div>
-        <div data-exam-type="3">Zelf al examen gereserveerd</div>
-      </div>
+    <!-- Step 4: Cities / CBR / Mijn -->
+    <div class="form-step" data-step-id="step4Cities" id="step4Cities">
+      <div id="step4"></div>
+    </div>
+    <div class="form-step" data-step-id="step4Cbr" id="step4Cbr">
+      <!-- CBR para el tipo de examen online (1 o 2) -->
+      <h2>Cbr</h2>
+    </div>
+    <div class="form-step" data-step-id="step4Mijn" id="step4Mijn">
+      <!-- Mijn para el tipo de examen (3) -->
+      <h2>Mijn</h2>
+    </div>
 
-      <div class="step" id="step4">
-        <h2>step 4</h2>
-      </div>
+    <!-- Step 5: Course Category -->
+    <div class="form-step" data-step-id="step5" id="step5">
+      <h2>Step 5</h2>
+      <div data-course-category="per_dates">Zo snel mogelijk</div>
+      <div data-course-category="per_month">Maand</div>
+      <div data-course-category="calendar">Specifieke datums</div>
+    </div>
 
-      <div class="step" id="step5">
-        <h2>Step 5</h2>
-        <div data-course-category="per_dates">Per dates</div>
-        <div data-course-category="per_month">Per month</div>
-        <div data-course-category="calendar">Calendar</div>
-      </div>
+    <!-- Step 6: Course Names / Months / Calendar -->
+    <div class="form-step" data-step-id="step6" id="step6">
+      <div data-course-name="Binnen een maand">Binnen een maand</div>
+      <div data-course-name="Binnen 1.5 maand">Binnen 1.5 maand</div>
+      <div data-course-name="Binnen 2 maanden">Binnen 2 maanden</div>
+    </div>
+    <div class="form-step" data-step-id="stepMonths" id="stepMonths">
+      <!-- Meses para 'per_month' -->
+    </div>
+    <div class="form-step" data-step-id="stepCalendar" id="stepCalendar">
+      <!-- Calendario para 'calendar' -->
+    </div>
 
-      <div class="step" id="step6">
-        <h2>Step 6</h2>
-        <!--Course names -->
-        <div class="form" id="stepTime">
-          <div data-course-name="Binnen een maand">ee</div>
-          <div data-course-name="Binnen 1.5 maand">1.5</div>
-          <div data-course-name="Binnen 2 maanden">2</div>
+    <!-- Step Inputs / Online Package -->
+    <div class="form-step" data-step-id="stepInputs" id="stepInputs">
+      <input type="text" data-key-back="first_name" />
+      <input type="text" data-key-back="last_name" />
+      <input
+        type="text"
+        data-key-back="nickname"
+        data-not-required="true"
+        placeholder="nickname"
+      />
+      <input type="text" data-key-back="birth_date" placeholder="birth_date" />
+      <input type="email" data-key-back="email" placeholder="email" />
+      <input type="phone" data-key-back="phone" />
+      <input type="text" data-key-back="address_1" />
+      <input type="text" data-key-back="address_2" />
+      <input type="text" data-key-back="address_3" />
+      <input type="checkbox" id="checkbox" />
+    </div>
+    <div class="form-step" data-step-id="7" id="stepOnlinePackage">
+      <!-- Paquete Online -->
+    </div>
+
+    <!-- Step 8: Resume (Overzicht) -->
+    <div class="form-step" data-step-id="overzicht" id="overzicht">
+      <h2>Resume</h2>
+
+      <p id="licenseText"></p>
+      <p id="courseTypeText"></p>
+      <p id="examTypeText"></p>
+      <div id="citiesText"></div>
+      <div>
+        <div id="zo-snel" class="overzicht_info-dates">
+          <p>Zo snel mogelijk</p>
+          <p id="courseNameBinnenText"></p>
         </div>
-        <!--Meses -->
-        <div class="form" id="stepMonths"></div>
-        <!--Date picker -->
-        <div class="form" id="stepDatePicker">
-          <h3 data-course-dates="test">Date picker</h3>
+        <div id="maand" class="overzicht_info-dates">
+          <p>Maand</p>
+          <p id="courseNameMaandText"></p>
+        </div>
+        <div id="specifieke" class="overzicht_info-dates">
+          <p>Specifieke datums</p>
+          <p id="courseDateText"></p>
         </div>
       </div>
-    </form>
+      <div id="dataInputs">
+        <p id="firstNameText"></p>
+        <p id="lastNameText"></p>
+        <p id="nicknameText"></p>
+        <p id="birthDateText"></p>
+        <p id="phoneText"></p>
+        <p id="emailText"></p>
+        <p id="address1Text"></p>
+        <p id="address2Text"></p>
+        <p id="address3Text"></p>
+      </div>
+    </div>
 
+    <!-- Navigation Buttons -->
     <div>
-      <a href="#" id="btn-next" class="disabled-button">Siguiente</a>
-      <a href="#" id="btn-prev" class="disabled-button">Antes</a>
+      <a href="#" id="btn-prev" style="cursor: pointer">Terug</a>
+      <a href="#" id="btn-next" class="disabled-button">Volgende</a>
     </div>
 
     <script src="../js/script.js"></script>
