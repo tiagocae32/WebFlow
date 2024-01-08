@@ -174,14 +174,14 @@ class FormManager {
 
   //END
 
-  checkIsLastStep() {
-    //console.log(this.getTotalSteps(), this.steps[this.currentStepIndex].id);
-    if (this.currentStepIndex === this.steps.length - 1) {
-      this.changeBtn("Verzenden");
-      this.handleProductMijnReservation();
-      console.log(this.formData);
-      this.completeResume(this.formData);
-    } else this.changeBtn("Volgende");
+  isLastStep() {
+    return this.currentStepIndex === this.steps.length - 1;
+  }
+
+  applyLastStepChanges() {
+    this.changeBtn("Verzenden");
+    this.handleProductMijnReservation();
+    this.completeResume(this.formData);
   }
 
   changeBtn(text) {
@@ -207,7 +207,6 @@ class FormManager {
     }
     this.handleSideEffects(form);
     this.updateProgressBar();
-    this.checkIsLastStep();
   }
 
   handleFormClick(event) {
@@ -255,8 +254,14 @@ class FormManager {
   }
 
   updateNextButtonState() {
-    if (!this.isStepInvalid()) this.disableButton();
-    else this.enableButton();
+    if (this.isLastStep()) {
+      this.enableButton();
+      this.applyLastStepChanges();
+    } else {
+      this.changeBtn("Volgende");
+      if (!this.isStepInvalid()) this.disableButton();
+      else this.enableButton();
+    }
   }
 
   handleSideEffects(form) {
