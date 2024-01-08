@@ -75,6 +75,7 @@ class FormManager {
       },
       stepInputs: "overzicht",
     };
+    this.stepHistory = [];
   }
 
   //INITIALIZE
@@ -83,34 +84,79 @@ class FormManager {
     this.prevButton.addEventListener("click", () => this.prevStep());
     document.addEventListener("click", (event) => this.handleFormClick(event));
     document.addEventListener("input", (event) => this.handleFormInput(event));
+    this.stepHistory.push(this.steps[this.currentStepIndex].id);
     this.showFormForStep(this.currentStepIndex);
   }
 
   // NEXT/PREV STEP
+
   nextStep() {
-    if (this.currentStepIndex < this.steps.length - 1) {
-      this.currentStepIndex++;
+    const currentStepId = this.getCurrentStepId();
+    const nextStepId = this.getNextStepId(currentStepId);
+
+    const nextStepIndex = this.steps.findIndex(
+      (step) => step.id === nextStepId
+    );
+    if (nextStepIndex !== -1) {
+      this.currentStepIndex = nextStepIndex;
+      this.stepHistory.push(nextStepId);
       this.showFormForStep(this.currentStepIndex);
     }
   }
 
   prevStep() {
-    if (this.currentStepIndex > 0) {
-      this.currentStepIndex--;
+    if (this.stepHistory.length > 1) {
+      // Eliminar el paso actual del historial
+      this.stepHistory.pop();
+
+      // Obtener el ID del paso anterior
+      const previousStepId = this.stepHistory[this.stepHistory.length - 1];
+
+      // Actualizar currentStepIndex al índice del paso anterior
+      this.currentStepIndex = this.steps.findIndex(
+        (step) => step.id === previousStepId
+      );
+
+      // Mostrar el paso anterior
       this.showFormForStep(this.currentStepIndex);
     }
   }
 
-  getNextStep(currentStep) {
-    const nextStepRule = this.nextStepRules[currentStep];
+  getCurrentStepId() {
+    console.log(this.stepHistory[this.stepHistory.length - 1]);
+    return this.stepHistory[this.stepHistory.length - 1];
+  }
 
-    if (typeof nextStepRule === "string") {
-      return nextStepRule;
-    } else if (typeof nextStepRule === "object") {
-      // Selecciona el siguiente paso basado en las condiciones
-      const courseType = this.formData["course_type"];
-      return nextStepRule[courseType] || nextStepRule["common"];
+  getNextStepId(currentStepId) {
+    const currentStepData = this.steps.find(
+      (step) => step.id === currentStepId
+    );
+    const currentStepKey = currentStepData.keyBack;
+    const currentStepValue = this.formData[currentStepKey];
+
+    // Si el paso actual tiene reglas en sectionRules
+    if (this.sectionRules[currentStepKey]) {
+      const sectionRule = this.sectionRules[currentStepKey];
+
+      if (typeof sectionRule === "object" && sectionRule[currentStepValue]) {
+        return sectionRule[currentStepValue];
+      }
     }
+
+    // Si el paso actual tiene reglas en nextStepRules
+    const nextStepRule = this.nextStepRules[currentStepId];
+    if (nextStepRule) {
+      if (typeof nextStepRule === "string") {
+        return nextStepRule;
+      } else if (typeof nextStepRule === "object") {
+        return (
+          nextStepRule[this.formData["course_type"]] || nextStepRule["common"]
+        );
+      }
+    }
+
+    // Si no hay reglas específicas, avanzar al siguiente paso en la lista
+    return this.steps[this.currentStepIndex + 1]?.id;
   }
   // END
 
@@ -130,9 +176,10 @@ class FormManager {
 
   checkIsLastStep() {
     //console.log(this.getTotalSteps(), this.steps[this.currentStepIndex].id);
-    if (this.steps[this.currentStepIndex].id === 8) {
+    if (this.currentStepIndex === this.steps.length - 1) {
       this.changeBtn("Verzenden");
       this.handleProductMijnReservation();
+      console.log(this.formData);
       this.completeResume(this.formData);
     } else this.changeBtn("Volgende");
   }
@@ -147,12 +194,12 @@ class FormManager {
       form.classList.remove("active");
     });
   }
-
-  showFormForStep(stepIndex) {
+  showFormForStep() {
     this.hideAllForms();
 
+    const currentStepId = this.getCurrentStepId();
     const form = document.querySelector(
-      `.form-step[data-step-id="${this.steps[stepIndex].id}"]`
+      `.form-step[data-step-id="${currentStepId}"]` // Modificado
     );
     if (form) {
       form.classList.add("active");
@@ -427,19 +474,29 @@ class FormManager {
   }
   //END RESUME
 }
+
 const steps = [
-  { id: 1, keyBack: "license_type", attribute: "data-license-type" },
-  { id: 2, keyBack: "course_type", attribute: "data-course-type" },
-  { id: 3, keyBack: "exam_type", attribute: "data-exam-type" },
-  { id: 4, keyBack: "cities" },
-  { id: 5, keyBack: "course_category", attribute: "data-course-category" },
-  { id: 6, keyBack: "course_names", attribute: "data-course-name" },
-  { id: 7, form: "allInputs" },
-  { id: 8, form: "Resume" },
-  //{
-  //id: 4,
-  //possibleSteps: [{ id: 5, keyBack: "cities" }],
-  //},
+  { id: "step1", keyBack: "license_type", attribute: "data-license-type" },
+  { id: "step2", keyBack: "course_type", attribute: "data-course-type" },
+  { id: "step3", keyBack: "exam_type", attribute: "data-exam-type" },
+  { id: "step4Cities", keyBack: "cities" }, // step para cuando se elige ciudades en offline
+  { id: "step4Cbr", keyBack: "cbr_locations" }, // step para cuando se elige CBR en online
+  { id: "step4Mijn", keyBack: "mijn_exam_location" }, // step para cuando se elige MIJN
+  {
+    id: "step5",
+    keyBack: "course_category",
+    attribute: "data-course-category",
+  },
+  { id: "step6", keyBack: "course_names", attribute: "data-course-name" }, // step6 genérico
+  { id: "stepMonths", keyBack: "course_names", attribute: "data-course-name" }, // step para course_category per_month
+  {
+    id: "stepCalendar",
+    keyBack: "course_dates",
+    attribute: "data-course-name",
+  }, // step para course_category calendar
+  { id: "stepInputs", form: "allInputs" }, // paso final para datos de entrada
+  { id: "stepOnlinePackage", form: "package_name" }, // paso adicional para paquetes en línea
+  { id: "overzicht", form: "Resume" }, // paso final de resumen
 ];
 
 const formManager = new FormManager(steps);
