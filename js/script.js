@@ -22,6 +22,7 @@ class FormManager {
       MIJN: "mijn",
     };
     this.citiesNameSelected = [];
+    this.cbr_locations = [];
 
     this.sectionRules = {
       license_type: {
@@ -347,8 +348,11 @@ class FormManager {
   }
 
   handleSideEffects(form) {
-    if (this.currentStepIndex === 3) {
+    if (this.getCurrentStepId() === "step4Cities") {
       this.getCities(form);
+    }
+    if (this.getCurrentStepId() === "step4Cbr") {
+      this.getCbrLocations();
     }
   }
   //END
@@ -360,6 +364,7 @@ class FormManager {
 
   setData(key, value) {
     this.formData[key] = value;
+    console.log(this.formData);
   }
   //END
 
@@ -483,6 +488,74 @@ class FormManager {
     this.setData("cities", idsCities);
   }
   // END CITIES
+
+  // CBR LOCATIONS
+  async getCbrLocations() {
+    const url =
+      "https://api.develop.nutheorie.be/api/applications/exam_locations/";
+    try {
+      const resServer = await fetch(url);
+      const data = await resServer.json();
+      this.createCbrElements(data);
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  createCbrElements(elements) {
+    const container = document.getElementById("step4check");
+    elements.forEach((element, index) => {
+      const itemContainer = document.createElement("div");
+      itemContainer.className = "aanmelden_step4-list_item";
+
+      const label = document.createElement("label");
+      label.className = "w-checkbox aanmelden_step4-item";
+
+      const checkboxDiv = document.createElement("div");
+      checkboxDiv.className =
+        "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = index;
+      checkbox.name = element;
+      checkbox.style.opacity = 0;
+      checkbox.style.position = "absolute";
+      checkbox.style.zIndex = -1;
+
+      checkbox.addEventListener("click", () => {
+        this.toggleCbrSelection(element);
+      });
+
+      const span = document.createElement("span");
+      span.className = "text-weight-bold w-form-label";
+      span.setAttribute("for", element);
+      span.textContent = element;
+
+      label.appendChild(checkboxDiv);
+      label.appendChild(checkbox);
+      label.appendChild(span);
+      itemContainer.appendChild(label);
+
+      container.appendChild(itemContainer);
+    });
+  }
+
+  toggleCbrSelection(element) {
+    const index = this.cbr_locations.indexOf(element);
+    console.log(index);
+
+    if (index === -1) {
+      this.cbr_locations.push(element);
+    } else {
+      this.cbr_locations.splice(index, 1);
+    }
+
+    this.setData("cbr_locations", this.cbr_locations);
+  }
+
+  // END LOCATIONS
 
   // RESUME
   completeResume() {
