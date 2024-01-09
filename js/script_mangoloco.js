@@ -552,13 +552,23 @@ if (window.location.pathname === '/aanmelden') {
 
       if (!this.formData[key].includes(value)) {
         this.formData[key].push(value);
+        if (isCity) {
+          this.citiesNameSelected.push(option.name);
+        }
         divElement.classList.add("active");
       } else {
         const index = this.formData[key].indexOf(value);
         this.formData[key].splice(index, 1);
+        if (isCity) {
+          const cityNameIndex = this.citiesNameSelected.indexOf(option.name);
+          if (cityNameIndex !== -1) {
+            this.citiesNameSelected.splice(cityNameIndex, 1);
+          }
+        }
         divElement.classList.remove("active");
       }
     }
+
 
     // END CITIES
 
