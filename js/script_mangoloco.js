@@ -416,15 +416,13 @@ class FormManager {
   //END
 
   // PROGRESS BAR
-  getTotalSteps() {
-    return this.formData.course_type === "offline" ? 7 : 8;
-  }
 
   calculateProgressPercentage() {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-        (this.currentStepIndex / this.getTotalSteps()) * (100 - basePercentage)
+        (this.currentStepIndex / this.calculateTotalSteps()) *
+          (100 - basePercentage)
     );
   }
 
