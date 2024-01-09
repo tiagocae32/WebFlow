@@ -638,6 +638,7 @@ if (window.location.pathname === '/aanmelden') {
       this.completeCourseCategory("course_category");
       this.completeCourseDates("course_dates");
       this.completeDataInputs();
+      this.completeCourseNames();
     }
     completeLicenseType(key) {
       const licenseTypeTextMap = {
@@ -685,6 +686,21 @@ if (window.location.pathname === '/aanmelden') {
       document
         .getElementById(courseCategoryTypeTextMap[this.formData[key]])
         .classList.add("active");
+    }
+    completeCourseNames() {
+      const category = this.formData["course_category"];
+
+      if (category === "per_dates") {
+        const courseNamesElement = document.getElementById("zo-snelResume");
+        if (courseNamesElement) {
+          courseNamesElement.textContent = this.formData["course_names"].join(", ");
+        }
+      } else if (category === "per_month") {
+        const monthsElement = document.getElementById("maandResume");
+        if (monthsElement) {
+          monthsElement.textContent = this.formData["course_names"].join(", ");
+        }
+      }
     }
     completeCourseDates(key) {
       const container = document.getElementById("specifiekeDates");
