@@ -173,6 +173,7 @@ class FormManager {
   }
 
   getCurrentStepId() {
+    console.log(this.stepHistory[this.stepHistory.length - 1]);
     return this.stepHistory[this.stepHistory.length - 1];
   }
 
@@ -261,6 +262,7 @@ class FormManager {
     });
   }
   showFormForStep() {
+    console.log(this.formData);
     this.hideAllForms();
 
     const currentStepId = this.getCurrentStepId();
@@ -590,6 +592,7 @@ class FormManager {
 
   createCbrElements(elements) {
     const container = document.getElementById("step4check");
+    this.cleanInterface(container);
     elements.forEach((element, index) => {
       const itemContainer = document.createElement("div");
       itemContainer.className = "aanmelden_step4-list_item";
@@ -666,10 +669,10 @@ class FormManager {
   completeCourseType(key) {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
-
-        Videocursus
-        CBR oefenexamens
-        E-book `,
+    
+            Videocursus
+            CBR oefenexamens
+            E-book `,
       offline: "Dagcursus met aansluitend het examen: 99,-",
     };
     document.getElementById("courseTypeText").textContent =
