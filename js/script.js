@@ -307,13 +307,11 @@ class FormManager {
   handleFormClick(event) {
     const clickedElement = event.target;
     const formStep = clickedElement.closest(".form-step");
-    console.log(formStep);
 
     if (formStep) {
       const { keyBack, attribute, keyArray } =
         this.steps[this.currentStepIndex];
       const value = clickedElement.getAttribute(attribute);
-      console.log(keyBack, attribute, value);
 
       if (value) {
         this.formData[keyBack] = keyArray ? [value] : value;
@@ -433,6 +431,8 @@ class FormManager {
       case "stepOnlinePackage":
         this.getPackages();
         this.sideEffects = true;
+      case "step4Mijn":
+        this.getCbrLocations(false);
       default:
         this.sideEffects = false;
         break;
@@ -611,16 +611,28 @@ class FormManager {
   // END CITIES
 
   // CBR LOCATIONS
-  async getCbrLocations() {
+  async getCbrLocations(createElements = true) {
     const url =
       "https://api.develop.nutheorie.be/api/applications/exam_locations/";
     try {
       const resServer = await fetch(url);
       const data = await resServer.json();
-      this.createCbrElements(data);
+      if (createElements) this.createCbrElements(data);
+      else this.createCbrsSelect(data);
     } catch (error) {
       console.log(error);
     }
+  }
+
+  createCbrsSelect(data) {
+    const selectElement = document.getElementById("selectCbrs");
+
+    data.forEach((option) => {
+      const optionElement = document.createElement("option");
+      optionElement.value = option;
+      optionElement.text = option;
+      selectElement.add(optionElement);
+    });
   }
 
   createCbrElements(elements) {
