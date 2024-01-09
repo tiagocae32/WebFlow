@@ -373,8 +373,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -423,8 +423,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-        (this.currentStepIndex / this.calculateTotalSteps()) *
-          (100 - basePercentage)
+      (this.currentStepIndex / this.calculateTotalSteps()) *
+      (100 - basePercentage)
     );
   }
 
@@ -669,7 +669,7 @@ class FormManager {
   completeCourseType(key) {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
-    
+
             Videocursus
             CBR oefenexamens
             E-book `,
@@ -774,8 +774,34 @@ class FormManager {
   }
   //END RESUME
 
+  submissionRules = {
+    'course_type': {
+      'offline': ['cbr_locations'],
+      'online': ['cities']
+    },
+    'course_category': {
+      'per_dates': ['course_dates'],
+      'per_month': ['course_dates'],
+      'calendar': ['course_names']
+    }
+  };
+
+  applySubmissionRules() {
+    Object.keys(this.submissionRules).forEach(key => {
+      const value = this.formData[key];
+      const rules = this.submissionRules[key][value];
+
+      if (rules) {
+        rules.forEach(field => {
+          this.formData[field] = [];
+        });
+      }
+    });
+  }
+
   //SEND DATA
   sendDataBack(data) {
+    // this.applySubmissionRules();
     const url = "https://api.develop.nutheorie.be/api/applications/";
 
     const options = {
