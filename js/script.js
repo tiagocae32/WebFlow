@@ -633,6 +633,12 @@ class FormManager {
       optionElement.text = option;
       selectElement.add(optionElement);
     });
+
+    selectElement.addEventListener("change", (event) => {
+      const selectedValue = event.target.value;
+      this.setData("mijn_exam_location", selectedValue);
+      console.log(this.formData);
+    });
   }
 
   createCbrElements(elements) {
@@ -1046,9 +1052,9 @@ const steps = [
   { id: "step1", keyBack: "license_type", attribute: "data-license-type" },
   { id: "step2", keyBack: "course_type", attribute: "data-course-type" },
   { id: "step3", keyBack: "exam_type", attribute: "data-exam-type" },
-  { id: "step4Cities", keyBack: "cities" }, // step para cuando se elige ciudades en offline
-  { id: "step4Cbr", keyBack: "cbr_locations" }, // step para cuando se elige CBR en online
-  { id: "step4Mijn", keyBack: "mijn_exam_location" }, // step para cuando se elige MIJN
+  { id: "step4Cities", keyBack: "cities" },
+  { id: "step4Cbr", keyBack: "cbr_locations" },
+  { id: "step4Mijn", keyBack: "mijn_exam_location" },
   {
     id: "step5",
     keyBack: "course_category",
@@ -1059,27 +1065,27 @@ const steps = [
     keyBack: "course_names",
     attribute: "data-course-name",
     keyArray: true,
-  }, // step6 genérico
-  { id: "stepMonths", keyBack: "course_names", attribute: "data-course-name" }, // step para course_category per_month
+  },
+  { id: "stepMonths", keyBack: "course_names", attribute: "data-course-name" },
   {
     id: "stepCalendar",
     keyBack: "course_dates",
     attribute: "data-course-name",
-  }, // step para course_category calendar
+  },
   {
     id: "stepOnlinePackage",
     attribute: "data-package-name",
     form: "package_name",
     keyBack: "package_name",
-  }, // paso adicional para paquetes en línea
+  },
   {
     id: "stepInputs",
     form: "allInputs",
     validations: {
       email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     },
-  }, // paso final para datos de entrada
-  { id: "overzicht", form: "Resume" }, // paso final de resumen
+  },
+  { id: "overzicht", form: "Resume" },
 ];
 
 const formManager = new FormManager(steps);
