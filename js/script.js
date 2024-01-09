@@ -670,13 +670,13 @@ class FormManager {
         const [hours, minutes] = value.split(":").map(Number);
         if (hours > 23 || minutes > 59) {
           timeError.style.display = "block";
+          this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
         } else {
           timeError.style.display = "none";
+          this.setData("mijn_exam_datetime", "");
         }
-        this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
       } else {
         timeError.style.display = "block";
-        this.setData("mijn_exam_datetime", "");
       }
       console.log(this.formData);
     });
