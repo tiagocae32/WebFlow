@@ -753,14 +753,13 @@ class FormManager {
   }
 
   createPackages(packages) {
-    console.log(packages);
     const packageListElement = document.getElementById("packageList");
     const packageItemTemplate = document.getElementById("packageItem");
 
     packages.forEach((pkg) => {
       packageItemTemplate.setAttribute("data-package-name", pkg.name);
       packageItemTemplate.addEventListener("click", () => {
-        this.formData["package_name"] = pkg.name;
+        this.setData("package_name", pkg.name);
       });
 
       let packageItem = packageItemTemplate.cloneNode(true);
