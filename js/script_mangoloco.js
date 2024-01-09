@@ -778,37 +778,44 @@ class FormManager {
   }
 
   addPackageItemElements(packageItem, pkg) {
-    // Añadir nombre del paquete
-    let packageNameElement = document.createElement("div");
-    packageNameElement.textContent = pkg.name;
-    packageNameElement.className = "text-weight-bold";
-    packageItem.appendChild(packageNameElement);
+    // Contenedor principal de la información del paquete
+    let packageInfoContainer = document.createElement("div");
+    packageInfoContainer.className = "aanmelden_package-info";
+    packageItem.appendChild(packageInfoContainer);
 
-    // Añadir precio del paquete
+    // Añadir nombre y precio del paquete
+    let packagePriceNameContainer = document.createElement("div");
+    packagePriceNameContainer.className = "margin-bottom margin-custom4";
+    packageInfoContainer.appendChild(packagePriceNameContainer);
+
+    let packagePriceContainer = document.createElement("div");
+    packagePriceContainer.className = "aanmelden_package-price";
+    packagePriceNameContainer.appendChild(packagePriceContainer);
+
+    // Precio completo
     let packagePriceElement = document.createElement("div");
-    packagePriceElement.textContent = `€${parseInt(pkg.price)}`;
+    packagePriceElement.id = "packagePrice";
     packagePriceElement.className = "heading-style-h4";
-    packageItem.appendChild(packagePriceElement);
+    packagePriceElement.textContent = `€${parseInt(pkg.price)}`;
+    packagePriceContainer.appendChild(packagePriceElement);
 
-    // Añadir precio anterior, si existe
-    if (pkg.old_price) {
-      let packageOldPriceElement = document.createElement("div");
-      packageOldPriceElement.textContent = `€${parseInt(pkg.old_price)}`;
-      packageOldPriceElement.className = "heading-style-h6 text-strikethrough";
-      packageItem.appendChild(packageOldPriceElement);
-    }
+    // Centavos del precio
+    let packagePriceSmallElement = document.createElement("div");
+    packagePriceSmallElement.id = "packagePriceSmall";
+    packagePriceSmallElement.className = "text-size-medium text-weight-bold";
+    packagePriceSmallElement.textContent = `${((pkg.price % 1) * 100).toFixed(0).padStart(2, "0")}`;
+    packagePriceContainer.appendChild(packagePriceSmallElement);
 
-    // Añadir etiqueta de descuento, si existe
-    if (pkg.discount_label) {
-      let packageDiscountLabelElement = document.createElement("div");
-      packageDiscountLabelElement.textContent = pkg.discount_label;
-      packageDiscountLabelElement.className =
-        "text-size-xtiny text-weight-bold text-style-allcaps";
-      packageItem.appendChild(packageDiscountLabelElement);
-    }
+    // Nombre del paquete
+    let packageNameElement = document.createElement("div");
+    packageNameElement.id = "packageName";
+    packageNameElement.className = "text-weight-bold";
+    packageNameElement.textContent = pkg.name;
+    packagePriceNameContainer.appendChild(packageNameElement);
 
-    // Añadir descripción del paquete
+    // Descripción del paquete
     let packageDescriptionElement = document.createElement("div");
+    packageDescriptionElement.id = "packageDescription";
     packageDescriptionElement.className = "aanmelden_package-list";
     pkg.description_items.forEach((desc) => {
       let descElement = document.createElement("div");
@@ -816,8 +823,42 @@ class FormManager {
       descElement.textContent = desc.description;
       packageDescriptionElement.appendChild(descElement);
     });
-    packageItem.appendChild(packageDescriptionElement);
+    packageInfoContainer.appendChild(packageDescriptionElement);
+
+    // Etiqueta de descuento y precio anterior
+    let packageLabelContainer = document.createElement("div");
+    packageLabelContainer.className = "aanmelden_package-label";
+    packageItem.appendChild(packageLabelContainer);
+
+    // Etiqueta de descuento
+    if (pkg.discount_label) {
+      let packageDiscountLabelElement = document.createElement("div");
+      packageDiscountLabelElement.id = "packageDiscountLabel";
+      packageDiscountLabelElement.className = "text-size-xtiny text-weight-bold";
+      packageDiscountLabelElement.textContent = pkg.discount_label;
+      packageLabelContainer.appendChild(packageDiscountLabelElement);
+    }
+
+    // Precio anterior
+    if (pkg.old_price) {
+      let packageOldPriceContainer = document.createElement("div");
+      packageOldPriceContainer.className = "aanmelden_package-label_price";
+      packageLabelContainer.appendChild(packageOldPriceContainer);
+
+      let packageOldPriceElement = document.createElement("div");
+      packageOldPriceElement.id = "packageOldPrice";
+      packageOldPriceElement.className = "heading-style-h6 text-weight-xbold";
+      packageOldPriceElement.textContent = `€${parseInt(pkg.old_price)}`;
+      packageOldPriceContainer.appendChild(packageOldPriceElement);
+
+      let packageOldPriceSmallElement = document.createElement("div");
+      packageOldPriceSmallElement.id = "packageOldPriceSmall";
+      packageOldPriceSmallElement.className = "text-size-tiny text-weight-bold";
+      packageOldPriceSmallElement.textContent = `${((pkg.old_price % 1) * 100).toFixed(0).padStart(2, "0")}`;
+      packageOldPriceContainer.appendChild(packageOldPriceSmallElement);
+    }
   }
+
 
   // END PACKAGES
 
