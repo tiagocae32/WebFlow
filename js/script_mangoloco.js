@@ -365,13 +365,22 @@ class FormManager {
 
   isStepInvalid() {
     const currentStep = this.steps[this.currentStepIndex];
-    const keyBack = currentStep.keyBack;
-    const value = this.formData[keyBack];
 
-    if (Array.isArray(value)) {
-      return value.length === 0;
+    if (currentStep.keysBack) {
+      const valid = currentStep.keysBack.every(
+        (key) => this.formData[key] && this.formData[key].trim() !== ""
+      );
+      //console.log(valid);
+      return !valid;
     } else {
-      return !value;
+      const keyBack = currentStep.keyBack;
+      const value = this.formData[keyBack];
+
+      if (Array.isArray(value)) {
+        return value.length === 0;
+      } else {
+        return !value;
+      }
     }
   }
 
@@ -674,6 +683,7 @@ class FormManager {
         this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
       } else {
         timeError.style.display = "block";
+        this.setData("mijn_exam_datetime", "");
       }
       console.log(this.formData);
     });
@@ -1092,7 +1102,7 @@ const steps = [
   { id: "step3", keyBack: "exam_type", attribute: "data-exam-type" },
   { id: "step4Cities", keyBack: "cities" },
   { id: "step4Cbr", keyBack: "cbr_locations" },
-  { id: "step4Mijn", keyBack: "mijn_exam_location" },
+  { id: "step4Mijn", keysBack: ["mijn_exam_location", "mijn_exam_datetime"] },
   {
     id: "step5",
     keyBack: "course_category",
