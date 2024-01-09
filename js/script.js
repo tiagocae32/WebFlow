@@ -707,8 +707,77 @@ class FormManager {
   }
 
   createPackages(packages) {
-    console.log(packages);
+    const packageListElement = document.getElementById("packageList");
+    const packageItemTemplate = document.getElementById("packageItem");
+
+    packages.forEach((pkg) => {
+      let packageItem = packageItemTemplate.cloneNode(true);
+
+      packageItem.id = ""; // Eliminar el id para evitar duplicados
+      packageItem.className = "aanmelden_package-item";
+
+      // Establece los valores de los precios y nombres
+      this.setPriceElements(
+        packageItem,
+        "#packagePrice",
+        "#packagePriceSmall",
+        pkg.price,
+        "heading-style-h4",
+        "text-size-medium text-weight-bold"
+      );
+      this.setPriceElements(
+        packageItem,
+        "#packageOldPrice",
+        "#packageOldPriceSmall",
+        pkg.old_price,
+        "heading-style-h6 text-weight-xbold",
+        "text-size-tiny text-weight-bold"
+      );
+      packageItem.querySelector("#packageName").textContent = pkg.name;
+      packageItem.querySelector("#packageName").className = "text-weight-bold";
+
+      packageItem.querySelector("#packageDiscountLabel").textContent =
+        pkg.discount_label;
+      packageItem.querySelector("#packageDiscountLabel").className =
+        "text-size-xtiny text-weight-bold";
+
+      // Añade descripciones de elementos
+      const packageDescriptionElement = packageItem.querySelector(
+        "#packageDescription"
+      );
+      packageDescriptionElement.className = "aanmelden_package-list";
+
+      pkg.description_items.forEach((desc) => {
+        let descElement = document.createElement("div");
+        descElement.className = "text-size-tiny";
+        descElement.textContent = desc.description;
+        packageDescriptionElement.appendChild(descElement);
+      });
+
+      packageListElement.appendChild(packageItem);
+    });
   }
+
+  setPriceElements(
+    packageItem,
+    priceSelector,
+    centsSelector,
+    price,
+    priceClass,
+    centsClass
+  ) {
+    const priceElement = packageItem.querySelector(priceSelector);
+    const centsElement = packageItem.querySelector(centsSelector);
+
+    priceElement.textContent = `€${parseInt(price)}`;
+    priceElement.className = priceClass;
+
+    centsElement.textContent = `${((price % 1) * 100)
+      .toFixed(0)
+      .padStart(2, "0")}`;
+    centsElement.className = centsClass;
+  }
+
   // END PACKAGES
 
   // RESUME
