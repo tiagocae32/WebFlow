@@ -98,6 +98,7 @@
     </div>
     <div class="form-step" data-step-id="stepMonths" id="stepMonths">
       <!-- Meses para 'per_month' -->
+      <div id="stepMonthsList"></div>
     </div>
     <div class="form-step" data-step-id="stepCalendar" id="stepCalendar">
       <!-- Calendario para 'calendar' -->
@@ -119,7 +120,7 @@
       <input type="text" data-key-back="address_1" />
       <input type="text" data-key-back="address_2" />
       <input type="text" data-key-back="address_3" />
-      <input type="checkbox" id="aaaa" />
+      <input type="checkbox" id="checkbox" />
     </div>
     <div class="form-step" data-step-id="7" id="stepOnlinePackage">
       <!-- Paquete Online -->
@@ -136,15 +137,15 @@
       <div>
         <div id="zo-snel" class="overzicht_info-dates">
           <p>Zo snel mogelijk</p>
-          <p id="courseNameBinnenText"></p>
+          <div id="zo-SnelResume"></div>
         </div>
         <div id="maand" class="overzicht_info-dates">
           <p>Maand</p>
-          <p id="courseNameMaandText"></p>
+          <div id="maandResume"></div>
         </div>
         <div id="specifieke" class="overzicht_info-dates">
           <p>Specifieke datums</p>
-          <p id="courseDateText"></p>
+          <div id="specifiekeDates"></div>
         </div>
       </div>
       <div id="dataInputs">
