@@ -493,7 +493,9 @@ if (window.location.pathname === '/aanmelden') {
       try {
         const resServer = await fetch("https://api.develop.nutheorie.be/api/cities/");
         const data = await resServer.json();
-        this.citiesList = data.filter((city) => city.license_types.includes(this.formData.license_type));
+        this.citiesList = data.filter((city) =>
+          city.license_types.includes(this.formData.license_type) && city.id !== 53
+        );
         this.createOptions(this.citiesList, "step4", true);
       } catch (error) {
         console.log(error);
