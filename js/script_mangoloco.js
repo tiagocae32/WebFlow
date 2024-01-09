@@ -502,10 +502,19 @@ if (window.location.pathname === '/aanmelden') {
 
 
     generateDutchMonths() {
-      const dutchMonths = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+      const dutchMonths = [
+        "januari", "februari", "maart", "april", "mei", "juni",
+        "juli", "augustus", "september", "oktober", "november", "december"
+      ];
+
       const currentMonth = new Date().getMonth();
-      return dutchMonths.slice(currentMonth, currentMonth + 6);
+      const monthsToShow = dutchMonths.slice(currentMonth, currentMonth + 6);
+
+      return monthsToShow.map(month =>
+        month.charAt(0).toUpperCase() + month.slice(1)
+      );
     }
+
 
     handleStepMonths() {
       const months = this.generateDutchMonths();
