@@ -4,30 +4,19 @@ class FormManager {
     this.steps = steps;
     this.currentStepIndex = 0;
     this.formData = {};
-    this.nextButton = document.getElementById("btn-next");
-    this.prevButton = document.getElementById("btn-prev");
     this.citiesList = [];
-    this.LicenseTypesEnum = Object.freeze({
-      AUTO: "auto",
-      SCOOTER: "scooter",
-      MOTOR: "motor",
-    });
-
-    this.PRODUCTS_LIST = {
-      BTH: "bth", //auto
-      BTH_VE: "bth_ve", //auto
-      ATH: "ath", //motor
-      ATH_VE: "ath_ve", //motor
-      AMTH: "amth", //scooter
-      AMTH_VE: "amth_ve", //scooter
-      MIJN: "mijn",
-    };
+    this.initEnums();
+    this.initStepRules();
+    this.initElements();
     this.sideEffects = false;
     this.citiesList = [];
     this.cities = [];
     this.citiesNameSelected = [];
     this.cbr_locations = [];
+    this.stepHistory = [];
+  }
 
+  initStepRules() {
     this.sectionRules = {
       license_type: {
         auto: "step2",
@@ -81,7 +70,44 @@ class FormManager {
       },
       stepInputs: "overzicht",
     };
-    this.stepHistory = [];
+    this.submissionRules = {
+      course_type: {
+        offline: ["cbr_locations"],
+        online: ["cities"],
+      },
+      course_category: {
+        per_dates: ["course_dates"],
+        per_month: ["course_dates"],
+        calendar: ["course_names"],
+      },
+    };
+  }
+
+  initEnums() {
+    this.LicenseTypesEnum = Object.freeze({
+      AUTO: "auto",
+      SCOOTER: "scooter",
+      MOTOR: "motor",
+    });
+
+    this.PRODUCTS_LIST = {
+      BTH: "bth", //auto
+      BTH_VE: "bth_ve", //auto
+      ATH: "ath", //motor
+      ATH_VE: "ath_ve", //motor
+      AMTH: "amth", //scooter
+      AMTH_VE: "amth_ve", //scooter
+      MIJN: "mijn",
+    };
+  }
+
+  initElements() {
+    this.nextButton = document.getElementById("btn-next");
+    this.prevButton = document.getElementById("btn-prev");
+    this.nextButton.addEventListener("click", () => this.nextStep());
+    this.prevButton.addEventListener("click", () => this.prevStep());
+    document.addEventListener("click", (event) => this.handleFormClick(event));
+    document.addEventListener("input", (event) => this.handleFormInput(event));
   }
 
   //INITIALIZE
@@ -89,10 +115,6 @@ class FormManager {
     this.updateStepIndexText();
     this.setInitialLicenseTypeFromURL();
     this.setInitialCourseTypeFromURL();
-    this.nextButton.addEventListener("click", () => this.nextStep());
-    this.prevButton.addEventListener("click", () => this.prevStep());
-    document.addEventListener("click", (event) => this.handleFormClick(event));
-    document.addEventListener("input", (event) => this.handleFormInput(event));
     this.stepHistory.push(this.steps[this.currentStepIndex].id);
     this.showFormForStep(this.currentStepIndex);
   }
@@ -395,17 +417,21 @@ class FormManager {
   }
 
   handleSideEffects(form) {
-    if (this.getCurrentStepId() === "step4Cities") {
-      this.getCities(form);
-      this.sideEffects = true;
-      return;
+    const currentStepId = this.getCurrentStepId();
+
+    switch (currentStepId) {
+      case "step4Cities":
+        this.getCities(form);
+        this.sideEffects = true;
+        break;
+      case "step4Cbr":
+        this.getCbrLocations();
+        this.sideEffects = true;
+        break;
+      default:
+        this.sideEffects = false;
+        break;
     }
-    if (this.getCurrentStepId() === "step4Cbr") {
-      this.getCbrLocations();
-      this.sideEffects = true;
-      return;
-    }
-    this.sideEffects = false;
   }
   //END
 
@@ -776,25 +802,13 @@ class FormManager {
   }
   //END RESUME
 
-  submissionRules = {
-    'course_type': {
-      'offline': ['cbr_locations'],
-      'online': ['cities']
-    },
-    'course_category': {
-      'per_dates': ['course_dates'],
-      'per_month': ['course_dates'],
-      'calendar': ['course_names']
-    }
-  };
-
   applySubmissionRules() {
-    Object.keys(this.submissionRules).forEach(key => {
+    Object.keys(this.submissionRules).forEach((key) => {
       const value = this.formData[key];
       const rules = this.submissionRules[key][value];
 
       if (rules) {
-        rules.forEach(field => {
+        rules.forEach((field) => {
           this.formData[field] = [];
         });
       }
@@ -803,7 +817,6 @@ class FormManager {
 
   //SEND DATA
   sendDataBack(data) {
-    // this.applySubmissionRules();
     const url = "https://api.develop.nutheorie.be/api/applications/";
 
     const options = {
