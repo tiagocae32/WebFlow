@@ -150,11 +150,13 @@ class FormManager {
     const nextStepIndex = this.steps.findIndex(
       (step) => step.id === nextStepId
     );
+
     if (nextStepIndex !== -1) {
       this.currentStepIndex = nextStepIndex;
       this.stepHistory.push(nextStepId);
       this.showFormForStep(this.currentStepIndex);
     }
+
     this.updateStepIndexText();
   }
 
@@ -352,14 +354,14 @@ class FormManager {
   }
 
   updateStepIndexText() {
-    const stepIndexTextElement = document.getElementById("stepIndexText");
-    if (stepIndexTextElement) {
-      let currentStepNumber = this.stepHistory.length;
-      if (this.stepHistory.length === 0) {
-        currentStepNumber = 1;
-      }
-      const totalSteps = this.calculateTotalSteps();
+    const currentStepNumber = this.stepHistory.includes("overzicht")
+      ? this.stepHistory.length - 1
+      : this.stepHistory.length || 1;
 
+    const totalSteps = this.calculateTotalSteps();
+    const stepIndexTextElement = document.getElementById("stepIndexText");
+
+    if (stepIndexTextElement) {
       stepIndexTextElement.textContent = `${currentStepNumber} van ${totalSteps}`;
     }
   }
@@ -848,6 +850,7 @@ const steps = [
     keyBack: "course_dates",
     attribute: "data-course-name",
   }, // step para course_category calendar
+  { id: "stepOnlinePackage", form: "package_name", keyBack: "package_name" }, // paso adicional para paquetes en línea
   {
     id: "stepInputs",
     form: "allInputs",
@@ -855,7 +858,6 @@ const steps = [
       email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     },
   }, // paso final para datos de entrada
-  { id: "stepOnlinePackage", form: "package_name", keyBack: "package_name" }, // paso adicional para paquetes en línea
   { id: "overzicht", form: "Resume" }, // paso final de resumen
 ];
 
