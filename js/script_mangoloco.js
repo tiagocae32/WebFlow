@@ -677,6 +677,48 @@ class FormManager {
   // END LOCATIONS
 
   // PACKAGES
+
+  getLastDayOfMonth() {
+    const now = new Date();
+    const lastDayOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0
+    ).getDate();
+    const dutchMonths = [
+      "januari",
+      "februari",
+      "maart",
+      "april",
+      "mei",
+      "juni",
+      "juli",
+      "augustus",
+      "september",
+      "oktober",
+      "november",
+      "december",
+    ];
+    const currentMonthInDutch = dutchMonths[now.getMonth()];
+
+    return `${lastDayOfMonth} ${currentMonthInDutch}`;
+  }
+
+  processDescriptionItems(descriptionItems) {
+    return descriptionItems.map((item) => {
+      if (typeof item.description === "string") {
+        return {
+          ...item,
+          description: item.description.replace(
+            "{{ getLastDayOfMonth }}",
+            this.getLastDayOfMonth()
+          ),
+        };
+      }
+      return item;
+    });
+  }
+
   async getPackages() {
     const url =
       "https://api.develop.nutheorie.be/api/applications/online_plans/";
@@ -694,7 +736,7 @@ class FormManager {
         .map(
           ({ name, description_items, price, old_price, discount_label }) => ({
             name,
-            description_items,
+            description_items: this.processDescriptionItems(description_items),
             price,
             old_price,
             discount_label,
@@ -707,16 +749,16 @@ class FormManager {
   }
 
   createPackages(packages) {
+    console.log(packages);
     const packageListElement = document.getElementById("packageList");
     const packageItemTemplate = document.getElementById("packageItem");
 
     packages.forEach((pkg) => {
       let packageItem = packageItemTemplate.cloneNode(true);
 
-      packageItem.id = ""; // Eliminar el id para evitar duplicados
+      packageItem.id = "";
       packageItem.className = "aanmelden_package-item";
 
-      // Establece los valores de los precios y nombres
       this.setPriceElements(
         packageItem,
         "#packagePrice",
@@ -741,7 +783,6 @@ class FormManager {
       packageItem.querySelector("#packageDiscountLabel").className =
         "text-size-xtiny text-weight-bold";
 
-      // Añade descripciones de elementos
       const packageDescriptionElement = packageItem.querySelector(
         "#packageDescription"
       );
