@@ -428,6 +428,9 @@ class FormManager {
         this.getCbrLocations();
         this.sideEffects = true;
         break;
+      case "stepOnlinePackage":
+        this.getPackages();
+        this.sideEffects = true;
       default:
         this.sideEffects = false;
         break;
@@ -672,6 +675,41 @@ class FormManager {
   }
 
   // END LOCATIONS
+
+  // PACKAGES
+  async getPackages() {
+    const url =
+      "https://api.develop.nutheorie.be/api/applications/online_plans/";
+
+    try {
+      const resServer = await fetch(url);
+      const data = await resServer.json();
+
+      this.allAvailablePlans = data
+        .filter(
+          (item) =>
+            item.type === "PUBLIC" &&
+            item.license_type === this.formData.license_type
+        )
+        .map(
+          ({ name, description_items, price, old_price, discount_label }) => ({
+            name,
+            description_items,
+            price,
+            old_price,
+            discount_label,
+          })
+        );
+      this.createPackages(this.allAvailablePlans);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  createPackages(packages) {
+    console.log(packages);
+  }
+  // END PACKAGES
 
   // RESUME
   completeResume() {
