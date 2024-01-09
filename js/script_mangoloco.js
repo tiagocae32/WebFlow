@@ -323,8 +323,6 @@ class FormManager {
     if (!this.isLastStep() && !this.noSideEffects) {
       this.updateNextButtonState();
     }
-
-    console.log(this.formData);
   }
 
   handleFormInput(event) {
@@ -401,8 +399,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-        ? 6
-        : 8;
+      ? 6
+      : 8;
   }
 
   isMijnReservation() {
@@ -458,8 +456,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-      (this.currentStepIndex / this.calculateTotalSteps()) *
-      (100 - basePercentage)
+        (this.currentStepIndex / this.calculateTotalSteps()) *
+          (100 - basePercentage)
     );
   }
 
@@ -803,7 +801,9 @@ class FormManager {
     let packagePriceSmallElement = document.createElement("div");
     packagePriceSmallElement.id = "packagePriceSmall";
     packagePriceSmallElement.className = "text-size-medium text-weight-bold";
-    packagePriceSmallElement.textContent = `${((pkg.price % 1) * 100).toFixed(0).padStart(2, "0")}`;
+    packagePriceSmallElement.textContent = `${((pkg.price % 1) * 100)
+      .toFixed(0)
+      .padStart(2, "0")}`;
     packagePriceContainer.appendChild(packagePriceSmallElement);
 
     // Nombre del paquete
@@ -834,7 +834,8 @@ class FormManager {
     if (pkg.discount_label) {
       let packageDiscountLabelElement = document.createElement("div");
       packageDiscountLabelElement.id = "packageDiscountLabel";
-      packageDiscountLabelElement.className = "text-size-xtiny text-weight-bold";
+      packageDiscountLabelElement.className =
+        "text-size-xtiny text-weight-bold";
       packageDiscountLabelElement.textContent = pkg.discount_label;
       packageLabelContainer.appendChild(packageDiscountLabelElement);
     }
@@ -854,11 +855,12 @@ class FormManager {
       let packageOldPriceSmallElement = document.createElement("div");
       packageOldPriceSmallElement.id = "packageOldPriceSmall";
       packageOldPriceSmallElement.className = "text-size-tiny text-weight-bold";
-      packageOldPriceSmallElement.textContent = `${((pkg.old_price % 1) * 100).toFixed(0).padStart(2, "0")}`;
+      packageOldPriceSmallElement.textContent = `${((pkg.old_price % 1) * 100)
+        .toFixed(0)
+        .padStart(2, "0")}`;
       packageOldPriceContainer.appendChild(packageOldPriceSmallElement);
     }
   }
-
 
   // END PACKAGES
 
