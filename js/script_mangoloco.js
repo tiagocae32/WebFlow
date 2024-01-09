@@ -401,8 +401,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -458,8 +458,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-        (this.currentStepIndex / this.calculateTotalSteps()) *
-          (100 - basePercentage)
+      (this.currentStepIndex / this.calculateTotalSteps()) *
+      (100 - basePercentage)
     );
   }
 
@@ -756,6 +756,8 @@ class FormManager {
     const packageListElement = document.getElementById("packageList");
     const packageItemTemplate = document.getElementById("packageItem");
 
+    this.cleanInterface(packageListElement);
+
     packages.forEach((pkg) => {
       packageItemTemplate.setAttribute("data-package-name", pkg.name);
       packageItemTemplate.addEventListener("click", () => {
@@ -853,7 +855,7 @@ class FormManager {
   completeCourseType(key) {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
-    
+
             Videocursus
             CBR oefenexamens
             E-book `,
