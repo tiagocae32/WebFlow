@@ -760,7 +760,7 @@ class FormManager {
     packages.forEach((pkg) => {
       packageItemTemplate.setAttribute("data-package-name", pkg.name);
       packageItemTemplate.addEventListener("click", () => {
-        console.log("holaaaa");
+        this.formData["package_name"] = pkg.name;
       });
 
       let packageItem = packageItemTemplate.cloneNode(true);
