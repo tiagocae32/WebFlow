@@ -307,11 +307,13 @@ class FormManager {
   handleFormClick(event) {
     const clickedElement = event.target;
     const formStep = clickedElement.closest(".form-step");
+    console.log(formStep);
 
     if (formStep) {
       const { keyBack, attribute, keyArray } =
         this.steps[this.currentStepIndex];
       const value = clickedElement.getAttribute(attribute);
+      console.log(keyBack, attribute, value);
 
       if (value) {
         this.formData[keyBack] = keyArray ? [value] : value;
@@ -321,6 +323,8 @@ class FormManager {
     if (!this.isLastStep() && !this.noSideEffects) {
       this.updateNextButtonState();
     }
+
+    console.log(this.formData);
   }
 
   handleFormInput(event) {
@@ -412,7 +416,7 @@ class FormManager {
     } else {
       this.changeBtn("Volgende");
       const isInvalid = this.isStepInvalid();
-      this.isStepInvalid() ? this.disableButton() : this.enableButton();
+      isInvalid ? this.disableButton() : this.enableButton();
     }
   }
 
@@ -754,6 +758,11 @@ class FormManager {
     const packageItemTemplate = document.getElementById("packageItem");
 
     packages.forEach((pkg) => {
+      packageItemTemplate.setAttribute("data-package-name", pkg.name);
+      packageItemTemplate.addEventListener("click", () => {
+        console.log("holaaaa");
+      });
+
       let packageItem = packageItemTemplate.cloneNode(true);
 
       packageItem.id = "";
@@ -1011,7 +1020,12 @@ const steps = [
     keyBack: "course_dates",
     attribute: "data-course-name",
   }, // step para course_category calendar
-  { id: "stepOnlinePackage", form: "package_name", keyBack: "package_name" }, // paso adicional para paquetes en línea
+  {
+    id: "stepOnlinePackage",
+    attribute: "data-package-name",
+    form: "package_name",
+    keyBack: "package_name",
+  }, // paso adicional para paquetes en línea
   {
     id: "stepInputs",
     form: "allInputs",
