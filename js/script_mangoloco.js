@@ -754,77 +754,67 @@ class FormManager {
 
   createPackages(packages) {
     const packageListElement = document.getElementById("packageList");
-    const packageItemTemplate = document.getElementById("packageItem");
+
+    this.cleanInterface(packageListElement);
 
     packages.forEach((pkg) => {
-      packageItemTemplate.setAttribute("data-package-name", pkg.name);
-      packageItemTemplate.addEventListener("click", () => {
+      let packageItem = document.createElement("div");
+      packageItem.className = "aanmelden_package-item";
+      packageItem.setAttribute("data-package-name", pkg.name);
+
+      // Evento de clic para el packageItem
+      packageItem.addEventListener("click", () => {
         this.setData("package_name", pkg.name);
       });
 
-      let packageItem = packageItemTemplate.cloneNode(true);
+      // Creación y añadido de elementos internos
+      this.addPackageItemElements(packageItem, pkg);
 
-      packageItem.id = "";
-      packageItem.className = "aanmelden_package-item";
-
-      this.setPriceElements(
-        packageItem,
-        "#packagePrice",
-        "#packagePriceSmall",
-        pkg.price,
-        "heading-style-h4",
-        "text-size-medium text-weight-bold"
-      );
-      this.setPriceElements(
-        packageItem,
-        "#packageOldPrice",
-        "#packageOldPriceSmall",
-        pkg.old_price,
-        "heading-style-h6 text-weight-xbold",
-        "text-size-tiny text-weight-bold"
-      );
-      packageItem.querySelector("#packageName").textContent = pkg.name;
-      packageItem.querySelector("#packageName").className = "text-weight-bold";
-
-      packageItem.querySelector("#packageDiscountLabel").textContent =
-        pkg.discount_label;
-      packageItem.querySelector("#packageDiscountLabel").className =
-        "text-size-xtiny text-weight-bold";
-
-      const packageDescriptionElement = packageItem.querySelector(
-        "#packageDescription"
-      );
-      packageDescriptionElement.className = "aanmelden_package-list";
-
-      pkg.description_items.forEach((desc) => {
-        let descElement = document.createElement("div");
-        descElement.className = "text-size-tiny";
-        descElement.textContent = desc.description;
-        packageDescriptionElement.appendChild(descElement);
-      });
-
+      // Añadir el packageItem al DOM
       packageListElement.appendChild(packageItem);
     });
   }
 
-  setPriceElements(
-    packageItem,
-    priceSelector,
-    centsSelector,
-    price,
-    priceClass,
-    centsClass
-  ) {
-    const priceElement = packageItem.querySelector(priceSelector);
-    const centsElement = packageItem.querySelector(centsSelector);
+  addPackageItemElements(packageItem, pkg) {
+    // Añadir nombre del paquete
+    let packageNameElement = document.createElement("div");
+    packageNameElement.textContent = pkg.name;
+    packageNameElement.className = "text-weight-bold";
+    packageItem.appendChild(packageNameElement);
 
-    priceElement.textContent = `€${parseInt(price)}`;
-    priceElement.className = priceClass;
+    // Añadir precio del paquete
+    let packagePriceElement = document.createElement("div");
+    packagePriceElement.textContent = `€${parseInt(pkg.price)}`;
+    packagePriceElement.className = "heading-style-h4";
+    packageItem.appendChild(packagePriceElement);
 
-    centsElement.textContent = `${((price % 1) * 100)
-      .toFixed(0)
-      .padStart(2, "0")}`;
-    centsElement.className = centsClass;
+    // Añadir precio anterior, si existe
+    if (pkg.old_price) {
+      let packageOldPriceElement = document.createElement("div");
+      packageOldPriceElement.textContent = `€${parseInt(pkg.old_price)}`;
+      packageOldPriceElement.className = "heading-style-h6 text-strikethrough";
+      packageItem.appendChild(packageOldPriceElement);
+    }
+
+    // Añadir etiqueta de descuento, si existe
+    if (pkg.discount_label) {
+      let packageDiscountLabelElement = document.createElement("div");
+      packageDiscountLabelElement.textContent = pkg.discount_label;
+      packageDiscountLabelElement.className =
+        "text-size-xtiny text-weight-bold text-style-allcaps";
+      packageItem.appendChild(packageDiscountLabelElement);
+    }
+
+    // Añadir descripción del paquete
+    let packageDescriptionElement = document.createElement("div");
+    packageDescriptionElement.className = "aanmelden_package-list";
+    pkg.description_items.forEach((desc) => {
+      let descElement = document.createElement("div");
+      descElement.className = "text-size-tiny";
+      descElement.textContent = desc.description;
+      packageDescriptionElement.appendChild(descElement);
+    });
+    packageItem.appendChild(packageDescriptionElement);
   }
 
   // END PACKAGES
