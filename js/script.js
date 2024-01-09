@@ -756,6 +756,8 @@ class FormManager {
     const packageListElement = document.getElementById("packageList");
     const packageItemTemplate = document.getElementById("packageItem");
 
+    this.cleanInterface(packageListElement);
+
     packages.forEach((pkg) => {
       packageItemTemplate.setAttribute("data-package-name", pkg.name);
       packageItemTemplate.addEventListener("click", () => {
