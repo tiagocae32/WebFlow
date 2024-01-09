@@ -592,6 +592,7 @@ class FormManager {
 
   createCbrElements(elements) {
     const container = document.getElementById("step4check");
+    this.cleanInterface(container);
     elements.forEach((element, index) => {
       const itemContainer = document.createElement("div");
       itemContainer.className = "aanmelden_step4-list_item";
