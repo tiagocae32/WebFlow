@@ -433,6 +433,8 @@ class FormManager {
         this.sideEffects = true;
       case "step4Mijn":
         this.getCbrLocations(false);
+        this.buildInputDate();
+        this.buildInput();
       default:
         this.sideEffects = false;
         break;
@@ -637,6 +639,42 @@ class FormManager {
     selectElement.addEventListener("change", (event) => {
       const selectedValue = event.target.value;
       this.setData("mijn_exam_location", selectedValue);
+      console.log(this.formData);
+    });
+  }
+
+  buildInputDate() {
+    const dateInput = document.getElementById("dateInput");
+    const calendarContainer = document.getElementById("calendarContainer");
+
+    dateInput.addEventListener("click", function () {
+      calendarContainer.style.display = "block";
+    });
+  }
+
+  buildInput() {
+    const timeInput = document.getElementById("timeInput");
+    const timeError = document.getElementById("timeError");
+
+    timeInput.addEventListener("input", (e) => {
+      let value = e.target.value.replace(/[^0-9]/g, "");
+      if (value.length > 2) {
+        value = value.substring(0, 2) + ":" + value.substring(2, 4);
+      }
+      e.target.value = value;
+
+      // Validar rango de tiempo
+      if (value.length === 5) {
+        const [hours, minutes] = value.split(":").map(Number);
+        if (hours > 23 || minutes > 59) {
+          timeError.style.display = "block";
+        } else {
+          timeError.style.display = "none";
+        }
+        this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
+      } else {
+        timeError.style.display = "block";
+      }
       console.log(this.formData);
     });
   }

@@ -82,6 +82,21 @@
       <h2>Mijn</h2>
       <select id="selectCbrs"></select>
 
+      <input
+        type="text"
+        id="dateInput"
+        placeholder="Selecteer een datum"
+        readonly
+      />
+      <div id="calendarContainer" style="display: none">
+        <!-- Tu calendario y otros elementos aquí -->
+      </div>
+
+      <input type="text" id="timeInput" placeholder="hh:mm" />
+      <div id="timeError" style="display: none; color: red">
+        Dit veld is verplicht
+      </div>
+
       <!--
 
         "mijn_exam_location": "Amsterdam (Naritaweg 150)",
