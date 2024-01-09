@@ -702,18 +702,12 @@ class FormManager {
   }
   completeCourseNames() {
     const category = this.formData["course_category"];
+    const elementId =
+      category === "per_dates" ? "zo-snelResume" : "maandResume";
+    const targetElement = document.getElementById(elementId);
 
-    if (category === "per_dates") {
-      const courseNamesElement = document.getElementById("zo-snelResume");
-      if (courseNamesElement) {
-        courseNamesElement.textContent =
-          this.formData["course_names"].join(", ");
-      }
-    } else if (category === "per_month") {
-      const monthsElement = document.getElementById("maandResume");
-      if (monthsElement) {
-        monthsElement.textContent = this.formData["course_names"].join(", ");
-      }
+    if (targetElement) {
+      targetElement.textContent = this.formData["course_names"].join(", ");
     }
   }
   completeCourseDates(key) {
