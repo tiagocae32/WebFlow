@@ -367,20 +367,13 @@ class FormManager {
     const currentStep = this.steps[this.currentStepIndex];
 
     if (currentStep.keysBack) {
-      const valid = currentStep.keysBack.every(
-        (key) => this.formData[key] && this.formData[key].trim() !== ""
+      return !currentStep.keysBack.every(
+        (key) => this.formData[key]?.trim() !== ""
       );
-      //console.log(valid);
-      return !valid;
     } else {
-      const keyBack = currentStep.keyBack;
-      const value = this.formData[keyBack];
+      const value = this.formData[currentStep.keyBack];
 
-      if (Array.isArray(value)) {
-        return value.length === 0;
-      } else {
-        return !value;
-      }
+      return Array.isArray(value) ? value.length === 0 : !value;
     }
   }
 
