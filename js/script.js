@@ -1,3 +1,4 @@
+//if (window.location.pathname === '/aanmelden') {
 class FormManager {
   constructor(steps) {
     this.steps = steps;
@@ -172,7 +173,7 @@ class FormManager {
   }
 
   getCurrentStepId() {
-    //console.log(this.stepHistory[this.stepHistory.length - 1]);
+    console.log(this.stepHistory[this.stepHistory.length - 1]);
     return this.stepHistory[this.stepHistory.length - 1];
   }
 
@@ -261,6 +262,7 @@ class FormManager {
     });
   }
   showFormForStep() {
+    console.log(this.formData);
     this.hideAllForms();
 
     const currentStepId = this.getCurrentStepId();
@@ -270,6 +272,9 @@ class FormManager {
     if (form) {
       form.classList.add("active");
       this.updateNextButtonState();
+    }
+    if (currentStepId === "stepMonths") {
+      this.handleStepMonths();
     }
     this.handleSideEffects(form);
     this.updateProgressBar();
@@ -311,7 +316,6 @@ class FormManager {
 
       if (keyBack === "email") {
         if (!this.isValidEmail(inputElement.value)) {
-          console.log("fdfdfdfdf");
           this.disableButton();
           validationResult = false;
           return;
@@ -348,12 +352,11 @@ class FormManager {
   }
 
   updateStepIndexText() {
-    const stepIndexTextElement = document.getElementById('stepIndexText');
+    const stepIndexTextElement = document.getElementById("stepIndexText");
     if (stepIndexTextElement) {
       let currentStepNumber = this.stepHistory.length;
-      console.log(this.stepHistory);
       if (this.stepHistory.length === 0) {
-        currentStepNumber = 1
+        currentStepNumber = 1;
       }
       const totalSteps = this.calculateTotalSteps();
 
@@ -362,22 +365,16 @@ class FormManager {
   }
 
   calculateTotalSteps() {
-    let totalSteps = 8;
-
-    const examType = this.formData["exam_type"];
     const courseType = this.formData["course_type"];
+    const isMijnReservation = this.isMijnReservation();
 
-    if (courseType === "offline" && this.isMijnReservation()) {
-      totalSteps = 5;
-    }
-    else if (courseType === "online" && this.isMijnReservation()) {
-      totalSteps = 6;
-    }
-    else if (courseType === "offline" && !this.isMijnReservation()) {
-      totalSteps = 7;
-    }
-
-    return totalSteps;
+    return courseType === "offline"
+      ? isMijnReservation
+        ? 5
+        : 7
+      : isMijnReservation
+      ? 6
+      : 8;
   }
 
   isMijnReservation() {
@@ -417,20 +414,17 @@ class FormManager {
 
   setData(key, value) {
     this.formData[key] = value;
-    console.log(this.formData);
   }
   //END
 
   // PROGRESS BAR
-  getTotalSteps() {
-    return this.formData.course_type === "offline" ? 7 : 8;
-  }
 
   calculateProgressPercentage() {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-      (this.currentStepIndex / this.getTotalSteps()) * (100 - basePercentage)
+        (this.currentStepIndex / this.calculateTotalSteps()) *
+          (100 - basePercentage)
     );
   }
 
@@ -495,50 +489,92 @@ class FormManager {
         "https://api.develop.nutheorie.be/api/cities/"
       );
       const data = await resServer.json();
-      this.citiesList = data.filter((city) =>
-        city.license_types.includes(this.formData.license_type)
+      this.citiesList = data.filter(
+        (city) =>
+          city.license_types.includes(this.formData.license_type) &&
+          city.id !== 53
       );
-      this.createCities(this.citiesList);
+      this.createOptions(this.citiesList, "step4", true);
     } catch (error) {
       console.log(error);
     }
   }
 
-  createCities(cities) {
-    const newContainer = document.getElementById("step4");
+  generateDutchMonths() {
+    const dutchMonths = [
+      "januari",
+      "februari",
+      "maart",
+      "april",
+      "mei",
+      "juni",
+      "juli",
+      "augustus",
+      "september",
+      "oktober",
+      "november",
+      "december",
+    ];
+
+    const currentMonth = new Date().getMonth();
+    const monthsToShow = dutchMonths.slice(currentMonth, currentMonth + 6);
+
+    return monthsToShow.map(
+      (month) => month.charAt(0).toUpperCase() + month.slice(1)
+    );
+  }
+
+  handleStepMonths() {
+    const months = this.generateDutchMonths();
+    this.createOptions(months, "stepMonthsList", false);
+  }
+
+  createOptions(options, containerId, isCity = true) {
+    const newContainer = document.getElementById(containerId);
     this.cleanInterface(newContainer);
-    cities.forEach((city) => {
+    options.forEach((option) => {
       const divElement = document.createElement("div");
       divElement.className = "aanmelden_step4-checkbox-item";
       divElement.addEventListener("click", () => {
-        this.toggleCitySelection(city, divElement);
+        this.toggleOptionSelection(option, divElement, isCity);
         this.updateNextButtonState();
       });
 
       const paragraph = document.createElement("p");
       paragraph.className = "text-weight-bold";
-      paragraph.textContent = city.name;
+      paragraph.textContent = isCity ? option.name : option;
 
       divElement.appendChild(paragraph);
       newContainer.appendChild(divElement);
     });
   }
-  toggleCitySelection(city, divElement) {
-    const cityId = city.id;
-    const index = this.cities.indexOf(cityId);
+  toggleOptionSelection(option, divElement, isCity) {
+    const key = isCity ? "cities" : "course_names";
+    const value = isCity ? option.id : option;
 
-    if (index === -1) {
-      this.cities.push(cityId);
-      this.citiesNameSelected.push(city.name);
-      divElement.classList.add("active");
-    } else {
-      this.cities.splice(index, 1);
-      this.citiesNameSelected.splice(index, 1);
-      divElement.classList.remove("active");
+    if (!Array.isArray(this.formData[key])) {
+      this.formData[key] = [];
     }
 
-    this.setData("cities", this.cities);
+    if (!this.formData[key].includes(value)) {
+      this.formData[key].push(value);
+      if (isCity) {
+        this.citiesNameSelected.push(option.name);
+      }
+      divElement.classList.add("active");
+    } else {
+      const index = this.formData[key].indexOf(value);
+      this.formData[key].splice(index, 1);
+      if (isCity) {
+        const cityNameIndex = this.citiesNameSelected.indexOf(option.name);
+        if (cityNameIndex !== -1) {
+          this.citiesNameSelected.splice(cityNameIndex, 1);
+        }
+      }
+      divElement.classList.remove("active");
+    }
   }
+
   // END CITIES
 
   // CBR LOCATIONS
@@ -617,6 +653,7 @@ class FormManager {
     this.completeCourseCategory("course_category");
     this.completeCourseDates("course_dates");
     this.completeDataInputs();
+    this.completeCourseNames();
   }
   completeLicenseType(key) {
     const licenseTypeTextMap = {
@@ -631,10 +668,10 @@ class FormManager {
   completeCourseType(key) {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
-
-      Videocursus
-      CBR oefenexamens
-      E-book `,
+  
+          Videocursus
+          CBR oefenexamens
+          E-book `,
       offline: "Dagcursus met aansluitend het examen: 99,-",
     };
     document.getElementById("courseTypeText").textContent =
@@ -665,6 +702,16 @@ class FormManager {
       .getElementById(courseCategoryTypeTextMap[this.formData[key]])
       .classList.add("active");
   }
+  completeCourseNames() {
+    const category = this.formData["course_category"];
+    const elementId =
+      category === "per_dates" ? "zo-snelResume" : "maandResume";
+    const targetElement = document.getElementById(elementId);
+
+    if (targetElement) {
+      targetElement.textContent = this.formData["course_names"].join(", ");
+    }
+  }
   completeCourseDates(key) {
     const container = document.getElementById("specifiekeDates");
     container.innerHTML = "";
@@ -684,25 +731,28 @@ class FormManager {
       "Dec",
     ];
 
-    this.formData[key].forEach((courseDate) => {
-      const date = new Date(courseDate);
+    if (Array.isArray(this.formData[key]) && this.formData[key].length > 0) {
+      this.formData[key].forEach((courseDate) => {
+        const date = new Date(courseDate);
 
-      const dayElement = document.createElement("div");
-      dayElement.id = "daySelected";
-      dayElement.textContent = date.getDate();
+        const dayElement = document.createElement("div");
+        dayElement.id = "daySelected";
+        dayElement.textContent = date.getDate();
 
-      const monthElement = document.createElement("div");
-      monthElement.id = "monthSelected";
-      monthElement.textContent = monthNames[date.getMonth()];
+        const monthElement = document.createElement("div");
+        monthElement.id = "monthSelected";
+        monthElement.textContent = monthNames[date.getMonth()];
 
-      const dateElement = document.createElement("div");
-      dateElement.classList.add("overzicht_info-date");
-      dateElement.appendChild(dayElement);
-      dateElement.appendChild(monthElement);
+        const dateElement = document.createElement("div");
+        dateElement.classList.add("overzicht_info-date");
+        dateElement.appendChild(dayElement);
+        dateElement.appendChild(monthElement);
 
-      container.appendChild(dateElement);
-    });
+        container.appendChild(dateElement);
+      });
+    }
   }
+
   completeDataInputs() {
     const dataMapping = {
       firstNameText: "first_name",
@@ -784,3 +834,4 @@ const steps = [
 
 const formManager = new FormManager(steps);
 formManager.initialize();
+//}
