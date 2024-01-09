@@ -271,6 +271,9 @@ if (window.location.pathname === '/aanmelden') {
         form.classList.add("active");
         this.updateNextButtonState();
       }
+      if (currentStepId === 'stepMonths') {
+        this.handleStepMonths();
+      }
       this.handleSideEffects(form);
       this.updateProgressBar();
     }
@@ -488,54 +491,64 @@ if (window.location.pathname === '/aanmelden') {
     // CITIES
     async getCities() {
       try {
-        const resServer = await fetch(
-          "https://api.develop.nutheorie.be/api/cities/"
-        );
+        const resServer = await fetch("https://api.develop.nutheorie.be/api/cities/");
         const data = await resServer.json();
-        this.citiesList = data.filter((city) =>
-          city.license_types.includes(this.formData.license_type)
-        );
-        this.createCities(this.citiesList);
+        this.citiesList = data.filter((city) => city.license_types.includes(this.formData.license_type));
+        this.createOptions(this.citiesList, "step4", true);
       } catch (error) {
         console.log(error);
       }
     }
 
-    createCities(cities) {
-      const newContainer = document.getElementById("step4");
+
+    generateDutchMonths() {
+      const dutchMonths = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+      const currentMonth = new Date().getMonth();
+      return dutchMonths.slice(currentMonth, currentMonth + 6);
+    }
+
+    handleStepMonths() {
+      const months = this.generateDutchMonths();
+      this.createOptions(months, "stepMonthsList", false);
+    }
+
+    createOptions(options, containerId, isCity = true) {
+      const newContainer = document.getElementById(containerId);
       this.cleanInterface(newContainer);
-      cities.forEach((city) => {
+      options.forEach((option) => {
         const divElement = document.createElement("div");
         divElement.className = "aanmelden_step4-checkbox-item";
         divElement.addEventListener("click", () => {
-          this.toggleCitySelection(city, divElement);
+          this.toggleOptionSelection(option, divElement, isCity);
           this.updateNextButtonState();
         });
 
         const paragraph = document.createElement("p");
         paragraph.className = "text-weight-bold";
-        paragraph.textContent = city.name;
+        paragraph.textContent = isCity ? option.name : option;
 
         divElement.appendChild(paragraph);
         newContainer.appendChild(divElement);
       });
     }
-    toggleCitySelection(city, divElement) {
-      const cityId = city.id;
-      const index = this.cities.indexOf(cityId);
+    toggleOptionSelection(option, divElement, isCity) {
+      const key = isCity ? "cities" : "course_names";
+      const value = isCity ? option.id : option;
 
-      if (index === -1) {
-        this.cities.push(cityId);
-        this.citiesNameSelected.push(city.name);
-        divElement.classList.add("active");
-      } else {
-        this.cities.splice(index, 1);
-        this.citiesNameSelected.splice(index, 1);
-        divElement.classList.remove("active");
+      if (!Array.isArray(this.formData[key])) {
+        this.formData[key] = [];
       }
 
-      this.setData("cities", this.cities);
+      if (!this.formData[key].includes(value)) {
+        this.formData[key].push(value);
+        divElement.classList.add("active");
+      } else {
+        const index = this.formData[key].indexOf(value);
+        this.formData[key].splice(index, 1);
+        divElement.classList.remove("active");
+      }
     }
+
     // END CITIES
 
     // CBR LOCATIONS
@@ -612,7 +625,7 @@ if (window.location.pathname === '/aanmelden') {
       this.completeTypeExam("exam_type");
       this.completeCities();
       this.completeCourseCategory("course_category");
-      this.completeCourseDates("course_dates");
+      // this.completeCourseDates("course_dates");
       this.completeDataInputs();
     }
     completeLicenseType(key) {
@@ -662,7 +675,7 @@ if (window.location.pathname === '/aanmelden') {
         .getElementById(courseCategoryTypeTextMap[this.formData[key]])
         .classList.add("active");
     }
-    completeCourseDates(key) {
+    /* completeCourseDates(key) {
       const container = document.getElementById("specifiekeDates");
       container.innerHTML = "";
 
@@ -699,7 +712,7 @@ if (window.location.pathname === '/aanmelden') {
 
         container.appendChild(dateElement);
       });
-    }
+    } */
     completeDataInputs() {
       const dataMapping = {
         firstNameText: "first_name",
