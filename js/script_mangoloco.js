@@ -9,7 +9,6 @@ class FormManager {
     this.initStepRules();
     this.initElements();
     this.sideEffects = false;
-    this.citiesList = [];
     this.cities = [];
     this.citiesNameSelected = [];
     this.cbr_locations = [];
@@ -165,9 +164,18 @@ class FormManager {
 
   // NEXT/PREV STEP
 
+  redirectTo(url) {
+    window.location.href = url;
+  }
+
   nextStep() {
     const currentStepId = this.getCurrentStepId();
     const nextStepId = this.getNextStepId(currentStepId);
+
+    if (currentStepId === 'overzicht') {
+      this.handleFinalStep();
+      return;
+    }
 
     const nextStepIndex = this.steps.findIndex(
       (step) => step.id === nextStepId
@@ -181,6 +189,7 @@ class FormManager {
 
     this.updateStepIndexText();
   }
+
 
   prevStep() {
     if (this.stepHistory.length > 1) {
@@ -399,8 +408,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -460,8 +469,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-        (this.currentStepIndex / this.calculateTotalSteps()) *
-          (100 - basePercentage)
+      (this.currentStepIndex / this.calculateTotalSteps()) *
+      (100 - basePercentage)
     );
   }
 
@@ -814,8 +823,6 @@ class FormManager {
 
     this.cleanInterface(packageListElement);
 
-    this.cleanInterface(packageListElement);
-
     packages.forEach((pkg) => {
       let packageItem = document.createElement("div");
       packageItem.className = "aanmelden_package-item";
@@ -947,7 +954,7 @@ class FormManager {
   completeCourseType(key) {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
-    
+
                 Videocursus
                 CBR oefenexamens
                 E-book `,
@@ -1066,7 +1073,19 @@ class FormManager {
   }
 
   //SEND DATA
-  sendDataBack(data) {
+
+  async handleFinalStep() {
+    const data = this.getData();
+    const success = await this.sendDataBack(data);
+    if (success) {
+      this.redirectTo('/bestellen');
+    } else {
+      console.log("Error al enviar los datos. No se pudo completar la operación.");
+    }
+  }
+
+
+  async sendDataBack(data) {
     const url = "https://api.develop.nutheorie.be/api/applications/";
 
     const options = {
@@ -1077,14 +1096,18 @@ class FormManager {
       body: JSON.stringify(data),
     };
 
-    fetch(url, options)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Respuesta del backend:", data);
-      })
-      .catch((error) => {
-        console.error("Error al enviar datos al backend:", error);
-      });
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error('Error en la respuesta de la red');
+      }
+      const responseData = await response.json();
+      console.log("Respuesta del backend:", responseData);
+      return true;
+    } catch (error) {
+      console.error("Error al enviar datos al backend:", error);
+      return false;
+    }
   }
   // END SEND DATA
 }
