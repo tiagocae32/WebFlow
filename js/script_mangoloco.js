@@ -113,7 +113,9 @@ class FormManager {
   initialize() {
     this.updateStepIndexText();
     this.setInitialLicenseTypeFromURL();
+    this.setInitialLicenseTypeUI();
     this.setInitialCourseTypeFromURL();
+    this.setInitialCourseTypeUI();
     this.stepHistory.push(this.steps[this.currentStepIndex].id);
     this.showFormForStep(this.currentStepIndex);
   }
@@ -134,30 +136,58 @@ class FormManager {
   }
 
   //URL
-  setInitialLicenseTypeFromURL() {
+
+  getURLParameter(paramName) {
     const queryParams = new URLSearchParams(window.location.search);
-    const licenseType = queryParams.get("license_type");
+    return queryParams.get(paramName);
+  }
+
+  setInitialLicenseTypeFromURL() {
+    const licenseType = this.getURLParameter("license_type");
     if (licenseType) {
       this.formData["license_type"] = licenseType;
-      this.stepHistory.push(this.steps[0].id);
-      this.stepHistory.push(this.steps[1].id);
-      this.currentStepIndex = this.steps.findIndex(
-        (step) => step.id === this.steps[1].id
-      );
+      this.stepHistory.push(this.steps[0].id, this.steps[1].id);
+      this.currentStepIndex = 1;
+    }
+  }
+
+  setInitialLicenseTypeUI() {
+    const licenseType = this.formData["license_type"];
+    if (licenseType) {
+      const licenseTypeElements = document.querySelectorAll('[data-license-type]');
+      licenseTypeElements.forEach(element => {
+        if (element.getAttribute('data-license-type') === licenseType) {
+          element.classList.add("selected-course");
+        } else {
+          element.classList.remove("selected-course");
+        }
+      });
     }
   }
 
   setInitialCourseTypeFromURL() {
-    const queryParams = new URLSearchParams(window.location.search);
-    const courseType = queryParams.get("course_type");
+    const courseType = this.getURLParameter("course_type");
     if (courseType) {
       this.formData["course_type"] = courseType;
       if (this.formData["license_type"]) {
         this.stepHistory.push(this.steps[2].id);
-        this.currentStepIndex = this.steps.findIndex(
-          (step) => step.id === this.steps[2].id
-        );
+        this.currentStepIndex = 2;
       }
+    }
+  }
+
+  setInitialCourseTypeUI() {
+    const courseType = this.formData["course_type"];
+    if (courseType) {
+      const courseTypeElements = document.querySelectorAll('[data-course-type]');
+
+      courseTypeElements.forEach(element => {
+        if (element.getAttribute('data-course-type') === courseType) {
+          element.classList.add("selected-course");
+        } else {
+          element.classList.remove("selected-course");
+        }
+      });
     }
   }
   // END URL
