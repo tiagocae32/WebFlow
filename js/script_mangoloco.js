@@ -13,6 +13,20 @@ class FormManager {
     this.citiesNameSelected = [];
     this.cbr_locations = [];
     this.stepHistory = [];
+    this.urls = {
+      payment_link:
+        "https://api.develop.nutheorie.be/api/applications/payment_link/",
+      package_start:
+        "https://api.develop.nutheorie.be/api/applications/set_package_start/",
+      final_redirect_url: "https://develop.nutheorie.be/user-profile",
+      fail_redirect_url: "https://develop.nutheorie.be/betaling/failed",
+      cities: "https://api.develop.nutheorie.be/api/cities/",
+      cbrsLocations:
+        "https://api.develop.nutheorie.be/api/applications/exam_locations/",
+      plans: "https://api.develop.nutheorie.be/api/applications/online_plans/",
+      urlPostMultiStepForm:
+        "https://api.develop.nutheorie.be/api/applications/",
+    };
   }
 
   initStepRules() {
@@ -571,9 +585,7 @@ class FormManager {
   // CITIES
   async getCities() {
     try {
-      const resServer = await fetch(
-        "https://api.develop.nutheorie.be/api/cities/"
-      );
+      const resServer = await fetch(this.urls.cities);
       const data = await resServer.json();
       this.citiesList = data.filter(
         (city) =>
@@ -665,10 +677,8 @@ class FormManager {
 
   // CBR LOCATIONS
   async getCbrLocations(createElements = true) {
-    const url =
-      "https://api.develop.nutheorie.be/api/applications/exam_locations/";
     try {
-      const resServer = await fetch(url);
+      const resServer = await fetch(this.urls.cbrsLocations);
       const data = await resServer.json();
       if (createElements) this.createCbrElements(data);
       else this.createCbrsSelect(data);
@@ -992,8 +1002,7 @@ class FormManager {
   }
 
   async getPackages() {
-    const url =
-      "https://api.develop.nutheorie.be/api/applications/online_plans/";
+    const url = this.urls.plans;
 
     try {
       const resServer = await fetch(url);
@@ -1186,9 +1195,11 @@ class FormManager {
       per_month: "maand",
       calendar: "specifieke",
     };
-    document
-      .getElementById(courseCategoryTypeTextMap[this.formData[key]])
-      .classList.add("active");
+
+    const element = document.getElementById(
+      courseCategoryTypeTextMap[this.formData[key]]
+    );
+    if (element) element.classList.add("active");
   }
   completeCourseNames() {
     const category = this.formData["course_category"];
@@ -1279,12 +1290,66 @@ class FormManager {
     });
   }
 
+  // HELP
+  /*
+        isMjinOnline variable as follows
+        isMjinOnline = appData.course_type === 'online' && appData.is_mijn_reservation.
+        So, if isMjinOnline is equal to "true", the button text will be "Betalen", otherwise - "Aanbetaling";
+        The button click handler looks like this:
+        () {
+          if(isMijnOnlineFlow) await sendPackageStartDate();
+          sendPaymentRequest();
+        }
+      
+      */
+  //
+
   //SEND DATA
 
   async handleFinalStep() {
     this.applySubmissionRules();
     const data = this.getData();
-    const success = await this.sendDataBack(data);
+    const dataResponse = await this.sendDataBack(data);
+
+    console.log(dataResponse);
+
+    if (dataResponse) {
+      let buttonText;
+      const {
+        course_type,
+        is_mijn_reservation,
+        payment_amount,
+        custom_application_id,
+      } = dataResponse;
+      let isMijnOnline = course_type === "online" && is_mijn_reservation;
+      buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
+      const isMijnOnlineFlow = is_mijn_reservation;
+      console.log(isMijnOnlineFlow);
+
+      let link;
+      if (isMijnOnlineFlow) {
+        const url = this.urls.package_start;
+        const data = {
+          package_starting_at: new Date(),
+        };
+        const response = await this.requestLinkPayment(url, data);
+        link = response;
+      } else {
+        const url = this.urls.payment_link;
+
+        const data = {
+          method: "ideal",
+          amount: payment_amount,
+          final_redirect_url: this.urls.final_redirect_url,
+          fail_redirect_url: this.urls.fail_redirect_url,
+          custom_application_id: custom_application_id,
+        };
+        const response = await this.requestLinkPayment(url, data);
+        console.log(response);
+        link = response;
+      }
+    }
+
     /*if (success) {
         this.redirectTo("/bestellen");
       } else {
@@ -1294,8 +1359,33 @@ class FormManager {
       }*/
   }
 
+  async requestLinkPayment(url, data) {
+    try {
+      const respuesta = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!respuesta.ok) {
+        throw new Error(
+          `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
+        );
+      }
+
+      const resultado = await respuesta.json();
+      console.log("Respuesta exitosa:", resultado);
+      return resultado;
+    } catch (error) {
+      console.error("Error en la solicitud:", error.message);
+      throw error;
+    }
+  }
+
   async sendDataBack(data) {
-    const url = "https://api.develop.nutheorie.be/api/applications/";
+    const url = this.urls.urlPostMultiStepForm;
 
     const options = {
       method: "POST",
@@ -1311,8 +1401,8 @@ class FormManager {
         throw new Error("Error en la respuesta de la red");
       }
       const responseData = await response.json();
-      console.log("Respuesta del backend:", responseData);
-      return true;
+      //console.log("Respuesta del backend:", responseData);
+      return responseData;
     } catch (error) {
       console.error("Error al enviar datos al backend:", error);
       return false;
