@@ -630,22 +630,18 @@ class FormManager {
   handleTextChanceMonths() {
     const data = this.formData["course_names"];
     const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
     const isWithinFiveDays = currentDate.getDate() >= 5;
 
     let text;
 
     if (data.length === 0) {
       text = "- (selecteer data)";
+    } else if (data.length === 1) {
+      this.isActualMonth(data[0]) && isWithinFiveDays
+        ? (text = "klein-gemiggeld")
+        : (text = "gemiggeld-groot");
     } else {
-      const isCurrentMonthDisplayed =
-        data.length === 1 ? this.getMonthByIndex(currentMonth) : false;
-
-      if (isCurrentMonthDisplayed && isWithinFiveDays) {
-        text = "klein-gemiggeld";
-      } else {
-        text = "gemiggeld-groot";
-      }
+      text = "gemiggeld-groot";
     }
 
     const chanceElement = document.getElementById("chanceMonths");
@@ -658,6 +654,10 @@ class FormManager {
     const currentDate = new Date();
     const currentMonthIndex = currentDate.getMonth();
     return index === currentMonthIndex;
+  }
+
+  isActualMonth(month) {
+    return this.dutchMonths.indexOf(month) === new Date().getMonth();
   }
 
   // END MONTHS
@@ -1059,26 +1059,21 @@ class FormManager {
       packageItem.className = "aanmelden_package-item";
       packageItem.setAttribute("data-package-name", pkg.name);
 
-      // Evento de clic para el packageItem
       packageItem.addEventListener("click", () => {
         this.setData("package_name", pkg.name);
       });
 
-      // Creación y añadido de elementos internos
       this.addPackageItemElements(packageItem, pkg);
 
-      // Añadir el packageItem al DOM
       packageListElement.appendChild(packageItem);
     });
   }
 
   addPackageItemElements(packageItem, pkg) {
-    // Contenedor principal de la información del paquete
     let packageInfoContainer = document.createElement("div");
     packageInfoContainer.className = "aanmelden_package-info";
     packageItem.appendChild(packageInfoContainer);
 
-    // Añadir nombre y precio del paquete
     let packagePriceNameContainer = document.createElement("div");
     packagePriceNameContainer.className = "margin-bottom margin-custom4";
     packageInfoContainer.appendChild(packagePriceNameContainer);
@@ -1087,14 +1082,12 @@ class FormManager {
     packagePriceContainer.className = "aanmelden_package-price";
     packagePriceNameContainer.appendChild(packagePriceContainer);
 
-    // Precio completo
     let packagePriceElement = document.createElement("div");
     packagePriceElement.id = "packagePrice";
     packagePriceElement.className = "heading-style-h4";
     packagePriceElement.textContent = `€${parseInt(pkg.price)}`;
     packagePriceContainer.appendChild(packagePriceElement);
 
-    // Centavos del precio
     let packagePriceSmallElement = document.createElement("div");
     packagePriceSmallElement.id = "packagePriceSmall";
     packagePriceSmallElement.className = "text-size-medium text-weight-bold";
@@ -1103,14 +1096,12 @@ class FormManager {
       .padStart(2, "0")}`;
     packagePriceContainer.appendChild(packagePriceSmallElement);
 
-    // Nombre del paquete
     let packageNameElement = document.createElement("div");
     packageNameElement.id = "packageName";
     packageNameElement.className = "text-weight-bold";
     packageNameElement.textContent = pkg.name;
     packagePriceNameContainer.appendChild(packageNameElement);
 
-    // Descripción del paquete
     let packageDescriptionElement = document.createElement("div");
     packageDescriptionElement.id = "packageDescription";
     packageDescriptionElement.className = "aanmelden_package-list";
@@ -1122,12 +1113,10 @@ class FormManager {
     });
     packageInfoContainer.appendChild(packageDescriptionElement);
 
-    // Etiqueta de descuento y precio anterior
     let packageLabelContainer = document.createElement("div");
     packageLabelContainer.className = "aanmelden_package-label";
     packageItem.appendChild(packageLabelContainer);
 
-    // Etiqueta de descuento
     if (pkg.discount_label) {
       let packageDiscountLabelElement = document.createElement("div");
       packageDiscountLabelElement.id = "packageDiscountLabel";
@@ -1137,7 +1126,6 @@ class FormManager {
       packageLabelContainer.appendChild(packageDiscountLabelElement);
     }
 
-    // Precio anterior
     if (pkg.old_price) {
       let packageOldPriceContainer = document.createElement("div");
       packageOldPriceContainer.className = "aanmelden_package-label_price";
@@ -1353,6 +1341,11 @@ class FormManager {
 
       const link = await this.requestLinkPayment(objUrlPayload);
       console.log(link);
+
+      // Agregar la informacion al local storage
+
+      const objetoComoCadena = JSON.stringify(miObjeto);
+      localStorage.setItem("claveLocalStorage", objetoComoCadena);
 
       //this.redirectTo("/bestellen");
     }
