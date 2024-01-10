@@ -650,12 +650,6 @@ class FormManager {
     }
   }
 
-  getMonthByIndex(index) {
-    const currentDate = new Date();
-    const currentMonthIndex = currentDate.getMonth();
-    return index === currentMonthIndex;
-  }
-
   isActualMonth(month) {
     return this.dutchMonths.indexOf(month) === new Date().getMonth();
   }
