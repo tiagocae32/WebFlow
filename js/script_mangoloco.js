@@ -927,21 +927,23 @@ class FormManager {
 
   updateChanceText() {
     const count = this.selectedDates.size;
-    let text = "";
-    if (count === 0) {
-      text = "- (selecteer data)";
-    } else if (count >= 1 && count <= 4) {
-      text = "klein-gemiddeld";
-    } else if (count >= 5 && count <= 8) {
-      text = "gemiddeld";
-    } else {
-      text = "gemiddeld-groot";
-    }
+
+    const ranges = [
+      { min: 1, max: 4, text: "klein-gemiddeld" },
+      { min: 5, max: 8, text: "gemiddeld" },
+      { min: 9, max: Infinity, text: "gemiddeld-groot" },
+    ];
+
+    const selectedRange = ranges.find(
+      (range) => count >= range.min && count <= range.max
+    );
+    const text = selectedRange ? selectedRange.text : "- (selecteer data)";
+
     this.chanceElement.textContent = text;
-    this.formData["course_dates"] = Array.from(this.selectedDates).sort(
+    this.formData["course_dates"] = [...this.selectedDates].sort(
       (a, b) => new Date(a) - new Date(b)
     );
-    console.log(this.selectedDates);
+    this.formData["chance"] = text;
   }
 
   // END CALENDAR
@@ -1280,16 +1282,16 @@ class FormManager {
   //SEND DATA
 
   async handleFinalStep() {
-    // this.applySubmissionRules();
+    this.applySubmissionRules();
     const data = this.getData();
     const success = await this.sendDataBack(data);
-    if (success) {
-      this.redirectTo("/bestellen");
-    } else {
-      console.log(
-        "Error al enviar los datos. No se pudo completar la operación."
-      );
-    }
+    /*if (success) {
+        this.redirectTo("/bestellen");
+      } else {
+        console.log(
+          "Error al enviar los datos. No se pudo completar la operación."
+        );
+      }*/
   }
 
   async sendDataBack(data) {
