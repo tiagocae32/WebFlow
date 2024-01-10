@@ -1290,20 +1290,6 @@ class FormManager {
     });
   }
 
-  // HELP
-  /*
-      isMjinOnline variable as follows
-      isMjinOnline = appData.course_type === 'online' && appData.is_mijn_reservation.
-      So, if isMjinOnline is equal to "true", the button text will be "Betalen", otherwise - "Aanbetaling";
-      The button click handler looks like this:
-      () {
-        if(isMijnOnlineFlow) await sendPackageStartDate();
-        sendPaymentRequest();
-      }
-    
-    */
-  //
-
   //SEND DATA
 
   async handleFinalStep() {
@@ -1314,59 +1300,52 @@ class FormManager {
     console.log(dataResponse);
 
     if (dataResponse) {
-      let buttonText;
       const {
         course_type,
         is_mijn_reservation,
         payment_amount,
         custom_application_id,
       } = dataResponse;
-      let isMijnOnline = course_type === "online" && is_mijn_reservation;
-      buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
+
+      const isMijnOnline = course_type === "online" && is_mijn_reservation;
+      const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
+      console.log(buttonText);
       const isMijnOnlineFlow = is_mijn_reservation;
       console.log(isMijnOnlineFlow);
 
-      let link;
-      if (isMijnOnlineFlow) {
-        const url = this.urls.package_start;
-        const data = {
-          package_starting_at: new Date(),
-        };
-        const response = await this.requestLinkPayment(url, data);
-        link = response;
-      } else {
-        const url = this.urls.payment_link;
+      let objUrlPayload;
 
-        const data = {
-          method: "ideal",
-          amount: payment_amount,
-          final_redirect_url: this.urls.final_redirect_url,
-          fail_redirect_url: this.urls.fail_redirect_url,
-          custom_application_id: custom_application_id,
-        };
-        const response = await this.requestLinkPayment(url, data);
-        console.log(response);
-        link = response;
-      }
+      isMijnOnlineFlow
+        ? (objUrlPayload = {
+            url: this.urls.package_start,
+            payload: { package_starting_at: new Date() },
+          })
+        : (objUrlPayload = {
+            url: this.urls.payment_link,
+            payload: {
+              method: "ideal",
+              amount: payment_amount,
+              final_redirect_url: this.urls.final_redirect_url,
+              fail_redirect_url: this.urls.fail_redirect_url,
+              custom_application_id: custom_application_id,
+            },
+          });
+
+      const link = await this.requestLinkPayment(objUrlPayload);
+      console.log(link);
+
+      //this.redirectTo("/bestellen");
     }
-
-    /*if (success) {
-      this.redirectTo("/bestellen");
-    } else {
-      console.log(
-        "Error al enviar los datos. No se pudo completar la operación."
-      );
-    }*/
   }
 
-  async requestLinkPayment(url, data) {
+  async requestLinkPayment({ url, payload }) {
     try {
       const respuesta = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!respuesta.ok) {
