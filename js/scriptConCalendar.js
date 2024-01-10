@@ -1126,9 +1126,9 @@ class FormManager {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
 
-                      Videocursus
-                      CBR oefenexamens
-                      E-book `,
+                    Videocursus
+                    CBR oefenexamens
+                    E-book `,
       offline: "Dagcursus met aansluitend het examen: 99,-",
     };
     document.getElementById("courseTypeText").textContent =

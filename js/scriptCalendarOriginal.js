@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', function () {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
   const today = new Date();
   const calendarElement = document.getElementById('calendar');
   const prevButton = document.getElementById('prev');
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const dayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
   monthLabel.textContent = monthNames[currentMonth];
-  yearLabel.textContent = currentYear.toString();
+	yearLabel.textContent = currentYear.toString();
 
   function updateChanceText() {
     const count = selectedDates.size;
@@ -39,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function highlightCurrentMonthInDropdown() {
-    document.querySelectorAll('.month-option').forEach(function (option) {
+    document.querySelectorAll('.month-option').forEach(function(option) {
       option.classList.remove('current-month');
       if (parseInt(option.getAttribute('data-month')) === currentMonth) {
         option.classList.add('current-month');
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
   monthLabel.addEventListener('click', toggleMonthDropdown);
 
   document.querySelectorAll('.month-option').forEach(monthOption => {
-    monthOption.addEventListener('click', function () {
+    monthOption.addEventListener('click', function() {
       const selectedMonth = parseInt(this.getAttribute('data-month'), 10);
       updateCalendarForMonth(selectedMonth);
     });
@@ -66,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function addEventListenersToDays() {
     const days = calendarElement.querySelectorAll('td:not(.disabled):not(.not-current-month)');
     days.forEach(day => {
-      day.addEventListener('click', function () {
+      day.addEventListener('click', function() {
         const date = this.getAttribute('data-date');
         if (selectedDates.has(date)) {
           selectedDates.delete(date);
@@ -76,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
           this.classList.add('selected-date');
         }
         if (window.updateCourseDates) {
-          window.updateCourseDates();
+            window.updateCourseDates();
         }
         updateChanceText();
       });
@@ -117,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
       let tdClass = !isEnabled ? 'disabled' : '';
       tdClass += selectedDates.has(dateStr) ? ' selected-date' : '';
 
-      if (currentDate.setHours(0, 0, 0, 0) === today.setHours(0, 0, 0, 0)) {
+      if(currentDate.setHours(0,0,0,0) === today.setHours(0,0,0,0)) {
         tdClass += ' today';
       }
 
@@ -125,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if ((firstDayAdjusted + day) % 7 === 0 && day !== daysInMonth) {
         calendar += `</tr><tr>`;
       }
-    }
+		}
 
     let daysAdded = 1;
     while ((firstDayAdjusted + daysInMonth + daysAdded - 1) % 7 !== 0) {
@@ -140,9 +141,9 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (prevButton) {
-    prevButton.addEventListener('click', function (event) {
+    prevButton.addEventListener('click', function(event) {
       event.preventDefault();
-      if (currentMonth === 0) {
+      if(currentMonth === 0) {
         currentMonth = 11;
         currentYear--;
       } else {
@@ -153,9 +154,9 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (nextButton) {
-    nextButton.addEventListener('click', function (event) {
+    nextButton.addEventListener('click', function(event) {
       event.preventDefault();
-      if (currentMonth === 11) {
+      if(currentMonth === 11) {
         currentMonth = 0;
         currentYear++;
       } else {
@@ -169,3 +170,4 @@ document.addEventListener('DOMContentLoaded', function () {
   highlightCurrentMonthInDropdown();
   updateChanceText();
 });
+</script>
