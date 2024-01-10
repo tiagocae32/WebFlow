@@ -1333,13 +1333,17 @@ class FormManager {
             },
           });
 
-      const link = await this.requestLinkPayment(objUrlPayload);
-      console.log(link);
-
       // Agregar la informacion al local storage
 
-      const objetoComoCadena = JSON.stringify(miObjeto);
+      const objetoComoCadena = JSON.stringify({
+        ...dataResponse,
+        link: "test link",
+      });
       localStorage.setItem("claveLocalStorage", objetoComoCadena);
+      console.log(localStorage.getItem("claveLocalStorage"));
+
+      const link = await this.requestLinkPayment(objUrlPayload);
+      console.log(link);
 
       //this.redirectTo("/bestellen");
     }
