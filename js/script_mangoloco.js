@@ -27,6 +27,20 @@ class FormManager {
       urlPostMultiStepForm:
         "https://api.develop.nutheorie.be/api/applications/",
     };
+    this.dutchMonths = [
+      "Januari",
+      "Februari",
+      "Maart",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Augustus",
+      "September",
+      "Oktober",
+      "November",
+      "December",
+    ];
   }
 
   initStepRules() {
@@ -352,9 +366,6 @@ class FormManager {
       form.classList.add("active");
       this.updateNextButtonState();
     }
-    if (currentStepId === "stepMonths") {
-      this.handleStepMonths();
-    }
     this.handleSideEffects(form);
     this.updateProgressBar();
   }
@@ -498,6 +509,9 @@ class FormManager {
         this.getCbrLocations(false);
         this.buildInputDate();
         this.buildInput();
+      case "stepMonths":
+        this.handleStepMonths();
+        break;
       case "stepCalendar":
         this.initializeCalendar();
       default:
@@ -597,35 +611,56 @@ class FormManager {
       console.log(error);
     }
   }
+  // END CITIES
+
+  // MONTHS
 
   generateDutchMonths() {
-    const dutchMonths = [
-      "januari",
-      "februari",
-      "maart",
-      "april",
-      "mei",
-      "juni",
-      "juli",
-      "augustus",
-      "september",
-      "oktober",
-      "november",
-      "december",
-    ];
-
     const currentMonth = new Date().getMonth();
-    const monthsToShow = dutchMonths.slice(currentMonth, currentMonth + 6);
+    const monthsToShow = this.dutchMonths.slice(currentMonth, currentMonth + 6);
 
-    return monthsToShow.map(
-      (month) => month.charAt(0).toUpperCase() + month.slice(1)
-    );
+    return monthsToShow.map((month) => month);
   }
 
   handleStepMonths() {
     const months = this.generateDutchMonths();
     this.createOptions(months, "stepMonthsList", false);
   }
+
+  handleTextChanceMonths() {
+    const data = this.formData["course_names"];
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const isWithinFiveDays = currentDate.getDate() >= 5;
+
+    let text;
+
+    if (data.length === 0) {
+      text = "- (selecteer data)";
+    } else {
+      const isCurrentMonthDisplayed =
+        data.length === 1 ? this.getMonthByIndex(currentMonth) : false;
+
+      if (isCurrentMonthDisplayed && isWithinFiveDays) {
+        text = "klein-gemiggeld";
+      } else {
+        text = "gemiggeld-groot";
+      }
+    }
+
+    const chanceElement = document.getElementById("chanceMonths");
+    if (chanceElement) {
+      chanceElement.textContent = text;
+    }
+  }
+
+  getMonthByIndex(index) {
+    const currentDate = new Date();
+    const currentMonthIndex = currentDate.getMonth();
+    return index === currentMonthIndex;
+  }
+
+  // END MONTHS
 
   createOptions(options, containerId, isCity = true) {
     const newContainer = document.getElementById(containerId);
@@ -636,6 +671,7 @@ class FormManager {
       divElement.addEventListener("click", () => {
         this.toggleOptionSelection(option, divElement, isCity);
         this.updateNextButtonState();
+        if (!isCity) this.handleTextChanceMonths(options);
       });
 
       const paragraph = document.createElement("p");
@@ -672,8 +708,6 @@ class FormManager {
       divElement.classList.remove("active");
     }
   }
-
-  // END CITIES
 
   // CBR LOCATIONS
   async getCbrLocations(createElements = true) {
@@ -967,21 +1001,7 @@ class FormManager {
       now.getMonth() + 1,
       0
     ).getDate();
-    const dutchMonths = [
-      "januari",
-      "februari",
-      "maart",
-      "april",
-      "mei",
-      "juni",
-      "juli",
-      "augustus",
-      "september",
-      "oktober",
-      "november",
-      "december",
-    ];
-    const currentMonthInDutch = dutchMonths[now.getMonth()];
+    const currentMonthInDutch = this.dutchMonths[now.getMonth()];
 
     return `${lastDayOfMonth} ${currentMonthInDutch}`;
   }
