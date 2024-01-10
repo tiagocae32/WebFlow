@@ -1249,6 +1249,7 @@ class FormManager {
   //SEND DATA
 
   async handleFinalStep() {
+    this.applySubmissionRules();
     const data = this.getData();
     const success = await this.sendDataBack(data);
     if (success) {
