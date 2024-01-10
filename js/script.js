@@ -1339,13 +1339,14 @@ class FormManager {
         ...dataResponse,
         link: "test link",
       });
-      localStorage.setItem("claveLocalStorage", objetoComoCadena);
-      console.log(localStorage.getItem("claveLocalStorage"));
-
-      const link = await this.requestLinkPayment(objUrlPayload);
-      console.log(link);
+      localStorage.setItem("formData", objetoComoCadena);
 
       //this.redirectTo("/bestellen");
+      const orderManager = new OrderManager();
+      orderManager.initialize();
+
+      //const link = await this.requestLinkPayment(objUrlPayload);
+      //console.log(link);
     }
   }
 
@@ -1443,4 +1444,27 @@ const steps = [
 
 const formManager = new FormManager(steps);
 formManager.initialize();
+//}
+
+//if (window.location.pathname === '/bestellen') {
+class OrderManager {
+  constructor() {}
+
+  initialize() {
+    const storedData = localStorage.getItem("formData");
+    if (storedData) {
+      const formData = JSON.parse(storedData);
+      console.log(formData);
+      //this.handleStoredData(formData);
+    } else {
+      // Redirigir o manejar la falta de datos
+      //window.location.href = '/inloggen';
+    }
+  }
+
+  handleStoredData(formData) {
+    // Lógica para manejar los datos del formulario almacenados
+    // Por ejemplo, mostrar la información en la página, preparar otros elementos de la UI, etc.
+  }
+}
 //}
