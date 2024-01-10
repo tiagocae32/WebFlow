@@ -9,7 +9,6 @@ class FormManager {
     this.initStepRules();
     this.initElements();
     this.sideEffects = false;
-    this.citiesList = [];
     this.cities = [];
     this.citiesNameSelected = [];
     this.cbr_locations = [];
@@ -114,7 +113,9 @@ class FormManager {
   initialize() {
     this.updateStepIndexText();
     this.setInitialLicenseTypeFromURL();
+    this.setInitialLicenseTypeUI();
     this.setInitialCourseTypeFromURL();
+    this.setInitialCourseTypeUI();
     this.stepHistory.push(this.steps[this.currentStepIndex].id);
     this.showFormForStep(this.currentStepIndex);
   }
@@ -135,39 +136,79 @@ class FormManager {
   }
 
   //URL
-  setInitialLicenseTypeFromURL() {
+
+  getURLParameter(paramName) {
     const queryParams = new URLSearchParams(window.location.search);
-    const licenseType = queryParams.get("license_type");
+    return queryParams.get(paramName);
+  }
+
+  setInitialLicenseTypeFromURL() {
+    const licenseType = this.getURLParameter("license_type");
     if (licenseType) {
       this.formData["license_type"] = licenseType;
-      this.stepHistory.push(this.steps[0].id);
-      this.stepHistory.push(this.steps[1].id);
-      this.currentStepIndex = this.steps.findIndex(
-        (step) => step.id === this.steps[1].id
+      this.stepHistory.push(this.steps[0].id, this.steps[1].id);
+      this.currentStepIndex = 1;
+    }
+  }
+
+  setInitialLicenseTypeUI() {
+    const licenseType = this.formData["license_type"];
+    if (licenseType) {
+      const licenseTypeElements = document.querySelectorAll(
+        "[data-license-type]"
       );
+      licenseTypeElements.forEach((element) => {
+        if (element.getAttribute("data-license-type") === licenseType) {
+          element.classList.add("selected-course");
+        } else {
+          element.classList.remove("selected-course");
+        }
+      });
     }
   }
 
   setInitialCourseTypeFromURL() {
-    const queryParams = new URLSearchParams(window.location.search);
-    const courseType = queryParams.get("course_type");
+    const courseType = this.getURLParameter("course_type");
     if (courseType) {
       this.formData["course_type"] = courseType;
       if (this.formData["license_type"]) {
         this.stepHistory.push(this.steps[2].id);
-        this.currentStepIndex = this.steps.findIndex(
-          (step) => step.id === this.steps[2].id
-        );
+        this.currentStepIndex = 2;
       }
+    }
+  }
+
+  setInitialCourseTypeUI() {
+    const courseType = this.formData["course_type"];
+    if (courseType) {
+      const courseTypeElements =
+        document.querySelectorAll("[data-course-type]");
+
+      courseTypeElements.forEach((element) => {
+        if (element.getAttribute("data-course-type") === courseType) {
+          element.classList.add("selected-course");
+        } else {
+          element.classList.remove("selected-course");
+        }
+      });
     }
   }
   // END URL
 
   // NEXT/PREV STEP
 
+  redirectTo(url) {
+    window.location.href = url;
+  }
+
   nextStep() {
     const currentStepId = this.getCurrentStepId();
     const nextStepId = this.getNextStepId(currentStepId);
+
+    if (currentStepId === "overzicht") {
+      this.handleFinalStep();
+      return;
+    }
 
     const nextStepIndex = this.steps.findIndex(
       (step) => step.id === nextStepId
@@ -366,13 +407,19 @@ class FormManager {
   isStepInvalid() {
     const currentStep = this.steps[this.currentStepIndex];
 
+    if (currentStep.id === "stepCalendar") {
+      return (
+        !Array.isArray(this.formData["course_dates"]) ||
+        this.formData["course_dates"].length === 0
+      );
+    }
+
     if (currentStep.keysBack) {
       return !currentStep.keysBack.every(
         (key) => this.formData[key]?.trim() !== ""
       );
     } else {
       const value = this.formData[currentStep.keyBack];
-
       return Array.isArray(value) ? value.length === 0 : !value;
     }
   }
@@ -437,6 +484,8 @@ class FormManager {
         this.getCbrLocations(false);
         this.buildInputDate();
         this.buildInput();
+      case "stepCalendar":
+        this.initializeCalendar();
       default:
         this.sideEffects = false;
         break;
@@ -737,6 +786,166 @@ class FormManager {
 
   // END LOCATIONS
 
+  // CALENDAR
+
+  initializeCalendar() {
+    this.todayCalendar = new Date();
+    this.currentMonthCalendar = this.todayCalendar.getMonth();
+    this.currentYearCalendar = this.todayCalendar.getFullYear();
+    this.selectedDates = new Set();
+    this.calendarElement = document.getElementById("calendar");
+    this.monthLabel = document.getElementById("monthLabel");
+    this.yearLabel = document.getElementById("yearLabel");
+    this.chanceElement = document.getElementById("chance");
+
+    this.initializeCalendarButtons();
+    this.renderCalendarForMonthYear(
+      this.currentMonthCalendar,
+      this.currentYearCalendar
+    );
+  }
+
+  initializeCalendarButtons() {
+    const prevMonthButton = document.getElementById("prev");
+    const nextMonthButton = document.getElementById("next");
+
+    if (prevMonthButton) {
+      prevMonthButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (this.currentMonthCalendar === 0) {
+          this.currentMonthCalendar = 11;
+          this.currentYearCalendar--;
+        } else {
+          this.currentMonthCalendar--;
+        }
+        this.renderCalendarForMonthYear(
+          this.currentMonthCalendar,
+          this.currentYearCalendar
+        );
+      });
+    }
+
+    if (nextMonthButton) {
+      nextMonthButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (this.currentMonthCalendar === 11) {
+          this.currentMonthCalendar = 0;
+          this.currentYearCalendar++;
+        } else {
+          this.currentMonthCalendar++;
+        }
+        this.renderCalendarForMonthYear(
+          this.currentMonthCalendar,
+          this.currentYearCalendar
+        );
+      });
+    }
+  }
+
+  renderCalendarForMonthYear(month, year) {
+    this.monthLabel.textContent = this.generateDutchMonths()[month];
+    this.yearLabel.textContent = year.toString();
+
+    const dayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = 32 - new Date(year, month, 32).getDate();
+    let calendar = `<table class="calendar-table"><thead><tr>`;
+
+    dayNames.forEach((day) => {
+      calendar += `<th>${day}</th>`;
+    });
+    calendar += `</tr></thead><tbody><tr>`;
+
+    const firstDayAdjusted = firstDay === 0 ? 6 : firstDay - 1;
+    const previousMonth = new Date(year, month, 0);
+    const previousMonthDays = previousMonth.getDate();
+
+    for (let i = 0; i < firstDayAdjusted; i++) {
+      calendar += `<td class="not-current-month disabled">${
+        previousMonthDays - firstDayAdjusted + i + 1
+      }</td>`;
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      let currentDate = new Date(year, month, day);
+      let dateStr = currentDate.toISOString().split("T")[0];
+      let isEnabled = this.isDateEnabled(currentDate);
+      let tdClass = !isEnabled ? "disabled" : "";
+      tdClass += this.selectedDates.has(dateStr) ? " selected-date" : "";
+
+      calendar += `<td class="${tdClass}" data-date="${dateStr}">${day}</td>`;
+      if ((firstDayAdjusted + day) % 7 === 0 && day !== daysInMonth) {
+        calendar += `</tr><tr>`;
+      }
+    }
+
+    let daysAdded = 1;
+    while ((firstDayAdjusted + daysInMonth + daysAdded - 1) % 7 !== 0) {
+      calendar += `<td class="not-current-month disabled">${daysAdded}</td>`;
+      daysAdded++;
+    }
+
+    calendar += `</tr></tbody></table>`;
+    this.calendarElement.innerHTML = calendar;
+    this.addEventListenersToDays();
+  }
+
+  isDateEnabled(date) {
+    const currentDate = new Date();
+    const maxDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 5,
+      currentDate.getDate()
+    );
+    return (
+      date <= maxDate &&
+      date >= currentDate &&
+      date.getDay() !== 6 &&
+      date.getDay() !== 0
+    );
+  }
+
+  addEventListenersToDays() {
+    const days = this.calendarElement.querySelectorAll(
+      "td:not(.disabled):not(.not-current-month)"
+    );
+    days.forEach((day) => {
+      day.addEventListener("click", () => {
+        const date = day.getAttribute("data-date");
+        if (this.selectedDates.has(date)) {
+          this.selectedDates.delete(date);
+          day.classList.remove("selected-date");
+        } else {
+          this.selectedDates.add(date);
+          day.classList.add("selected-date");
+        }
+        this.updateChanceText();
+        console.log(this.selectedDates);
+      });
+    });
+  }
+
+  updateChanceText() {
+    const count = this.selectedDates.size;
+    let text = "";
+    if (count === 0) {
+      text = "- (selecteer data)";
+    } else if (count >= 1 && count <= 4) {
+      text = "klein-gemiddeld";
+    } else if (count >= 5 && count <= 8) {
+      text = "gemiddeld";
+    } else {
+      text = "gemiddeld-groot";
+    }
+    this.chanceElement.textContent = text;
+    this.formData["course_dates"] = Array.from(this.selectedDates).sort(
+      (a, b) => new Date(a) - new Date(b)
+    );
+    console.log(this.selectedDates);
+  }
+
+  // END CALENDAR
+
   // PACKAGES
 
   getLastDayOfMonth() {
@@ -811,8 +1020,6 @@ class FormManager {
 
   createPackages(packages) {
     const packageListElement = document.getElementById("packageList");
-
-    this.cleanInterface(packageListElement);
 
     this.cleanInterface(packageListElement);
 
@@ -948,9 +1155,9 @@ class FormManager {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
   
-              Videocursus
-              CBR oefenexamens
-              E-book `,
+                        Videocursus
+                        CBR oefenexamens
+                        E-book `,
       offline: "Dagcursus met aansluitend het examen: 99,-",
     };
     document.getElementById("courseTypeText").textContent =
@@ -987,7 +1194,7 @@ class FormManager {
       category === "per_dates" ? "zo-snelResume" : "maandResume";
     const targetElement = document.getElementById(elementId);
 
-    if (targetElement) {
+    if (targetElement && Array.isArray(this.formData["course_names"])) {
       targetElement.textContent = this.formData["course_names"].join(", ");
     }
   }
@@ -1011,16 +1218,21 @@ class FormManager {
     ];
 
     if (Array.isArray(this.formData[key]) && this.formData[key].length > 0) {
-      this.formData[key].forEach((courseDate) => {
+      const sortedDates = this.formData[key].sort(
+        (a, b) => new Date(a) - new Date(b)
+      );
+      sortedDates.forEach((courseDate) => {
         const date = new Date(courseDate);
 
         const dayElement = document.createElement("div");
         dayElement.id = "daySelected";
         dayElement.textContent = date.getDate();
+        dayElement.classList.add("text-size-tiny", "text-weight-bold");
 
         const monthElement = document.createElement("div");
         monthElement.id = "monthSelected";
         monthElement.textContent = monthNames[date.getMonth()];
+        monthElement.classList.add("text-size-xtiny", "text-weight-bold");
 
         const dateElement = document.createElement("div");
         dateElement.classList.add("overzicht_info-date");
@@ -1066,7 +1278,21 @@ class FormManager {
   }
 
   //SEND DATA
-  sendDataBack(data) {
+
+  async handleFinalStep() {
+    // this.applySubmissionRules();
+    const data = this.getData();
+    const success = await this.sendDataBack(data);
+    if (success) {
+      this.redirectTo("/bestellen");
+    } else {
+      console.log(
+        "Error al enviar los datos. No se pudo completar la operación."
+      );
+    }
+  }
+
+  async sendDataBack(data) {
     const url = "https://api.develop.nutheorie.be/api/applications/";
 
     const options = {
@@ -1077,14 +1303,18 @@ class FormManager {
       body: JSON.stringify(data),
     };
 
-    fetch(url, options)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Respuesta del backend:", data);
-      })
-      .catch((error) => {
-        console.error("Error al enviar datos al backend:", error);
-      });
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error("Error en la respuesta de la red");
+      }
+      const responseData = await response.json();
+      console.log("Respuesta del backend:", responseData);
+      return true;
+    } catch (error) {
+      console.error("Error al enviar datos al backend:", error);
+      return false;
+    }
   }
   // END SEND DATA
 }

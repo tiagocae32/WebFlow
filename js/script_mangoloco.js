@@ -116,7 +116,6 @@ class FormManager {
     this.setInitialLicenseTypeUI();
     this.setInitialCourseTypeFromURL();
     this.setInitialCourseTypeUI();
-    this.initializeCalendar();
     this.stepHistory.push(this.steps[this.currentStepIndex].id);
     this.showFormForStep(this.currentStepIndex);
   }
@@ -155,9 +154,11 @@ class FormManager {
   setInitialLicenseTypeUI() {
     const licenseType = this.formData["license_type"];
     if (licenseType) {
-      const licenseTypeElements = document.querySelectorAll('[data-license-type]');
-      licenseTypeElements.forEach(element => {
-        if (element.getAttribute('data-license-type') === licenseType) {
+      const licenseTypeElements = document.querySelectorAll(
+        "[data-license-type]"
+      );
+      licenseTypeElements.forEach((element) => {
+        if (element.getAttribute("data-license-type") === licenseType) {
           element.classList.add("selected-course");
         } else {
           element.classList.remove("selected-course");
@@ -180,10 +181,11 @@ class FormManager {
   setInitialCourseTypeUI() {
     const courseType = this.formData["course_type"];
     if (courseType) {
-      const courseTypeElements = document.querySelectorAll('[data-course-type]');
+      const courseTypeElements =
+        document.querySelectorAll("[data-course-type]");
 
-      courseTypeElements.forEach(element => {
-        if (element.getAttribute('data-course-type') === courseType) {
+      courseTypeElements.forEach((element) => {
+        if (element.getAttribute("data-course-type") === courseType) {
           element.classList.add("selected-course");
         } else {
           element.classList.remove("selected-course");
@@ -203,7 +205,7 @@ class FormManager {
     const currentStepId = this.getCurrentStepId();
     const nextStepId = this.getNextStepId(currentStepId);
 
-    if (currentStepId === 'overzicht') {
+    if (currentStepId === "overzicht") {
       this.handleFinalStep();
       return;
     }
@@ -220,7 +222,6 @@ class FormManager {
 
     this.updateStepIndexText();
   }
-
 
   prevStep() {
     if (this.stepHistory.length > 1) {
@@ -406,8 +407,11 @@ class FormManager {
   isStepInvalid() {
     const currentStep = this.steps[this.currentStepIndex];
 
-    if (currentStep.id === 'stepCalendar') {
-      return !Array.isArray(this.formData['course_dates']) || this.formData['course_dates'].length === 0;
+    if (currentStep.id === "stepCalendar") {
+      return (
+        !Array.isArray(this.formData["course_dates"]) ||
+        this.formData["course_dates"].length === 0
+      );
     }
 
     if (currentStep.keysBack) {
@@ -442,8 +446,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-        ? 6
-        : 8;
+      ? 6
+      : 8;
   }
 
   isMijnReservation() {
@@ -480,6 +484,8 @@ class FormManager {
         this.getCbrLocations(false);
         this.buildInputDate();
         this.buildInput();
+      case "stepCalendar":
+        this.initializeCalendar();
       default:
         this.sideEffects = false;
         break;
@@ -503,8 +509,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-      (this.currentStepIndex / this.calculateTotalSteps()) *
-      (100 - basePercentage)
+        (this.currentStepIndex / this.calculateTotalSteps()) *
+          (100 - basePercentage)
     );
   }
 
@@ -787,21 +793,24 @@ class FormManager {
     this.currentMonthCalendar = this.todayCalendar.getMonth();
     this.currentYearCalendar = this.todayCalendar.getFullYear();
     this.selectedDates = new Set();
-    this.calendarElement = document.getElementById('calendar');
-    this.monthLabel = document.getElementById('monthLabel');
-    this.yearLabel = document.getElementById('yearLabel');
-    this.chanceElement = document.getElementById('chance');
+    this.calendarElement = document.getElementById("calendar");
+    this.monthLabel = document.getElementById("monthLabel");
+    this.yearLabel = document.getElementById("yearLabel");
+    this.chanceElement = document.getElementById("chance");
 
     this.initializeCalendarButtons();
-    this.renderCalendarForMonthYear(this.currentMonthCalendar, this.currentYearCalendar);
+    this.renderCalendarForMonthYear(
+      this.currentMonthCalendar,
+      this.currentYearCalendar
+    );
   }
 
   initializeCalendarButtons() {
-    const prevMonthButton = document.getElementById('prev');
-    const nextMonthButton = document.getElementById('next');
+    const prevMonthButton = document.getElementById("prev");
+    const nextMonthButton = document.getElementById("next");
 
     if (prevMonthButton) {
-      prevMonthButton.addEventListener('click', (event) => {
+      prevMonthButton.addEventListener("click", (event) => {
         event.preventDefault();
         if (this.currentMonthCalendar === 0) {
           this.currentMonthCalendar = 11;
@@ -809,12 +818,15 @@ class FormManager {
         } else {
           this.currentMonthCalendar--;
         }
-        this.renderCalendarForMonthYear(this.currentMonthCalendar, this.currentYearCalendar);
+        this.renderCalendarForMonthYear(
+          this.currentMonthCalendar,
+          this.currentYearCalendar
+        );
       });
     }
 
     if (nextMonthButton) {
-      nextMonthButton.addEventListener('click', (event) => {
+      nextMonthButton.addEventListener("click", (event) => {
         event.preventDefault();
         if (this.currentMonthCalendar === 11) {
           this.currentMonthCalendar = 0;
@@ -822,7 +834,10 @@ class FormManager {
         } else {
           this.currentMonthCalendar++;
         }
-        this.renderCalendarForMonthYear(this.currentMonthCalendar, this.currentYearCalendar);
+        this.renderCalendarForMonthYear(
+          this.currentMonthCalendar,
+          this.currentYearCalendar
+        );
       });
     }
   }
@@ -836,7 +851,7 @@ class FormManager {
     const daysInMonth = 32 - new Date(year, month, 32).getDate();
     let calendar = `<table class="calendar-table"><thead><tr>`;
 
-    dayNames.forEach(day => {
+    dayNames.forEach((day) => {
       calendar += `<th>${day}</th>`;
     });
     calendar += `</tr></thead><tbody><tr>`;
@@ -846,15 +861,17 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1}</td>`;
+      calendar += `<td class="not-current-month disabled">${
+        previousMonthDays - firstDayAdjusted + i + 1
+      }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
       let currentDate = new Date(year, month, day);
-      let dateStr = currentDate.toISOString().split('T')[0];
+      let dateStr = currentDate.toISOString().split("T")[0];
       let isEnabled = this.isDateEnabled(currentDate);
-      let tdClass = !isEnabled ? 'disabled' : '';
-      tdClass += this.selectedDates.has(dateStr) ? ' selected-date' : '';
+      let tdClass = !isEnabled ? "disabled" : "";
+      tdClass += this.selectedDates.has(dateStr) ? " selected-date" : "";
 
       calendar += `<td class="${tdClass}" data-date="${dateStr}">${day}</td>`;
       if ((firstDayAdjusted + day) % 7 === 0 && day !== daysInMonth) {
@@ -875,21 +892,32 @@ class FormManager {
 
   isDateEnabled(date) {
     const currentDate = new Date();
-    const maxDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 5, currentDate.getDate());
-    return date <= maxDate && date >= currentDate && date.getDay() !== 6 && date.getDay() !== 0;
+    const maxDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 5,
+      currentDate.getDate()
+    );
+    return (
+      date <= maxDate &&
+      date >= currentDate &&
+      date.getDay() !== 6 &&
+      date.getDay() !== 0
+    );
   }
 
   addEventListenersToDays() {
-    const days = this.calendarElement.querySelectorAll('td:not(.disabled):not(.not-current-month)');
-    days.forEach(day => {
-      day.addEventListener('click', () => {
-        const date = day.getAttribute('data-date');
+    const days = this.calendarElement.querySelectorAll(
+      "td:not(.disabled):not(.not-current-month)"
+    );
+    days.forEach((day) => {
+      day.addEventListener("click", () => {
+        const date = day.getAttribute("data-date");
         if (this.selectedDates.has(date)) {
           this.selectedDates.delete(date);
-          day.classList.remove('selected-date');
+          day.classList.remove("selected-date");
         } else {
           this.selectedDates.add(date);
-          day.classList.add('selected-date');
+          day.classList.add("selected-date");
         }
         this.updateChanceText();
         console.log(this.selectedDates);
@@ -899,19 +927,20 @@ class FormManager {
 
   updateChanceText() {
     const count = this.selectedDates.size;
-    let text = '';
+    let text = "";
     if (count === 0) {
-      text = '- (selecteer data)';
+      text = "- (selecteer data)";
     } else if (count >= 1 && count <= 4) {
-      text = 'klein-gemiddeld';
+      text = "klein-gemiddeld";
     } else if (count >= 5 && count <= 8) {
-      text = 'gemiddeld';
+      text = "gemiddeld";
     } else {
-      text = 'gemiddeld-groot';
+      text = "gemiddeld-groot";
     }
     this.chanceElement.textContent = text;
-    this.formData['course_dates'] = Array.from(this.selectedDates)
-      .sort((a, b) => new Date(a) - new Date(b));
+    this.formData["course_dates"] = Array.from(this.selectedDates).sort(
+      (a, b) => new Date(a) - new Date(b)
+    );
     console.log(this.selectedDates);
   }
 
@@ -1125,10 +1154,10 @@ class FormManager {
   completeCourseType(key) {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
-
-                      Videocursus
-                      CBR oefenexamens
-                      E-book `,
+    
+                          Videocursus
+                          CBR oefenexamens
+                          E-book `,
       offline: "Dagcursus met aansluitend het examen: 99,-",
     };
     document.getElementById("courseTypeText").textContent =
@@ -1189,7 +1218,9 @@ class FormManager {
     ];
 
     if (Array.isArray(this.formData[key]) && this.formData[key].length > 0) {
-      const sortedDates = this.formData[key].sort((a, b) => new Date(a) - new Date(b));
+      const sortedDates = this.formData[key].sort(
+        (a, b) => new Date(a) - new Date(b)
+      );
       sortedDates.forEach((courseDate) => {
         const date = new Date(courseDate);
 
@@ -1253,12 +1284,13 @@ class FormManager {
     const data = this.getData();
     const success = await this.sendDataBack(data);
     if (success) {
-      this.redirectTo('/bestellen');
+      this.redirectTo("/bestellen");
     } else {
-      console.log("Error al enviar los datos. No se pudo completar la operación.");
+      console.log(
+        "Error al enviar los datos. No se pudo completar la operación."
+      );
     }
   }
-
 
   async sendDataBack(data) {
     const url = "https://api.develop.nutheorie.be/api/applications/";
@@ -1274,7 +1306,7 @@ class FormManager {
     try {
       const response = await fetch(url, options);
       if (!response.ok) {
-        throw new Error('Error en la respuesta de la red');
+        throw new Error("Error en la respuesta de la red");
       }
       const responseData = await response.json();
       console.log("Respuesta del backend:", responseData);
