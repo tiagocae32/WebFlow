@@ -1335,10 +1335,12 @@ class FormManager {
 
       // Agregar la informacion al local storage
 
-      const objetoComoCadena = JSON.stringify({
-        ...dataResponse,
-        link: "test link",
-      });
+      const objetoComoCadena = JSON.parse(
+        JSON.stringify({
+          ...dataResponse,
+          link: "test link",
+        })
+      );
       localStorage.setItem("formData", objetoComoCadena);
 
       //this.redirectTo("/bestellen");
