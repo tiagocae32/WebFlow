@@ -41,6 +41,66 @@ class FormManager {
       "November",
       "December",
     ];
+    this.resumeConfig = {
+      license_type: {
+        elementId: "licenseText",
+        textMap: {
+          motor: "Motortheorie",
+          auto: "Autotheorie",
+          scooter: "Scootertheorie",
+        },
+      },
+      course_type: {
+        elementId: "courseTypeText",
+        textMap: {
+          online: ` Volledige online cursus
+    
+                      Videocursus
+                      CBR oefenexamens
+                      E-book `,
+          offline: "Dagcursus met aansluitend het examen: 99,-",
+        },
+      },
+      exam_type: {
+        elementId: "examTypeText",
+        textMap: {
+          1: "Standaard CBR examen (30 min): 48,-",
+          2: "Verlengd CBR examen (45 min): 61,-",
+          3: "Ik heb zelf al een examen gereserveerd",
+        },
+      },
+      cities: {
+        elementId: "citiesText",
+        customHandler: this.completeCities,
+      },
+      cbr_locations: {
+        elementId: "cbrLocationsText",
+        customHandler: this.completeCbrLocations,
+      },
+      course_category: {
+        elementId: null,
+        customHandler: this.completeCourseCategory,
+      },
+      course_dates: {
+        elementId: "specifiekeDates",
+        customHandler: this.completeCourseDates,
+      },
+      course_names: {
+        elementId: null,
+        customHandler: this.completeCourseNames,
+      },
+    };
+    this.resumeConfigInputs = {
+      first_name: { elementId: "firstNameText" },
+      last_name: { elementId: "lastNameText" },
+      nickname: { elementId: "nicknameText" },
+      birth_date: { elementId: "birthDateText" },
+      email: { elementId: "emailText" },
+      phone: { elementId: "phoneText" },
+      address_1: { elementId: "address1Text" },
+      address_2: { elementId: "address2Text" },
+      address_3: { elementId: "address3Text" },
+    };
   }
 
   initStepRules() {
@@ -678,7 +738,7 @@ class FormManager {
   }
   toggleOptionSelection(option, divElement, isCity) {
     const key = isCity ? "cities" : "course_names";
-    const value = isCity ? option.id : option;
+    const value = isCity ? option.name : option;
 
     if (!Array.isArray(this.formData[key])) {
       this.formData[key] = [];
@@ -1152,54 +1212,54 @@ class FormManager {
   // END PACKAGES
 
   // RESUME
+
+  completeField(key) {
+    const config = this.resumeConfig[key];
+    if (!config) return;
+
+    if (config.customHandler) {
+      config.customHandler.call(this);
+      return;
+    }
+
+    const element = document.getElementById(config.elementId);
+    if (!element) return;
+
+    const value = this.formData[key];
+    element.textContent = config.textMap[value] ?? value;
+  }
+
   completeResume() {
-    this.completeLicenseType("license_type");
-    this.completeCourseType("course_type");
-    this.completeTypeExam("exam_type");
-    this.completeCities();
-    this.completeCourseCategory("course_category");
-    this.completeCourseDates("course_dates");
+    Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
     this.completeDataInputs();
-    this.completeCourseNames();
-  }
-  completeLicenseType(key) {
-    const licenseTypeTextMap = {
-      motor: "Motortheorie",
-      auto: "Autotheorie",
-      scooter: "Scootertheorie",
-    };
-
-    document.getElementById("licenseText").textContent =
-      licenseTypeTextMap[this.formData[key]] || "";
-  }
-  completeCourseType(key) {
-    const courseTypeTextMap = {
-      online: ` Volledige online cursus
-  
-                            Videocursus
-                            CBR oefenexamens
-                            E-book `,
-      offline: "Dagcursus met aansluitend het examen: 99,-",
-    };
-    document.getElementById("courseTypeText").textContent =
-      courseTypeTextMap[this.formData[key]] || "";
-  }
-
-  completeTypeExam(key) {
-    const examTypeTextMap = {
-      1: "Standaard CBR examen (30 min): 48,-",
-      2: "Verlengd CBR examen (45 min): 61,-",
-      3: "Ik heb zelf al een examen gereserveerd",
-    };
-    document.getElementById("examTypeText").textContent =
-      examTypeTextMap[Number(this.formData[key])] || "";
   }
 
   completeCities() {
-    const container = document.getElementById("citiesText");
-    container.textContent = this.citiesNameSelected.join(", ");
+    const container = document.getElementById(
+      this.resumeConfig["cities"].elementId
+    );
+    if (this.citiesNameSelected.length > 0) {
+      container.textContent = this.citiesNameSelected.join(", ");
+      container.classList.remove("hide");
+    } else {
+      container.classList.add("hide");
+    }
   }
-  completeCourseCategory(key) {
+
+  completeCbrLocations() {
+    const container = document.getElementById(
+      this.resumeConfig["cbr_locations"].elementId
+    );
+    if (this.cbr_locations.length > 0) {
+      container.textContent = this.cbr_locations.join(", ");
+      container.classList.remove("hide");
+    } else {
+      container.classList.add("hide");
+    }
+  }
+
+  completeCourseCategory() {
+    const key = this.formData["course_category"];
     const courseCategoryTypeTextMap = {
       per_dates: "zo-snel",
       per_month: "maand",
@@ -1211,17 +1271,27 @@ class FormManager {
     );
     if (element) element.classList.add("active");
   }
+
   completeCourseNames() {
     const category = this.formData["course_category"];
     const elementId =
       category === "per_dates" ? "zo-snelResume" : "maandResume";
     const targetElement = document.getElementById(elementId);
 
-    if (targetElement && Array.isArray(this.formData["course_names"])) {
+    if (
+      targetElement &&
+      Array.isArray(this.formData["course_names"]) &&
+      this.formData["course_names"].length > 0
+    ) {
       targetElement.textContent = this.formData["course_names"].join(", ");
+      targetElement.classList.remove("hide");
+    } else if (targetElement) {
+      targetElement.classList.add("hide");
     }
   }
-  completeCourseDates(key) {
+
+  completeCourseDates() {
+    const key = this.formData["course_dates"];
     const container = document.getElementById("specifiekeDates");
     container.innerHTML = "";
 
@@ -1268,21 +1338,14 @@ class FormManager {
   }
 
   completeDataInputs() {
-    const dataMapping = {
-      firstNameText: "first_name",
-      lastNameText: "last_name",
-      nicknameText: "nickname",
-      birthDateText: "birth_date",
-      emailText: "email",
-      phoneText: "phone",
-      address1Text: "address_1",
-      address2Text: "address_2",
-      address3Text: "address_3",
-    };
-
-    Object.entries(dataMapping).forEach(([key, value]) => {
-      const element = document.getElementById(key);
-      element.textContent = this.formData[value] ?? "-";
+    Object.keys(this.resumeConfigInputs).forEach((key) => {
+      const config = this.resumeConfigInputs[key];
+      if (config && config.elementId) {
+        const element = document.getElementById(config.elementId);
+        if (element) {
+          element.textContent = this.formData[key] ?? "-";
+        }
+      }
     });
   }
   //END RESUME
@@ -1357,7 +1420,7 @@ class FormManager {
         );
 
         //this.redirectTo("/bestellen");
-        //const orderManager = new OrderManager();
+        const orderManager = new OrderManager();
       }
     }
   }
@@ -1469,14 +1532,17 @@ class OrderManager {
     const storedData = localStorage.getItem("formData");
     if (storedData) {
       const formData = JSON.parse(storedData);
+      console.log(formData);
       //this.handleStoredData(formData);
+    } else {
+      // Redirigir o manejar la falta de datos
+      //window.location.href = '/inloggen';
     }
   }
 
   handleStoredData(formData) {
-    console.log(formData);
-    const button = document.getElementById("btnLink");
-    button.setAttribute("href", formData.payment_link);
+    // Lógica para manejar los datos del formulario almacenados
+    // Por ejemplo, mostrar la información en la página, preparar otros elementos de la UI, etc.
   }
 }
 const orderManager = new OrderManager();
