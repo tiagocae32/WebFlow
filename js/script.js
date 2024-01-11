@@ -1266,9 +1266,7 @@ class FormManager {
       calendar: "specifieke",
     };
 
-    const element = document.getElementById(
-      courseCategoryTypeTextMap[this.formData[key]]
-    );
+    const element = document.getElementById(courseCategoryTypeTextMap[key]);
     if (element) element.classList.add("active");
   }
 
