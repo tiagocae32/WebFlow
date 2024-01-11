@@ -89,6 +89,10 @@ class FormManager {
         elementId: null,
         customHandler: this.completeCourseNames,
       },
+      package_name: {
+        elementId: "packageImage",
+        customHandler: this.completePackage,
+      },
     };
     this.resumeConfigInputs = {
       first_name: { elementId: "firstNameText" },
@@ -397,7 +401,7 @@ class FormManager {
     this.convertDate();
     this.handleProductMijnReservation();
     const data = this.applySubmissionRules();
-    this.completeResume(data);
+    this.completeResume();
 
     this.nextButton.addEventListener("click", () => {
       this.sendDataBack(data);
@@ -1115,6 +1119,7 @@ class FormManager {
 
       packageItem.addEventListener("click", () => {
         this.setData("package_name", pkg.name);
+        this.packageSelected = pkg;
         const allPackageItems = document.querySelectorAll(
           ".aanmelden_package-item"
         );
@@ -1213,6 +1218,11 @@ class FormManager {
 
   // RESUME
 
+  completeResume() {
+    Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
+    this.completeDataInputs();
+  }
+
   completeField(key) {
     const config = this.resumeConfig[key];
     if (!config) return;
@@ -1229,9 +1239,16 @@ class FormManager {
     element.textContent = config.textMap[value] ?? value;
   }
 
-  completeResume() {
-    Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
-    this.completeDataInputs();
+  completeDataInputs() {
+    Object.keys(this.resumeConfigInputs).forEach((key) => {
+      const config = this.resumeConfigInputs[key];
+      if (config && config.elementId) {
+        const element = document.getElementById(config.elementId);
+        if (element) {
+          element.textContent = this.formData[key] ?? "-";
+        }
+      }
+    });
   }
 
   completeCities() {
@@ -1335,16 +1352,17 @@ class FormManager {
     }
   }
 
-  completeDataInputs() {
-    Object.keys(this.resumeConfigInputs).forEach((key) => {
-      const config = this.resumeConfigInputs[key];
-      if (config && config.elementId) {
-        const element = document.getElementById(config.elementId);
-        if (element) {
-          element.textContent = this.formData[key] ?? "-";
-        }
-      }
-    });
+  completePackage() {
+    const container = document.getElementById(
+      this.resumeConfig["package_name"].elementId
+    );
+    if (this.formData["course_type"] === "offline") {
+      container.textContent = "Random text";
+    } else {
+      // Render package
+      const packageItem = this.packageSelected;
+      console.log(packageItem);
+    }
   }
   //END RESUME
 
