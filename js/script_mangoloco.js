@@ -471,8 +471,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-        ? 6
-        : 8;
+      ? 6
+      : 8;
   }
 
   isMijnReservation() {
@@ -537,8 +537,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-      (this.currentStepIndex / this.calculateTotalSteps()) *
-      (100 - basePercentage)
+        (this.currentStepIndex / this.calculateTotalSteps()) *
+          (100 - basePercentage)
     );
   }
 
@@ -899,8 +899,9 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+      calendar += `<td class="not-current-month disabled">${
+        previousMonthDays - firstDayAdjusted + i + 1
+      }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1054,8 +1055,10 @@ class FormManager {
 
       packageItem.addEventListener("click", () => {
         this.setData("package_name", pkg.name);
-        const allPackageItems = document.querySelectorAll(".aanmelden_package-item");
-        allPackageItems.forEach(item => {
+        const allPackageItems = document.querySelectorAll(
+          ".aanmelden_package-item"
+        );
+        allPackageItems.forEach((item) => {
           item.classList.remove("selected-option");
         });
 
@@ -1172,10 +1175,10 @@ class FormManager {
   completeCourseType(key) {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
-
-                          Videocursus
-                          CBR oefenexamens
-                          E-book `,
+    
+                              Videocursus
+                              CBR oefenexamens
+                              E-book `,
       offline: "Dagcursus met aansluitend het examen: 99,-",
     };
     document.getElementById("courseTypeText").textContent =
@@ -1324,19 +1327,19 @@ class FormManager {
 
       isMijnOnlineFlow
         ? (objUrlPayload = {
-          url: this.urls.package_start,
-          payload: { package_starting_at: new Date() },
-        })
+            url: this.urls.package_start,
+            payload: { package_starting_at: new Date() },
+          })
         : (objUrlPayload = {
-          url: this.urls.payment_link,
-          payload: {
-            method: "ideal",
-            amount: payment_amount,
-            final_redirect_url: this.urls.final_redirect_url,
-            fail_redirect_url: this.urls.fail_redirect_url,
-          },
-          token: access,
-        });
+            url: this.urls.payment_link,
+            payload: {
+              method: "ideal",
+              amount: payment_amount,
+              final_redirect_url: this.urls.final_redirect_url,
+              fail_redirect_url: this.urls.fail_redirect_url,
+            },
+            token: access,
+          });
 
       const payment_link = await this.requestLinkPayment(objUrlPayload);
 
@@ -1354,7 +1357,7 @@ class FormManager {
         );
 
         //this.redirectTo("/bestellen");
-        const orderManager = new OrderManager();
+        //const orderManager = new OrderManager();
       }
     }
   }
@@ -1466,7 +1469,7 @@ class OrderManager {
     const storedData = localStorage.getItem("formData");
     if (storedData) {
       const formData = JSON.parse(storedData);
-      this.handleStoredData(formData);
+      //this.handleStoredData(formData);
     }
   }
 

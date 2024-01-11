@@ -1055,6 +1055,14 @@ class FormManager {
 
       packageItem.addEventListener("click", () => {
         this.setData("package_name", pkg.name);
+        const allPackageItems = document.querySelectorAll(
+          ".aanmelden_package-item"
+        );
+        allPackageItems.forEach((item) => {
+          item.classList.remove("selected-option");
+        });
+
+        packageItem.classList.add("selected-option");
       });
 
       this.addPackageItemElements(packageItem, pkg);
@@ -1168,9 +1176,9 @@ class FormManager {
     const courseTypeTextMap = {
       online: ` Volledige online cursus
   
-                        Videocursus
-                        CBR oefenexamens
-                        E-book `,
+                            Videocursus
+                            CBR oefenexamens
+                            E-book `,
       offline: "Dagcursus met aansluitend het examen: 99,-",
     };
     document.getElementById("courseTypeText").textContent =
@@ -1349,7 +1357,7 @@ class FormManager {
         );
 
         //this.redirectTo("/bestellen");
-        const orderManager = new OrderManager();
+        //const orderManager = new OrderManager();
       }
     }
   }
@@ -1461,17 +1469,14 @@ class OrderManager {
     const storedData = localStorage.getItem("formData");
     if (storedData) {
       const formData = JSON.parse(storedData);
-      console.log(formData);
       //this.handleStoredData(formData);
-    } else {
-      // Redirigir o manejar la falta de datos
-      //window.location.href = '/inloggen';
     }
   }
 
   handleStoredData(formData) {
-    // Lógica para manejar los datos del formulario almacenados
-    // Por ejemplo, mostrar la información en la página, preparar otros elementos de la UI, etc.
+    console.log(formData);
+    const button = document.getElementById("btnLink");
+    button.setAttribute("href", formData.payment_link);
   }
 }
 const orderManager = new OrderManager();
