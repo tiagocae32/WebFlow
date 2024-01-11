@@ -396,7 +396,7 @@ class FormManager {
     this.changeBtn("Verzenden");
     this.convertDate();
     this.handleProductMijnReservation();
-    this.applyLastStepChanges();
+    this.applySubmissionRules();
     const data = this.getData();
     this.completeResume(data);
 
