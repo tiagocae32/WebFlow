@@ -396,6 +396,7 @@ class FormManager {
     this.changeBtn("Verzenden");
     this.convertDate();
     this.handleProductMijnReservation();
+    this.applyLastStepChanges();
     const data = this.getData();
     this.completeResume(data);
 
@@ -1237,7 +1238,7 @@ class FormManager {
   completeCities() {
     const container = document.getElementById("citiesColumn");
     const text = document.getElementById(this.resumeConfig["cities"].elementId);
-    if (this.citiesNameSelected.length > 0) {
+    if (this.formData["cities"].length > 0) {
       text.textContent = this.citiesNameSelected.join(", ");
       container.classList.remove("hide");
     } else {
@@ -1250,7 +1251,7 @@ class FormManager {
     const text = document.getElementById(
       this.resumeConfig["cbr_locations"].elementId
     );
-    if (this.cbr_locations.length > 0) {
+    if (this.formData["cbr_locations"].length > 0) {
       text.textContent = this.cbr_locations.join(", ");
       container.classList.remove("hide");
     } else {
