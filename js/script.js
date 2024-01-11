@@ -1306,7 +1306,7 @@ class FormManager {
         course_type,
         is_mijn_reservation,
         payment_amount,
-        custom_application_id,
+        auth_tokens: { access },
       } = dataResponse;
 
       const isMijnOnline = course_type === "online" && is_mijn_reservation;
@@ -1329,32 +1329,37 @@ class FormManager {
               amount: payment_amount,
               final_redirect_url: this.urls.final_redirect_url,
               fail_redirect_url: this.urls.fail_redirect_url,
-              custom_application_id: custom_application_id,
             },
+            token: access,
           });
 
-      // Agregar la informacion al local storage
-      const test = {
-        ...dataResponse,
-        link: "test link",
-      };
-      const objetoComoCadena = JSON.parse(JSON.stringify(test));
-      localStorage.setItem("formData", JSON.stringify(objetoComoCadena));
+      const payment_link = await this.requestLinkPayment(objUrlPayload);
 
-      //this.redirectTo("/bestellen");
-      const orderManager = new OrderManager();
-      orderManager.initialize();
+      if (payment_link) {
+        const payloadStorage = {
+          ...dataResponse,
+          ...payment_link,
+        };
+        const copyDeepPayloadStorage = JSON.parse(
+          JSON.stringify(payloadStorage)
+        );
+        localStorage.setItem(
+          "formData",
+          JSON.stringify(copyDeepPayloadStorage)
+        );
 
-      //const link = await this.requestLinkPayment(objUrlPayload);
-      //console.log(link);
+        //this.redirectTo("/bestellen");
+        const orderManager = new OrderManager();
+      }
     }
   }
 
-  async requestLinkPayment({ url, payload }) {
+  async requestLinkPayment({ url, payload, token }) {
     try {
       const respuesta = await fetch(url, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
@@ -1448,7 +1453,9 @@ formManager.initialize();
 
 //if (window.location.pathname === '/bestellen') {
 class OrderManager {
-  constructor() {}
+  constructor() {
+    this.initialize();
+  }
 
   initialize() {
     const storedData = localStorage.getItem("formData");
@@ -1467,4 +1474,5 @@ class OrderManager {
     // Por ejemplo, mostrar la información en la página, preparar otros elementos de la UI, etc.
   }
 }
+const orderManager = new OrderManager();
 //}
