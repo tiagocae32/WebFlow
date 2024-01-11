@@ -396,8 +396,7 @@ class FormManager {
     this.changeBtn("Verzenden");
     this.convertDate();
     this.handleProductMijnReservation();
-    this.applySubmissionRules();
-    const data = this.getData();
+    const data = this.applySubmissionRules();
     this.completeResume(data);
 
     this.nextButton.addEventListener("click", () => {
@@ -1360,12 +1359,12 @@ class FormManager {
         });
       }
     });
+    return this.formData;
   }
 
   //SEND DATA
 
   async handleFinalStep() {
-    this.applySubmissionRules();
     const data = this.getData();
     const dataResponse = await this.sendDataBack(data);
 
