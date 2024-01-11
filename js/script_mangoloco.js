@@ -1461,17 +1461,14 @@ class OrderManager {
     const storedData = localStorage.getItem("formData");
     if (storedData) {
       const formData = JSON.parse(storedData);
-      console.log(formData);
-      //this.handleStoredData(formData);
-    } else {
-      // Redirigir o manejar la falta de datos
-      //window.location.href = '/inloggen';
+      this.handleStoredData(formData);
     }
   }
 
   handleStoredData(formData) {
-    // Lógica para manejar los datos del formulario almacenados
-    // Por ejemplo, mostrar la información en la página, preparar otros elementos de la UI, etc.
+    console.log(formData);
+    const button = document.getElementById("btnLink");
+    button.setAttribute("href", formData.payment_link);
   }
 }
 const orderManager = new OrderManager();
