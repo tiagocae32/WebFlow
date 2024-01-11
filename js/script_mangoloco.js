@@ -1235,11 +1235,10 @@ class FormManager {
   }
 
   completeCities() {
-    const container = document.getElementById(
-      this.resumeConfig["cities"].elementId
-    );
+    const container = document.getElementById("citiesColumn");
+    const text = document.getElementById(this.resumeConfig["cities"].elementId);
     if (this.citiesNameSelected.length > 0) {
-      container.textContent = this.citiesNameSelected.join(", ");
+      text.textContent = this.citiesNameSelected.join(", ");
       container.classList.remove("hide");
     } else {
       container.classList.add("hide");
@@ -1247,11 +1246,12 @@ class FormManager {
   }
 
   completeCbrLocations() {
-    const container = document.getElementById(
+    const container = document.getElementById("cbrsColumn");
+    const text = document.getElementById(
       this.resumeConfig["cbr_locations"].elementId
     );
     if (this.cbr_locations.length > 0) {
-      container.textContent = this.cbr_locations.join(", ");
+      text.textContent = this.cbr_locations.join(", ");
       container.classList.remove("hide");
     } else {
       container.classList.add("hide");
