@@ -55,9 +55,9 @@ class FormManager {
         textMap: {
           online: ` Volledige online cursus
 
-                      Videocursus
-                      CBR oefenexamens
-                      E-book `,
+                          Videocursus
+                          CBR oefenexamens
+                          E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -90,7 +90,7 @@ class FormManager {
         customHandler: this.completeCourseNames,
       },
       package_name: {
-        elementId: "packageImage",
+        elementId: "overzichtRight",
         customHandler: this.completePackage,
       },
     };
@@ -1160,12 +1160,13 @@ class FormManager {
     element.appendChild(svgElement);
   }
 
-  addPackageItemElements(packageItem, pkg) {
+  addPackageItemElements(packageItem, pkg, isFinalStep = false) {
     const packageInfoContainer = this.createElementWithClass("div", "aanmelden_package-info");
     const packagePriceMarginContainer = this.createElementWithClass("div", "margin-bottom margin-custom4");
     const packagePriceNameContainer = this.createElementWithClass("div", "margin-bottom margin-xsmall");
     const packagePriceNameElement = this.createElementWithClass("div", "aanmelden_package-name");
-    const packageSeparator = this.createElementWithClass("div", "aanmelden_package-separator");
+    const separatorClass = isFinalStep ? "aanmelden_package-separator_overzicht" : "aanmelden_package-separator";
+    const packageSeparator = this.createElementWithClass("div", separatorClass);
     const packagePriceContainer = this.createElementWithClass("div", "aanmelden_package-price");
     const packagePriceElement = this.createTextElement("div", "packagePrice", "heading-style-h4", `€${parseInt(pkg.price)}`);
     const packagePriceSmallElement = this.createTextElement("div", "packagePriceSmall", "text-size-medium text-weight-bold", `${((pkg.price % 1) * 100).toFixed(0).padStart(2, "0")}`);
@@ -1185,15 +1186,15 @@ class FormManager {
     pkg.description_items.forEach(desc => {
       const packageDescriptionItem = this.createElementWithClass("div", "aanmelden_package-description");
       this.appendSvgToElement(packageDescriptionItem, `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g clip-path="url(#clip0_410_3698)">
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
-          </g>
-          <defs>
-          <clipPath id="clip0_410_3698">
-          <rect width="10" height="8" fill="white"></rect>
-          </clipPath>
-          </defs>
-          </svg >`);
+              <g clip-path="url(#clip0_410_3698)">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
+              </g>
+              <defs>
+              <clipPath id="clip0_410_3698">
+              <rect width="10" height="8" fill="white"></rect>
+              </clipPath>
+              </defs>
+              </svg >`);
 
       const descriptionItem = this.createElementWithClass("div", "text-size-tiny");
       descriptionItem.textContent = desc.description;
@@ -1214,7 +1215,43 @@ class FormManager {
       packageOldPriceContainer.appendChild(this.createTextElement("div", "packageOldPriceSmall", "text-size-tiny text-weight-bold", `${((pkg.old_price % 1) * 100).toFixed(0).padStart(2, "0")}`));
       packageLabelContainer.appendChild(packageOldPriceContainer);
     }
-    packageItem.appendChild(packageLabelContainer);
+    if (!isFinalStep) {
+      packageItem.appendChild(packageLabelContainer);
+    }
+    if (isFinalStep && pkg.old_price) {
+      const discountAmount = pkg.old_price - pkg.price;
+      const formattedDiscountAmount = `€${discountAmount.toFixed(2)}`;
+
+      const additionalSeparatorMargin = this.createElementWithClass("div", "margin-top margin-xsmall")
+      const additionalSeparator = this.createElementWithClass("div", separatorClass);
+      const pricingElementMargin = this.createElementWithClass("div", "margin-top margin-xsmall");
+      const pricingElementList = this.createElementWithClass("div", "overzicht_pricing-list");
+      const pricingElementItem = this.createElementWithClass("div", "overzicht_pricing-item");
+      const oldPriceText = this.createTextElement("div", "", "text-weight-bold", "Subtotaal");
+      const formattedOldPrice = `€${parseFloat(pkg.old_price).toFixed(2)}`;
+      const oldPrice = this.createTextElement("div", "", "text-weight-bold", formattedOldPrice);
+      const pricingElementItemDiscount = this.createElementWithClass("div", "overzicht_pricing-item");
+      const discountText = this.createTextElement("div", "", "text-weight-bold text-color-pink", "Korting");
+      const discountPrice = this.createTextElement("div", "", "text-weight-bold text-color-pink", formattedDiscountAmount);
+      const pricingTotalMargin = this.createElementWithClass("div", "margin-top margin-xsmall");
+      const pricingTotal = this.createElementWithClass("div", "overzicht_pricing-total");
+      const formattedPrice = `Totaal: €${parseFloat(pkg.price).toFixed(2)}`;
+      const totalTextElement = this.createTextElement("div", "", "text-size-large text-weight-bold", formattedPrice);
+
+      packageItem.appendChild(additionalSeparatorMargin);
+      packageItem.appendChild(pricingElementMargin);
+      additionalSeparatorMargin.appendChild(additionalSeparator);
+      pricingElementMargin.appendChild(pricingElementList);
+      pricingElementList.appendChild(pricingElementItem);
+      pricingElementList.appendChild(pricingElementItemDiscount);
+      pricingElementItem.appendChild(oldPriceText);
+      pricingElementItem.appendChild(oldPrice);
+      pricingElementItemDiscount.appendChild(discountText);
+      pricingElementItemDiscount.appendChild(discountPrice);
+      pricingTotal.appendChild(totalTextElement);
+      packageItem.appendChild(pricingTotalMargin);
+      pricingTotalMargin.appendChild(pricingTotal);
+    }
   }
 
   // END PACKAGES
@@ -1360,11 +1397,18 @@ class FormManager {
       this.resumeConfig["package_name"].elementId
     );
     if (this.formData["course_type"] === "offline") {
-      container.textContent = "Random text";
+      container.textContent = "Random text"; // reemplazar por el ID cuando modele el offline
     } else {
       // Render package
-      const packageItem = this.packageSelected;
-      console.log(packageItem);
+      const selectedPackage = this.packageSelected;
+      if (selectedPackage) {
+        container.innerHTML = '';
+        let packageElement = document.createElement('div');
+        this.addPackageItemElements(packageElement, selectedPackage, true);
+        container.appendChild(packageElement);
+      } else {
+        container.textContent = 'No se ha seleccionado ningún paquete.';
+      }
     }
   }
   //END RESUME
