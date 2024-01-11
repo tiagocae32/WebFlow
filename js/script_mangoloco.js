@@ -1382,9 +1382,7 @@ class FormManager {
 
       const isMijnOnline = course_type === "online" && is_mijn_reservation;
       const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
-      console.log(buttonText);
       const isMijnOnlineFlow = is_mijn_reservation;
-      console.log(isMijnOnlineFlow);
 
       let objUrlPayload;
 
@@ -1410,6 +1408,7 @@ class FormManager {
         const payloadStorage = {
           ...dataResponse,
           ...payment_link,
+          buttonText: buttonText,
         };
         const copyDeepPayloadStorage = JSON.parse(
           JSON.stringify(payloadStorage)
@@ -1420,7 +1419,7 @@ class FormManager {
         );
 
         //this.redirectTo("/bestellen");
-        const orderManager = new OrderManager();
+        //const orderManager = new OrderManager();
       }
     }
   }
@@ -1532,17 +1531,19 @@ class OrderManager {
     const storedData = localStorage.getItem("formData");
     if (storedData) {
       const formData = JSON.parse(storedData);
-      console.log(formData);
-      //this.handleStoredData(formData);
-    } else {
-      // Redirigir o manejar la falta de datos
-      //window.location.href = '/inloggen';
+      this.handleStoredData(formData);
     }
   }
 
   handleStoredData(formData) {
-    // Lógica para manejar los datos del formulario almacenados
-    // Por ejemplo, mostrar la información en la página, preparar otros elementos de la UI, etc.
+    const link = document.getElementById("btnLink");
+    const text = document.getElementById("btnText");
+    const amount = document.getElementById("btnAmount");
+    text.textContent = formData.buttonText;
+    amount.textContent = `€ ${formData.payment_amount}`;
+    link.addEventListener("click", function () {
+      window.location.href = formData.payment_link;
+    });
   }
 }
 const orderManager = new OrderManager();
