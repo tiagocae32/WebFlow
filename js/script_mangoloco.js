@@ -41,6 +41,64 @@ class FormManager {
       "November",
       "December",
     ];
+    this.resumeConfig = {
+      "license_type": {
+        elementId: "licenseText",
+        textMap: {
+          motor: "Motortheorie",
+          auto: "Autotheorie",
+          scooter: "Scootertheorie",
+        }
+      },
+      "course_type": {
+        elementId: "courseTypeText",
+        textMap: {
+          online: ` Volledige online cursus
+
+                Videocursus
+                CBR oefenexamens
+                E-book `,
+          offline: "Dagcursus met aansluitend het examen: 99,-",
+        }
+      },
+      "exam_type": {
+        elementId: "examTypeText",
+        textMap: {
+          1: "Standaard CBR examen (30 min): 48,-",
+          2: "Verlengd CBR examen (45 min): 61,-",
+          3: "Ik heb zelf al een examen gereserveerd",
+        }
+      },
+      "cities": {
+        elementId: "citiesText",
+        customHandler: this.completeCities,
+      },
+      "cbr_locations": {
+        elementId: "cbrLocationsText",
+        customHandler: this.completeCbrLocations,
+      },
+      "course_category": {
+        elementId: null,
+        customHandler: this.completeCourseCategory,
+      },
+      "course_dates": {
+        elementId: "specifiekeDates",
+        customHandler: this.completeCourseDates,
+      },
+      "course_names": {
+        elementId: null,
+        customHandler: this.completeCourseNames,
+      },
+      "first_name": { elementId: "firstNameText" },
+      "last_name": { elementId: "lastNameText" },
+      "nickname": { elementId: "nicknameText" },
+      "birth_date": { elementId: "birthDateText" },
+      "email": { elementId: "emailText" },
+      "phone": { elementId: "phoneText" },
+      "address_1": { elementId: "address1Text" },
+      "address_2": { elementId: "address2Text" },
+      "address_3": { elementId: "address3Text" },
+    };
   }
 
   initStepRules() {
@@ -1150,67 +1208,8 @@ class FormManager {
 
   // RESUME
 
-  const resumeConfig = {
-    "license_type": {
-      elementId: "licenseText",
-      textMap: {
-        motor: "Motortheorie",
-        auto: "Autotheorie",
-        scooter: "Scootertheorie",
-      }
-    },
-    "course_type": {
-      elementId: "courseTypeText",
-      textMap: {
-        online: ` Volledige online cursus
-
-          Videocursus
-          CBR oefenexamens
-          E-book `,
-        offline: "Dagcursus met aansluitend het examen: 99,-",
-      }
-    },
-    "exam_type": {
-      elementId: "examTypeText",
-      textMap: {
-        1: "Standaard CBR examen (30 min): 48,-",
-        2: "Verlengd CBR examen (45 min): 61,-",
-        3: "Ik heb zelf al een examen gereserveerd",
-      }
-    },
-    "cities": {
-      elementId: "citiesText",
-      customHandler: this.completeCities,
-    },
-    "cbr_locations": {
-      elementId: "cbrLocationsText",
-      customHandler: this.completeCbrLocations,
-    },
-    "course_category": {
-      elementId: null,
-      customHandler: this.completeCourseCategory,
-    },
-    "course_dates": {
-      elementId: "specifiekeDates",
-      customHandler: this.completeCourseDates,
-    },
-    "course_names": {
-      elementId: null,
-      customHandler: this.completeCourseNames,
-    },
-    "first_name": { elementId: "firstNameText" },
-    "last_name": { elementId: "lastNameText" },
-    "nickname": { elementId: "nicknameText" },
-    "birth_date": { elementId: "birthDateText" },
-    "email": { elementId: "emailText" },
-    "phone": { elementId: "phoneText" },
-    "address_1": { elementId: "address1Text" },
-    "address_2": { elementId: "address2Text" },
-    "address_3": { elementId: "address3Text" },
-  };
-
   completeField(key) {
-    const config = resumeConfig[key];
+    const config = this.resumeConfig[key];
     if (!config) return;
 
     if (config.customHandler) {
@@ -1222,17 +1221,17 @@ class FormManager {
     if (!element) return;
 
     const value = this.formData[key];
-    const textValue = config.textMap ? (config.textMap[value] || "") : value;
+    const textValue = config.textMap && value in config.textMap ? config.textMap[value] : value;
     element.textContent = textValue;
   }
 
   completeResume() {
-    Object.keys(resumeConfig).forEach(key => this.completeField(key));
+    Object.keys(this.resumeConfig).forEach(key => this.completeField(key));
     this.completeDataInputs();
   }
 
   completeCities() {
-    const container = document.getElementById(resumeConfig["cities"].elementId);
+    const container = document.getElementById(this.resumeConfig["cities"].elementId);
     if (this.citiesNameSelected.length > 0) {
       container.textContent = this.citiesNameSelected.join(", ");
       container.classList.remove("hide");
@@ -1242,23 +1241,13 @@ class FormManager {
   }
 
   completeCbrLocations() {
-    const container = document.getElementById(resumeConfig["cbr_locations"].elementId);
+    const container = document.getElementById(this.resumeConfig["cbr_locations"].elementId);
     if (this.cbr_locations.length > 0) {
       container.textContent = this.cbr_locations.join(", ");
       container.classList.remove("hide");
     } else {
       container.classList.add("hide");
     }
-  }
-
-  completeCities() {
-    const container = document.getElementById(resumeConfig["cities"].elementId);
-    container.textContent = this.citiesNameSelected.join(", ");
-  }
-
-  completeCbrLocations() {
-    const container = document.getElementById(resumeConfig["cbr_locations"].elementId);
-    container.textContent = this.cbr_locations.join(", ");
   }
 
   completeCourseCategory() {
@@ -1288,16 +1277,6 @@ class FormManager {
     }
   }
 
-  completeCourseNames() {
-    const category = this.formData["course_category"];
-    const elementId =
-      category === "per_dates" ? "zo-snelResume" : "maandResume";
-    const targetElement = document.getElementById(elementId);
-
-    if (targetElement && Array.isArray(this.formData["course_names"])) {
-      targetElement.textContent = this.formData["course_names"].join(", ");
-    }
-  }
   completeCourseDates() {
     const key = this.formData["course_dates"]
     const container = document.getElementById("specifiekeDates");
@@ -1346,8 +1325,8 @@ class FormManager {
   }
 
   completeDataInputs() {
-    Object.keys(resumeConfig).forEach((key) => {
-      const config = resumeConfig[key];
+    Object.keys(this.resumeConfig).forEach((key) => {
+      const config = this.resumeConfig[key];
       if (config && config.elementId) {
         const element = document.getElementById(config.elementId);
         if (element) {

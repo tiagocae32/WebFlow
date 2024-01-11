@@ -41,6 +41,64 @@ class FormManager {
       "November",
       "December",
     ];
+    this.resumeConfig = {
+      "license_type": {
+        elementId: "licenseText",
+        textMap: {
+          motor: "Motortheorie",
+          auto: "Autotheorie",
+          scooter: "Scootertheorie",
+        }
+      },
+      "course_type": {
+        elementId: "courseTypeText",
+        textMap: {
+          online: ` Volledige online cursus
+
+                  Videocursus
+                  CBR oefenexamens
+                  E-book `,
+          offline: "Dagcursus met aansluitend het examen: 99,-",
+        }
+      },
+      "exam_type": {
+        elementId: "examTypeText",
+        textMap: {
+          1: "Standaard CBR examen (30 min): 48,-",
+          2: "Verlengd CBR examen (45 min): 61,-",
+          3: "Ik heb zelf al een examen gereserveerd",
+        }
+      },
+      "cities": {
+        elementId: "citiesText",
+        customHandler: this.completeCities,
+      },
+      "cbr_locations": {
+        elementId: "cbrLocationsText",
+        customHandler: this.completeCbrLocations,
+      },
+      "course_category": {
+        elementId: null,
+        customHandler: this.completeCourseCategory,
+      },
+      "course_dates": {
+        elementId: "specifiekeDates",
+        customHandler: this.completeCourseDates,
+      },
+      "course_names": {
+        elementId: null,
+        customHandler: this.completeCourseNames,
+      },
+      "first_name": { elementId: "firstNameText" },
+      "last_name": { elementId: "lastNameText" },
+      "nickname": { elementId: "nicknameText" },
+      "birth_date": { elementId: "birthDateText" },
+      "email": { elementId: "emailText" },
+      "phone": { elementId: "phoneText" },
+      "address_1": { elementId: "address1Text" },
+      "address_2": { elementId: "address2Text" },
+      "address_3": { elementId: "address3Text" },
+    };
   }
 
   initStepRules() {
@@ -471,8 +529,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -537,8 +595,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-        (this.currentStepIndex / this.calculateTotalSteps()) *
-          (100 - basePercentage)
+      (this.currentStepIndex / this.calculateTotalSteps()) *
+      (100 - basePercentage)
     );
   }
 
@@ -899,9 +957,8 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${
-        previousMonthDays - firstDayAdjusted + i + 1
-      }</td>`;
+      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1055,6 +1112,12 @@ class FormManager {
 
       packageItem.addEventListener("click", () => {
         this.setData("package_name", pkg.name);
+        const allPackageItems = document.querySelectorAll(".aanmelden_package-item");
+        allPackageItems.forEach(item => {
+          item.classList.remove("selected-option");
+        });
+
+        packageItem.classList.add("selected-option");
       });
 
       this.addPackageItemElements(packageItem, pkg);
@@ -1144,54 +1207,51 @@ class FormManager {
   // END PACKAGES
 
   // RESUME
+
+  completeField(key) {
+    const config = this.resumeConfig[key];
+    if (!config) return;
+
+    if (config.customHandler) {
+      config.customHandler.call(this);
+      return;
+    }
+
+    const element = document.getElementById(config.elementId);
+    if (!element) return;
+
+    const value = this.formData[key];
+    const textValue = config.textMap && value in config.textMap ? config.textMap[value] : value;
+    element.textContent = textValue;
+  }
+
   completeResume() {
-    this.completeLicenseType("license_type");
-    this.completeCourseType("course_type");
-    this.completeTypeExam("exam_type");
-    this.completeCities();
-    this.completeCourseCategory("course_category");
-    this.completeCourseDates("course_dates");
+    Object.keys(this.resumeConfig).forEach(key => this.completeField(key));
     this.completeDataInputs();
-    this.completeCourseNames();
-  }
-  completeLicenseType(key) {
-    const licenseTypeTextMap = {
-      motor: "Motortheorie",
-      auto: "Autotheorie",
-      scooter: "Scootertheorie",
-    };
-
-    document.getElementById("licenseText").textContent =
-      licenseTypeTextMap[this.formData[key]] || "";
-  }
-  completeCourseType(key) {
-    const courseTypeTextMap = {
-      online: ` Volledige online cursus
-  
-                        Videocursus
-                        CBR oefenexamens
-                        E-book `,
-      offline: "Dagcursus met aansluitend het examen: 99,-",
-    };
-    document.getElementById("courseTypeText").textContent =
-      courseTypeTextMap[this.formData[key]] || "";
-  }
-
-  completeTypeExam(key) {
-    const examTypeTextMap = {
-      1: "Standaard CBR examen (30 min): 48,-",
-      2: "Verlengd CBR examen (45 min): 61,-",
-      3: "Ik heb zelf al een examen gereserveerd",
-    };
-    document.getElementById("examTypeText").textContent =
-      examTypeTextMap[Number(this.formData[key])] || "";
   }
 
   completeCities() {
-    const container = document.getElementById("citiesText");
-    container.textContent = this.citiesNameSelected.join(", ");
+    const container = document.getElementById(this.resumeConfig["cities"].elementId);
+    if (this.citiesNameSelected.length > 0) {
+      container.textContent = this.citiesNameSelected.join(", ");
+      container.classList.remove("hide");
+    } else {
+      container.classList.add("hide");
+    }
   }
-  completeCourseCategory(key) {
+
+  completeCbrLocations() {
+    const container = document.getElementById(this.resumeConfig["cbr_locations"].elementId);
+    if (this.cbr_locations.length > 0) {
+      container.textContent = this.cbr_locations.join(", ");
+      container.classList.remove("hide");
+    } else {
+      container.classList.add("hide");
+    }
+  }
+
+  completeCourseCategory() {
+    const key = this.formData["course_category"];
     const courseCategoryTypeTextMap = {
       per_dates: "zo-snel",
       per_month: "maand",
@@ -1203,17 +1263,22 @@ class FormManager {
     );
     if (element) element.classList.add("active");
   }
+
   completeCourseNames() {
     const category = this.formData["course_category"];
-    const elementId =
-      category === "per_dates" ? "zo-snelResume" : "maandResume";
+    const elementId = category === "per_dates" ? "zo-snelResume" : "maandResume";
     const targetElement = document.getElementById(elementId);
 
-    if (targetElement && Array.isArray(this.formData["course_names"])) {
+    if (targetElement && Array.isArray(this.formData["course_names"]) && this.formData["course_names"].length > 0) {
       targetElement.textContent = this.formData["course_names"].join(", ");
+      targetElement.classList.remove("hide");
+    } else if (targetElement) {
+      targetElement.classList.add("hide");
     }
   }
-  completeCourseDates(key) {
+
+  completeCourseDates() {
+    const key = this.formData["course_dates"]
     const container = document.getElementById("specifiekeDates");
     container.innerHTML = "";
 
@@ -1260,21 +1325,14 @@ class FormManager {
   }
 
   completeDataInputs() {
-    const dataMapping = {
-      firstNameText: "first_name",
-      lastNameText: "last_name",
-      nicknameText: "nickname",
-      birthDateText: "birth_date",
-      emailText: "email",
-      phoneText: "phone",
-      address1Text: "address_1",
-      address2Text: "address_2",
-      address3Text: "address_3",
-    };
-
-    Object.entries(dataMapping).forEach(([key, value]) => {
-      const element = document.getElementById(key);
-      element.textContent = this.formData[value] ?? "-";
+    Object.keys(this.resumeConfig).forEach((key) => {
+      const config = this.resumeConfig[key];
+      if (config && config.elementId) {
+        const element = document.getElementById(config.elementId);
+        if (element) {
+          element.textContent = this.formData[key] ?? "-";
+        }
+      }
     });
   }
   //END RESUME
@@ -1319,19 +1377,19 @@ class FormManager {
 
       isMijnOnlineFlow
         ? (objUrlPayload = {
-            url: this.urls.package_start,
-            payload: { package_starting_at: new Date() },
-          })
+          url: this.urls.package_start,
+          payload: { package_starting_at: new Date() },
+        })
         : (objUrlPayload = {
-            url: this.urls.payment_link,
-            payload: {
-              method: "ideal",
-              amount: payment_amount,
-              final_redirect_url: this.urls.final_redirect_url,
-              fail_redirect_url: this.urls.fail_redirect_url,
-            },
-            token: access,
-          });
+          url: this.urls.payment_link,
+          payload: {
+            method: "ideal",
+            amount: payment_amount,
+            final_redirect_url: this.urls.final_redirect_url,
+            fail_redirect_url: this.urls.fail_redirect_url,
+          },
+          token: access,
+        });
 
       const payment_link = await this.requestLinkPayment(objUrlPayload);
 
