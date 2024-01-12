@@ -311,8 +311,6 @@ class FormManager {
       (step) => step.id === nextStepId
     );
 
-    console.log(nextStepIndex);
-
     if (nextStepIndex !== -1) {
       this.currentStepIndex = nextStepIndex;
       this.stepHistory.push(nextStepId);
@@ -433,7 +431,6 @@ class FormManager {
     });
   }
   showFormForStep() {
-    console.log(this.formData);
     this.hideAllForms();
 
     const currentStepId = this.getCurrentStepId();
@@ -891,7 +888,6 @@ class FormManager {
   async getCbrLocations(createElements = true) {
     if (this.cbr_locations.length === 0) {
       try {
-        console.log("gfgfg");
         this.enableLoader();
         const resServer = await fetch(this.urls.cbrsLocations);
         const data = await resServer.json();
@@ -922,7 +918,6 @@ class FormManager {
     selectElement.addEventListener("change", (event) => {
       const selectedValue = event.target.value;
       this.setData("mijn_exam_location", selectedValue);
-      console.log(this.formData);
     });
   }
 
@@ -1732,8 +1727,6 @@ class FormManager {
     const data = this.getData();
     const dataResponse = await this.sendDataBack(data);
 
-    console.log(dataResponse);
-
     if (dataResponse) {
       const {
         course_type,
@@ -1813,7 +1806,6 @@ class FormManager {
       }
 
       const resultado = await respuesta.json();
-      console.log("Success:", resultado);
       return resultado;
     } catch (error) {
       console.error("Error:", error.message);
@@ -1841,7 +1833,6 @@ class FormManager {
         throw new Error("Error en la respuesta de la red");
       }
       const responseData = await response.json();
-      //console.log("Respuesta del backend:", responseData);
       return responseData;
     } catch (error) {
       console.error("Error when sending data:", error);
