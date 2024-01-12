@@ -598,12 +598,22 @@ class FormManager {
 
     if (currentStep.keysBack) {
       return currentStep.keysBack.some((key) => {
-        return !this.formData.hasOwnProperty(key) || !this.formData[key];
+        const value = this.formData[key];
+        return !value || (typeof value === "string" && value.trim() === "");
       });
-    } else {
+    } else if (
+      currentStep.keyBack &&
+      this.formData.hasOwnProperty(currentStep.keyBack)
+    ) {
       const value = this.formData[currentStep.keyBack];
-      return Array.isArray(value) ? value.length === 0 : !value;
+
+      if (Array.isArray(value)) {
+        return value.length === 0;
+      }
+
+      return typeof value === "string" && value.trim() === "";
     }
+    return true;
   }
 
   updateStepIndexText() {
@@ -634,8 +644,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-        ? 6
-        : 8;
+      ? 6
+      : 8;
   }
 
   isMijnReservation() {
@@ -1122,8 +1132,9 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+      calendar += `<td class="not-current-month disabled">${
+        previousMonthDays - firstDayAdjusted + i + 1
+      }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
