@@ -412,8 +412,8 @@ class FormManager {
     this.convertDate();
     this.handleProductMijnReservation();
     const data = this.applySubmissionRules();
+    if (Number(data.exam_type) === 3) this.formatDateMijnFlow();
     this.completeResume();
-
     this.nextButton.addEventListener("click", () => {
       this.sendDataBack(data);
     });
@@ -465,12 +465,15 @@ class FormManager {
   }
 
   formatBirthDate(value) {
-    let formattedValue = value.replace(/[^0-9\-]/g, '');
+    let formattedValue = value.replace(/[^0-9\-]/g, "");
     formattedValue = formattedValue.slice(0, 10);
 
     if (formattedValue.length === 2 || formattedValue.length === 5) {
-      if (this.lastFormattedValue && formattedValue.length > this.lastFormattedValue.length) {
-        formattedValue += '-';
+      if (
+        this.lastFormattedValue &&
+        formattedValue.length > this.lastFormattedValue.length
+      ) {
+        formattedValue += "-";
       }
     }
 
@@ -480,7 +483,7 @@ class FormManager {
   }
 
   validateDate(dateString) {
-    const parts = dateString.split('-');
+    const parts = dateString.split("-");
     if (parts.length !== 3) return false;
 
     const day = parseInt(parts[0], 10);
@@ -494,7 +497,8 @@ class FormManager {
     if (day < 1 || day > 31) return false;
 
     if (month === 2) {
-      const isLeapYear = (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0));
+      const isLeapYear =
+        year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
       if (day > 29 || (day === 29 && !isLeapYear)) return false;
     } else if ([4, 6, 9, 11].includes(month) && day > 30) {
       return false;
@@ -504,8 +508,8 @@ class FormManager {
   }
 
   initBirthDateInput() {
-    const birthDateInput = document.getElementById('birthDateInput');
-    birthDateInput.addEventListener('input', (event) => {
+    const birthDateInput = document.getElementById("birthDateInput");
+    birthDateInput.addEventListener("input", (event) => {
       const value = event.target.value;
       const formattedValue = this.formatBirthDate(value);
       event.target.value = formattedValue;
@@ -564,19 +568,24 @@ class FormManager {
         this.formData[keyBack] = inputElement.value;
       }
 
-      let validationResult = this.isValidEmail(this.formData['email']) &&
-        this.validateDate(this.formData['birth_date']) &&
+      let validationResult =
+        this.isValidEmail(this.formData["email"]) &&
+        this.validateDate(this.formData["birth_date"]) &&
         this.areAllRequiredInputsFilled();
 
-      validationResult = validationResult && document.getElementById("checkbox").checked;
+      validationResult =
+        validationResult && document.getElementById("checkbox").checked;
       validationResult ? this.enableButton() : this.disableButton();
     }
   }
 
   areAllRequiredInputsFilled() {
-    const textInputs = document.querySelectorAll('.form_step input[type="text"]');
-    return Array.from(textInputs).filter(input => !input.hasAttribute("data-not-required"))
-      .every(input => input.value.trim() !== "");
+    const textInputs = document.querySelectorAll(
+      '.form_step input[type="text"]'
+    );
+    return Array.from(textInputs)
+      .filter((input) => !input.hasAttribute("data-not-required"))
+      .every((input) => input.value.trim() !== "");
   }
 
   isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -623,8 +632,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-        ? 6
-        : 8;
+      ? 6
+      : 8;
   }
 
   isMijnReservation() {
@@ -659,7 +668,7 @@ class FormManager {
         this.sideEffects = true;
       case "step4Mijn":
         this.getCbrLocations(false);
-        this.buildInputDate();
+        this.setTimeInput();
         this.buildInput();
       case "stepMonths":
         this.handleStepMonths();
@@ -689,8 +698,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-      (this.currentStepIndex / this.calculateTotalSteps()) *
-      (100 - basePercentage)
+        (this.currentStepIndex / this.calculateTotalSteps()) *
+          (100 - basePercentage)
     );
   }
 
@@ -890,12 +899,11 @@ class FormManager {
     });
   }
 
-  buildInputDate() {
-    const dateInput = document.getElementById("dateInput");
-    const calendarContainer = document.getElementById("calendarContainer");
-
-    dateInput.addEventListener("click", function () {
-      calendarContainer.style.display = "block";
+  setTimeInput() {
+    const fechaInput = document.getElementById("fechaInput");
+    fechaInput.addEventListener("change", (event) => {
+      const fechaSeleccionada = event.target.value;
+      this.datePicked = fechaSeleccionada;
     });
   }
 
@@ -910,21 +918,34 @@ class FormManager {
       }
       e.target.value = value;
 
-      // Validar rango de tiempo
       if (value.length === 5) {
         const [hours, minutes] = value.split(":").map(Number);
         if (hours > 23 || minutes > 59) {
           timeError.style.display = "block";
-          this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
+          //this.setData("mijn_exam_datetime", "");
+          this.timePicked = "";
         } else {
           timeError.style.display = "none";
-          this.setData("mijn_exam_datetime", "");
+          //this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
+          this.timePicked = `${hours}:${minutes}`;
         }
       } else {
         timeError.style.display = "block";
       }
-      console.log(this.formData);
     });
+  }
+
+  formatDateMijnFlow() {
+    const mijn_exam_datetime = this.timePicked;
+    const valueDate = this.datePicked;
+    if (mijn_exam_datetime && valueDate) {
+      this.setData(
+        "mijn_exam_datetime",
+        `${valueDate}T${mijn_exam_datetime}:00+01:00`
+      );
+    } else {
+      this.setData("mijn_exam_datetime", "");
+    }
   }
 
   createCbrElements(elements) {
@@ -1057,8 +1078,9 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+      calendar += `<td class="not-current-month disabled">${
+        previousMonthDays - firstDayAdjusted + i + 1
+      }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1529,11 +1551,13 @@ class FormManager {
   }
 
   completeCbrLocations() {
+    const data = this.formData["cbr_locations"];
+    if (!data) return;
     const container = document.getElementById("cbrsColumn");
     const text = document.getElementById(
       this.resumeConfig["cbr_locations"].elementId
     );
-    if (this.formData["cbr_locations"].length > 0) {
+    if (data.length > 0) {
       text.textContent = this.cbr_locations.join(", ");
       container.classList.remove("hide");
     } else {
@@ -1677,19 +1701,20 @@ class FormManager {
 
       isMijnOnlineFlow
         ? (objUrlPayload = {
-          url: this.urls.package_start,
-          payload: { package_starting_at: new Date() },
-        })
+            url: this.urls.package_start,
+            payload: { package_starting_at: new Date() },
+            token: access,
+          })
         : (objUrlPayload = {
-          url: this.urls.payment_link,
-          payload: {
-            method: "ideal",
-            amount: payment_amount,
-            final_redirect_url: this.urls.final_redirect_url,
-            fail_redirect_url: this.urls.fail_redirect_url,
-          },
-          token: access,
-        });
+            url: this.urls.payment_link,
+            payload: {
+              method: "ideal",
+              amount: payment_amount,
+              final_redirect_url: this.urls.final_redirect_url,
+              fail_redirect_url: this.urls.fail_redirect_url,
+            },
+            token: access,
+          });
 
       const payment_link = await this.requestLinkPayment(objUrlPayload);
 
@@ -1707,7 +1732,7 @@ class FormManager {
           JSON.stringify(copyDeepPayloadStorage)
         );
 
-        localStorage.setItem('userLoggedIn', true);
+        localStorage.setItem("userLoggedIn", true);
         updateLoginButton();
 
         //this.redirectTo("/bestellen");
@@ -1820,8 +1845,8 @@ formManager.initialize();
 //}
 
 //if (window.location.pathname === '/bestellen') {
-if (!localStorage.getItem('userLoggedIn')) {
-  window.location.href = '/inloggen';
+if (!localStorage.getItem("userLoggedIn")) {
+  window.location.href = "/inloggen";
 }
 class OrderManager {
   constructor() {
@@ -1852,7 +1877,7 @@ const orderManager = new OrderManager();
 
 function updateLoginButton() {
   const loginButton = document.getElementById("btn-login");
-  if (localStorage.getItem('userLoggedIn')) {
+  if (localStorage.getItem("userLoggedIn")) {
     loginButton.textContent = "Uitloggen";
     loginButton.href = "/inloggen";
   } else {
@@ -1864,9 +1889,9 @@ function updateLoginButton() {
 document.addEventListener("DOMContentLoaded", updateLoginButton);
 
 document.getElementById("btn-login").addEventListener("click", (event) => {
-  if (localStorage.getItem('userLoggedIn')) {
-    localStorage.removeItem('userLoggedIn');
+  if (localStorage.getItem("userLoggedIn")) {
+    localStorage.removeItem("userLoggedIn");
     event.target.textContent = "Inloggen";
-    window.location.href = '/inloggen';
+    window.location.href = "/inloggen";
   }
 });
