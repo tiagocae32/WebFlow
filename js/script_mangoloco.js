@@ -56,7 +56,7 @@ class FormManager {
         elementId: "courseTypeText",
         textMap: {
           online: ` Volledige online cursus
-  
+
                                         Videocursus
                                         CBR oefenexamens
                                         E-book `,
@@ -634,8 +634,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -683,7 +683,7 @@ class FormManager {
     }
   }
   //END
-  // test
+
   // GET/SET DATA
   getData() {
     return this.formData;
@@ -1122,9 +1122,8 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${
-        previousMonthDays - firstDayAdjusted + i + 1
-      }</td>`;
+      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1891,10 +1890,10 @@ formManager.initialize();
 //if (window.location.pathname === '/bestellen') {
 
 /*
-        if (!localStorage.getItem("userLoggedIn")) {
-          window.location.href = "/inloggen";
-        }
-        */
+      if (!localStorage.getItem("userLoggedIn")) {
+        window.location.href = "/inloggen";
+      }
+      */
 class OrderManager {
   constructor() {
     this.initialize();
@@ -1923,25 +1922,25 @@ const orderManager = new OrderManager();
 //}
 
 /*
-        function updateLoginButton() {
-          const loginButton = document.getElementById("btn-login");
-          if (localStorage.getItem("userLoggedIn")) {
-            loginButton.textContent = "Uitloggen";
-            loginButton.href = "/inloggen";
-          } else {
-            loginButton.textContent = "Inloggen";
-            loginButton.href = "/inloggen";
-          }
+      function updateLoginButton() {
+        const loginButton = document.getElementById("btn-login");
+        if (localStorage.getItem("userLoggedIn")) {
+          loginButton.textContent = "Uitloggen";
+          loginButton.href = "/inloggen";
+        } else {
+          loginButton.textContent = "Inloggen";
+          loginButton.href = "/inloggen";
         }
-  
-        document.addEventListener("DOMContentLoaded", updateLoginButton);
-  
-        document.getElementById("btn-login").addEventListener("click", (event) => {
-          if (localStorage.getItem("userLoggedIn")) {
-            localStorage.removeItem("userLoggedIn");
-            event.target.textContent = "Inloggen";
-            window.location.href = "/inloggen";
-          }
-        });
-  
-        */
+      }
+
+      document.addEventListener("DOMContentLoaded", updateLoginButton);
+
+      document.getElementById("btn-login").addEventListener("click", (event) => {
+        if (localStorage.getItem("userLoggedIn")) {
+          localStorage.removeItem("userLoggedIn");
+          event.target.textContent = "Inloggen";
+          window.location.href = "/inloggen";
+        }
+      });
+
+      */
