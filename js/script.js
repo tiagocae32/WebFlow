@@ -444,7 +444,7 @@ class FormManager {
       form.classList.add("active");
       this.updateNextButtonState();
     }
-    this.handleSideEffects(form);
+    this.handleSideEffects();
     this.updateProgressBar();
   }
 
@@ -637,8 +637,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-        ? 6
-        : 8;
+      ? 6
+      : 8;
   }
 
   isMijnReservation() {
@@ -656,12 +656,12 @@ class FormManager {
     }
   }
 
-  handleSideEffects(form) {
+  handleSideEffects() {
     const currentStepId = this.getCurrentStepId();
 
     switch (currentStepId) {
       case "step4Cities":
-        this.getCities(form);
+        this.getCities();
         this.sideEffects = true;
         break;
       case "step4Cbr":
@@ -1009,7 +1009,10 @@ class FormManager {
       checkbox.style.position = "absolute";
       checkbox.style.zIndex = -1;
 
-      if (this.formData['cbr_locations'] && this.formData['cbr_locations'].includes(element)) {
+      if (
+        this.formData["cbr_locations"] &&
+        this.formData["cbr_locations"].includes(element)
+      ) {
         checkbox.checked = true;
       }
 
@@ -1121,8 +1124,9 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+      calendar += `<td class="not-current-month disabled">${
+        previousMonthDays - firstDayAdjusted + i + 1
+      }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
