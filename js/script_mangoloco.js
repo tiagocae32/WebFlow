@@ -705,7 +705,7 @@ class FormManager {
     const totalSteps = this.calculateTotalSteps();
 
     const progressPercentage =
-      totalSteps > 1 ? Math.round((currentStepNumber / totalSteps) * 100) : 0;
+      totalSteps > 1 ? Math.round((currentStepNumber / totalSteps + 1) * 100) : 0;
 
     return progressPercentage;
   }
