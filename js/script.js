@@ -518,32 +518,35 @@ class FormManager {
 
   initFormInputEvents() {
     const inputs = document.querySelectorAll('.form_step input[type="text"]');
-    inputs.forEach(input => {
-      input.addEventListener('blur', this.handleInputBlur.bind(this));
+    inputs.forEach((input) => {
+      input.addEventListener("blur", this.handleInputBlur.bind(this));
     });
   }
 
   handleInputBlur(event) {
     const inputElement = event.target;
-    const errorHintId = inputElement.getAttribute('data-error-hint-id');
+    const errorHintId = inputElement.getAttribute("data-error-hint-id");
     const errorHintElement = document.getElementById(errorHintId);
 
     let isValid = true;
-    let errorMessage = '';
+    let errorMessage = "";
 
     if (!inputElement.value.trim()) {
-      errorMessage = 'Dit veld is verplicht';
+      errorMessage = "Dit veld is verplicht";
       isValid = false;
-    } else if (inputElement.getAttribute("data-key-back") === "email" && !this.isValidEmail(inputElement.value)) {
+    } else if (
+      inputElement.getAttribute("data-key-back") === "email" &&
+      !this.isValidEmail(inputElement.value)
+    ) {
       errorMessage = "E-mail is niet geldig";
       isValid = false;
     }
 
     if (!isValid) {
       errorHintElement.textContent = errorMessage;
-      errorHintElement.style.display = 'block';
+      errorHintElement.style.display = "block";
     } else {
-      errorHintElement.style.display = 'none';
+      errorHintElement.style.display = "none";
     }
   }
 
@@ -601,9 +604,9 @@ class FormManager {
     }
 
     if (currentStep.keysBack) {
-      return !currentStep.keysBack.every(
-        (key) => this.formData[key]?.trim() !== ""
-      );
+      return currentStep.keysBack.some((key) => {
+        return !this.formData.hasOwnProperty(key) || !this.formData[key];
+      });
     } else {
       const value = this.formData[currentStep.keyBack];
       return Array.isArray(value) ? value.length === 0 : !value;
@@ -900,10 +903,18 @@ class FormManager {
   }
 
   setTimeInput() {
-    const fechaInput = document.getElementById("fechaInput");
+    const fechaInput = document.getElementById("dateInput");
     fechaInput.addEventListener("change", (event) => {
-      const fechaSeleccionada = event.target.value;
-      this.datePicked = fechaSeleccionada;
+      let fechaSeleccionada = event.target.value;
+      const splitDate = fechaSeleccionada.split("-");
+
+      if (splitDate[0].length > 4) {
+        const truncatedYear = splitDate[0].slice(0, 4);
+        const truncatedDate = truncatedYear + splitDate[1] + splitDate[2];
+        fechaInput.value = truncatedDate;
+      } else {
+        this.datePicked = fechaSeleccionada;
+      }
     });
   }
 
@@ -922,12 +933,12 @@ class FormManager {
         const [hours, minutes] = value.split(":").map(Number);
         if (hours > 23 || minutes > 59) {
           timeError.style.display = "block";
-          //this.setData("mijn_exam_datetime", "");
+          this.setData("mijn_exam_datetime", "");
           this.timePicked = "";
         } else {
           timeError.style.display = "none";
-          //this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
           this.timePicked = `${hours}:${minutes}`;
+          this.setData("mijn_exam_datetime", this.timePicked);
         }
       } else {
         timeError.style.display = "block";
