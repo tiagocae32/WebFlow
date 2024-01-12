@@ -311,8 +311,6 @@ class FormManager {
       (step) => step.id === nextStepId
     );
 
-    console.log(nextStepIndex);
-
     if (nextStepIndex !== -1) {
       this.currentStepIndex = nextStepIndex;
       this.stepHistory.push(nextStepId);
@@ -433,7 +431,6 @@ class FormManager {
     });
   }
   showFormForStep() {
-    console.log(this.formData);
     this.hideAllForms();
 
     const currentStepId = this.getCurrentStepId();
@@ -444,7 +441,7 @@ class FormManager {
       form.classList.add("active");
       this.updateNextButtonState();
     }
-    this.handleSideEffects(form);
+    this.handleSideEffects();
     this.updateProgressBar();
   }
 
@@ -656,12 +653,12 @@ class FormManager {
     }
   }
 
-  handleSideEffects(form) {
+  handleSideEffects() {
     const currentStepId = this.getCurrentStepId();
 
     switch (currentStepId) {
       case "step4Cities":
-        this.getCities(form);
+        this.getCities();
         this.sideEffects = true;
         break;
       case "step4Cbr":
@@ -889,16 +886,22 @@ class FormManager {
 
   // CBR LOCATIONS
   async getCbrLocations(createElements = true) {
-    try {
-      this.enableLoader();
-      const resServer = await fetch(this.urls.cbrsLocations);
-      const data = await resServer.json();
-      if (createElements) this.createCbrElements(data);
-      else this.createCbrsSelect(data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      this.disableLoader();
+    if (this.cbr_locations.length === 0) {
+      try {
+        this.enableLoader();
+        const resServer = await fetch(this.urls.cbrsLocations);
+        const data = await resServer.json();
+        this.cbrs_list = data;
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.disableLoader();
+      }
+    }
+    if (createElements) {
+      this.createCbrElements(this.cbrs_list);
+    } else {
+      this.createCbrsSelect(this.cbrs_list);
     }
   }
 
@@ -915,7 +918,6 @@ class FormManager {
     selectElement.addEventListener("change", (event) => {
       const selectedValue = event.target.value;
       this.setData("mijn_exam_location", selectedValue);
-      console.log(this.formData);
     });
   }
 
@@ -1003,6 +1005,10 @@ class FormManager {
       checkbox.style.position = "absolute";
       checkbox.style.zIndex = -1;
 
+      if (this.formData['cbr_locations'] && this.formData['cbr_locations'].includes(element)) {
+        checkbox.checked = true;
+      }
+
       checkbox.addEventListener("click", () => {
         this.toggleCbrSelection(element);
         this.updateNextButtonState();
@@ -1019,18 +1025,32 @@ class FormManager {
       itemContainer.appendChild(label);
 
       container.appendChild(itemContainer);
+
+      if (
+        this.formData["cbr_locations"] &&
+        this.formData["cbr_locations"].includes(element)
+      ) {
+        checkbox.checked = true;
+      }
+
+      checkbox.addEventListener("click", () => {
+        this.toggleCbrSelection(element);
+        this.updateNextButtonState();
+      });
     });
   }
 
   toggleCbrSelection(element) {
-    const index = this.cbr_locations.indexOf(element);
-
-    if (index === -1) {
-      this.cbr_locations.push(element);
-    } else {
-      this.cbr_locations.splice(index, 1);
+    if (!this.formData["cbr_locations"]) {
+      this.formData["cbr_locations"] = [];
     }
 
+    if (!this.formData["cbr_locations"].includes(element)) {
+      this.cbr_locations.push(element);
+    } else {
+      const index = this.cbr_locations.indexOf(element);
+      this.cbr_locations.splice(index, 1);
+    }
     this.setData("cbr_locations", this.cbr_locations);
   }
 
@@ -1715,8 +1735,6 @@ class FormManager {
     const data = this.getData();
     const dataResponse = await this.sendDataBack(data);
 
-    console.log(dataResponse);
-
     if (dataResponse) {
       const {
         course_type,
@@ -1796,7 +1814,6 @@ class FormManager {
       }
 
       const resultado = await respuesta.json();
-      console.log("Success:", resultado);
       return resultado;
     } catch (error) {
       console.error("Error:", error.message);
@@ -1824,7 +1841,6 @@ class FormManager {
         throw new Error("Error en la respuesta de la red");
       }
       const responseData = await response.json();
-      //console.log("Respuesta del backend:", responseData);
       return responseData;
     } catch (error) {
       console.error("Error when sending data:", error);
