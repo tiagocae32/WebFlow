@@ -1714,7 +1714,7 @@ class FormManager {
 
       const isMijnOnline = course_type === "online" && is_mijn_reservation;
       const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
-      const isMijnOnlineFlow = is_mijn_reservation;
+      const isMijnOnlineFlow = isMijnOnline;
       let payment_link;
 
       const objUrlPayloadPackage = {
