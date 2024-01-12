@@ -897,6 +897,11 @@ class FormManager {
 
   setTimeInput() {
     const fechaInput = document.getElementById("dateInput");
+
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString().split("T")[0];
+    fechaInput.min = formattedDate;
+
     fechaInput.addEventListener("change", (event) => {
       let fechaSeleccionada = event.target.value;
       const splitDate = fechaSeleccionada.split("-");
