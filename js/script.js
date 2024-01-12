@@ -1696,27 +1696,31 @@ class FormManager {
       const isMijnOnline = course_type === "online" && is_mijn_reservation;
       const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
       const isMijnOnlineFlow = is_mijn_reservation;
+      let payment_link;
 
-      let objUrlPayload;
+      const objUrlPayloadPackage = {
+        url: this.urls.package_start,
+        payload: { package_starting_at: new Date() },
+        token: access,
+      };
 
-      isMijnOnlineFlow
-        ? (objUrlPayload = {
-            url: this.urls.package_start,
-            payload: { package_starting_at: new Date() },
-            token: access,
-          })
-        : (objUrlPayload = {
-            url: this.urls.payment_link,
-            payload: {
-              method: "ideal",
-              amount: payment_amount,
-              final_redirect_url: this.urls.final_redirect_url,
-              fail_redirect_url: this.urls.fail_redirect_url,
-            },
-            token: access,
-          });
+      const objUrlPayloadPayment = {
+        url: this.urls.payment_link,
+        payload: {
+          method: "ideal",
+          amount: payment_amount,
+          final_redirect_url: this.urls.final_redirect_url,
+          fail_redirect_url: this.urls.fail_redirect_url,
+        },
+        token: access,
+      };
 
-      const payment_link = await this.requestLinkPayment(objUrlPayload);
+      if (isMijnOnlineFlow) {
+        await this.requestLinkPayment(objUrlPayloadPackage);
+        payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+      } else {
+        payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+      }
 
       if (payment_link) {
         const payloadStorage = {
@@ -1845,9 +1849,12 @@ formManager.initialize();
 //}
 
 //if (window.location.pathname === '/bestellen') {
+
+/*
 if (!localStorage.getItem("userLoggedIn")) {
   window.location.href = "/inloggen";
 }
+*/
 class OrderManager {
   constructor() {
     this.initialize();
@@ -1875,6 +1882,7 @@ class OrderManager {
 const orderManager = new OrderManager();
 //}
 
+/*
 function updateLoginButton() {
   const loginButton = document.getElementById("btn-login");
   if (localStorage.getItem("userLoggedIn")) {
@@ -1895,3 +1903,5 @@ document.getElementById("btn-login").addEventListener("click", (event) => {
     window.location.href = "/inloggen";
   }
 });
+
+*/
