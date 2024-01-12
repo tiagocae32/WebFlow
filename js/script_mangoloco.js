@@ -698,12 +698,6 @@ class FormManager {
   // PROGRESS BAR
 
   calculateProgressPercentage() {
-    const basePercentage = 15;
-    return Math.round(
-      basePercentage +
-      (this.currentStepIndex / this.calculateTotalSteps()) *
-      (100 - basePercentage)
-    );
     const currentStepNumber = this.stepHistory.includes("overzicht")
       ? this.stepHistory.length - 1
       : this.stepHistory.length || 1;
