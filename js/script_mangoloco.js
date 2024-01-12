@@ -56,7 +56,7 @@ class FormManager {
         elementId: "courseTypeText",
         textMap: {
           online: ` Volledige online cursus
-    
+
                                     Videocursus
                                     CBR oefenexamens
                                     E-book `,
@@ -637,8 +637,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -769,21 +769,23 @@ class FormManager {
 
   // CITIES
   async getCities() {
-    try {
-      this.enableLoader();
-      const resServer = await fetch(this.urls.cities);
-      const data = await resServer.json();
-      this.citiesList = data.filter(
-        (city) =>
-          city.license_types.includes(this.formData.license_type) &&
-          city.id !== 53
-      );
-      this.createOptions(this.citiesList, "step4", true);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      this.disableLoader();
+    if (this.citiesList.length === 0) {
+      try {
+        this.enableLoader();
+        const resServer = await fetch(this.urls.cities);
+        const data = await resServer.json();
+        this.citiesList = data.filter(
+          (city) =>
+            city.license_types.includes(this.formData.license_type) &&
+            city.id !== 53
+        );
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.disableLoader();
+      }
     }
+    this.createOptions(this.citiesList, "step4", true);
   }
   // END CITIES
 
@@ -833,6 +835,8 @@ class FormManager {
   createOptions(options, containerId, isCity = true) {
     const newContainer = document.getElementById(containerId);
     this.cleanInterface(newContainer);
+    const key = isCity ? "cities" : "course_names";
+
     options.forEach((option) => {
       const divElement = document.createElement("div");
       divElement.className = "aanmelden_step4-checkbox-item";
@@ -848,8 +852,14 @@ class FormManager {
 
       divElement.appendChild(paragraph);
       newContainer.appendChild(divElement);
+
+      const value = isCity ? option.id : option;
+      if (this.formData[key] && this.formData[key].includes(value)) {
+        divElement.classList.add("active");
+      }
     });
   }
+
   toggleOptionSelection(option, divElement, isCity) {
     const key = isCity ? "cities" : "course_names";
     const value = isCity ? option.id : option;
@@ -879,16 +889,22 @@ class FormManager {
 
   // CBR LOCATIONS
   async getCbrLocations(createElements = true) {
-    try {
-      this.enableLoader();
-      const resServer = await fetch(this.urls.cbrsLocations);
-      const data = await resServer.json();
-      if (createElements) this.createCbrElements(data);
-      else this.createCbrsSelect(data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      this.disableLoader();
+    if (this.cbr_locations.length === 0) {
+      try {
+        this.enableLoader();
+        const resServer = await fetch(this.urls.cbrsLocations);
+        const data = await resServer.json();
+        this.cbr_locations = data;
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.disableLoader();
+      }
+    }
+    if (createElements) {
+      this.createCbrElements(this.cbr_locations);
+    } else {
+      this.createCbrsSelect(this.cbr_locations);
     }
   }
 
@@ -1101,9 +1117,8 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${
-        previousMonthDays - firstDayAdjusted + i + 1
-      }</td>`;
+      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1916,9 +1931,9 @@ const orderManager = new OrderManager();
           loginButton.href = "/inloggen";
         }
       }
-    
+
       document.addEventListener("DOMContentLoaded", updateLoginButton);
-    
+
       document.getElementById("btn-login").addEventListener("click", (event) => {
         if (localStorage.getItem("userLoggedIn")) {
           localStorage.removeItem("userLoggedIn");
@@ -1926,5 +1941,5 @@ const orderManager = new OrderManager();
           window.location.href = "/inloggen";
         }
       });
-    
+
       */

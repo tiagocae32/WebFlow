@@ -56,10 +56,10 @@ class FormManager {
         elementId: "courseTypeText",
         textMap: {
           online: ` Volledige online cursus
-  
-                                  Videocursus
-                                  CBR oefenexamens
-                                  E-book `,
+
+                                      Videocursus
+                                      CBR oefenexamens
+                                      E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -637,8 +637,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -769,21 +769,23 @@ class FormManager {
 
   // CITIES
   async getCities() {
-    try {
-      this.enableLoader();
-      const resServer = await fetch(this.urls.cities);
-      const data = await resServer.json();
-      this.citiesList = data.filter(
-        (city) =>
-          city.license_types.includes(this.formData.license_type) &&
-          city.id !== 53
-      );
-      this.createOptions(this.citiesList, "step4", true);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      this.disableLoader();
+    if (this.citiesList.length === 0) {
+      try {
+        this.enableLoader();
+        const resServer = await fetch(this.urls.cities);
+        const data = await resServer.json();
+        this.citiesList = data.filter(
+          (city) =>
+            city.license_types.includes(this.formData.license_type) &&
+            city.id !== 53
+        );
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.disableLoader();
+      }
     }
+    this.createOptions(this.citiesList, "step4", true);
   }
   // END CITIES
 
@@ -879,16 +881,22 @@ class FormManager {
 
   // CBR LOCATIONS
   async getCbrLocations(createElements = true) {
-    try {
-      this.enableLoader();
-      const resServer = await fetch(this.urls.cbrsLocations);
-      const data = await resServer.json();
-      if (createElements) this.createCbrElements(data);
-      else this.createCbrsSelect(data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      this.disableLoader();
+    if (this.cbr_locations.length === 0) {
+      try {
+        this.enableLoader();
+        const resServer = await fetch(this.urls.cbrsLocations);
+        const data = await resServer.json();
+        this.cbr_locations = data;
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.disableLoader();
+      }
+    }
+    if (createElements) {
+      this.createCbrElements(this.cbr_locations);
+    } else {
+      this.createCbrsSelect(this.cbr_locations);
     }
   }
 
@@ -1101,9 +1109,8 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${
-        previousMonthDays - firstDayAdjusted + i + 1
-      }</td>`;
+      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1377,15 +1384,15 @@ class FormManager {
       this.appendSvgToElement(
         packageDescriptionItem,
         `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <g clip-path="url(#clip0_410_3698)">
-                      <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
-                      </g>
-                      <defs>
-                      <clipPath id="clip0_410_3698">
-                      <rect width="10" height="8" fill="white"></rect>
-                      </clipPath>
-                      </defs>
-                      </svg >`
+                          <g clip-path="url(#clip0_410_3698)">
+                          <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
+                          </g>
+                          <defs>
+                          <clipPath id="clip0_410_3698">
+                          <rect width="10" height="8" fill="white"></rect>
+                          </clipPath>
+                          </defs>
+                          </svg >`
       );
 
       const descriptionItem = this.createElementWithClass(
@@ -1874,10 +1881,10 @@ formManager.initialize();
 //if (window.location.pathname === '/bestellen') {
 
 /*
-    if (!localStorage.getItem("userLoggedIn")) {
-      window.location.href = "/inloggen";
-    }
-    */
+      if (!localStorage.getItem("userLoggedIn")) {
+        window.location.href = "/inloggen";
+      }
+      */
 class OrderManager {
   constructor() {
     this.initialize();
@@ -1906,25 +1913,25 @@ const orderManager = new OrderManager();
 //}
 
 /*
-    function updateLoginButton() {
-      const loginButton = document.getElementById("btn-login");
-      if (localStorage.getItem("userLoggedIn")) {
-        loginButton.textContent = "Uitloggen";
-        loginButton.href = "/inloggen";
-      } else {
-        loginButton.textContent = "Inloggen";
-        loginButton.href = "/inloggen";
+      function updateLoginButton() {
+        const loginButton = document.getElementById("btn-login");
+        if (localStorage.getItem("userLoggedIn")) {
+          loginButton.textContent = "Uitloggen";
+          loginButton.href = "/inloggen";
+        } else {
+          loginButton.textContent = "Inloggen";
+          loginButton.href = "/inloggen";
+        }
       }
-    }
-  
-    document.addEventListener("DOMContentLoaded", updateLoginButton);
-  
-    document.getElementById("btn-login").addEventListener("click", (event) => {
-      if (localStorage.getItem("userLoggedIn")) {
-        localStorage.removeItem("userLoggedIn");
-        event.target.textContent = "Inloggen";
-        window.location.href = "/inloggen";
-      }
-    });
-  
-    */
+
+      document.addEventListener("DOMContentLoaded", updateLoginButton);
+
+      document.getElementById("btn-login").addEventListener("click", (event) => {
+        if (localStorage.getItem("userLoggedIn")) {
+          localStorage.removeItem("userLoggedIn");
+          event.target.textContent = "Inloggen";
+          window.location.href = "/inloggen";
+        }
+      });
+
+      */
