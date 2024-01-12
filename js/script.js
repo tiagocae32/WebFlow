@@ -411,8 +411,8 @@ class FormManager {
     this.convertDate();
     this.handleProductMijnReservation();
     const data = this.applySubmissionRules();
+    if (Number(data.exam_type) === 3) this.formatDateMijnFlow();
     this.completeResume();
-
     this.nextButton.addEventListener("click", () => {
       this.sendDataBack(data);
     });
@@ -581,7 +581,7 @@ class FormManager {
         this.sideEffects = true;
       case "step4Mijn":
         this.getCbrLocations(false);
-        this.buildInputDate();
+        this.setTimeInput();
         this.buildInput();
       case "stepMonths":
         this.handleStepMonths();
@@ -812,12 +812,11 @@ class FormManager {
     });
   }
 
-  buildInputDate() {
-    const dateInput = document.getElementById("dateInput");
-    const calendarContainer = document.getElementById("calendarContainer");
-
-    dateInput.addEventListener("click", function () {
-      calendarContainer.style.display = "block";
+  setTimeInput() {
+    const fechaInput = document.getElementById("fechaInput");
+    fechaInput.addEventListener("change", (event) => {
+      const fechaSeleccionada = event.target.value;
+      this.datePicked = fechaSeleccionada;
     });
   }
 
@@ -832,21 +831,34 @@ class FormManager {
       }
       e.target.value = value;
 
-      // Validar rango de tiempo
       if (value.length === 5) {
         const [hours, minutes] = value.split(":").map(Number);
         if (hours > 23 || minutes > 59) {
           timeError.style.display = "block";
-          this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
+          //this.setData("mijn_exam_datetime", "");
+          this.timePicked = "";
         } else {
           timeError.style.display = "none";
-          this.setData("mijn_exam_datetime", "");
+          //this.setData("mijn_exam_datetime", `${hours}:${minutes}`);
+          this.timePicked = `${hours}:${minutes}`;
         }
       } else {
         timeError.style.display = "block";
       }
-      console.log(this.formData);
     });
+  }
+
+  formatDateMijnFlow() {
+    const mijn_exam_datetime = this.timePicked;
+    const valueDate = this.datePicked;
+    if (mijn_exam_datetime && valueDate) {
+      this.setData(
+        "mijn_exam_datetime",
+        `${valueDate}T${mijn_exam_datetime}:00+01:00`
+      );
+    } else {
+      this.setData("mijn_exam_datetime", "");
+    }
   }
 
   createCbrElements(elements) {
@@ -1453,11 +1465,13 @@ class FormManager {
   }
 
   completeCbrLocations() {
+    const data = this.formData["cbr_locations"];
+    if (!data) return;
     const container = document.getElementById("cbrsColumn");
     const text = document.getElementById(
       this.resumeConfig["cbr_locations"].elementId
     );
-    if (this.formData["cbr_locations"].length > 0) {
+    if (data.length > 0) {
       text.textContent = this.cbr_locations.join(", ");
       container.classList.remove("hide");
     } else {
@@ -1603,6 +1617,7 @@ class FormManager {
         ? (objUrlPayload = {
             url: this.urls.package_start,
             payload: { package_starting_at: new Date() },
+            token: access,
           })
         : (objUrlPayload = {
             url: this.urls.payment_link,
