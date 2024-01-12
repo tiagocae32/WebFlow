@@ -13,6 +13,7 @@ class FormManager {
     this.citiesNameSelected = [];
     this.cbr_locations = [];
     this.stepHistory = [];
+    this.initBirthDateInput();
     this.urls = {
       payment_link:
         "https://api.develop.nutheorie.be/api/applications/payment_link/",
@@ -463,42 +464,86 @@ class FormManager {
     }
   }
 
+  formatBirthDate(value) {
+    let formattedValue = value.replace(/[^0-9]/g, '').slice(0, 8); // Eliminar guiones y limitar a 8 dígitos
+
+    if (formattedValue.length >= 2) {
+      formattedValue = formattedValue.slice(0, 2) + '-' + formattedValue.slice(2);
+    }
+    if (formattedValue.length >= 5) {
+      formattedValue = formattedValue.slice(0, 5) + '-' + formattedValue.slice(5);
+    }
+
+    return formattedValue;
+  }
+
+  validateDate(dateString) {
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return false;
+
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+
+    if (year < 1900 || year > new Date().getFullYear()) return false;
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+
+    if (month === 2) {
+      const isLeapYear = (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0));
+      if (day > 29 || (day === 29 && !isLeapYear)) return false;
+    } else if ([4, 6, 9, 11].includes(month) && day > 30) {
+      return false;
+    }
+
+    return true;
+  }
+
+  initBirthDateInput() {
+    const birthDateInput = document.getElementById('birthDateInput');
+    birthDateInput.addEventListener('input', (event) => {
+      const value = event.target.value;
+      const formattedValue = this.formatBirthDate(value);
+      event.target.value = formattedValue;
+    });
+  }
+
   handleFormInput(event) {
     if (this.getCurrentStepId() === "stepInputs") {
-      let validationResult = false;
       const inputElement = event.target;
-      const formStep = inputElement.closest(".form-step");
-      const textInputs = formStep.querySelectorAll('input[type="text"]');
-      const requiredInputs = Array.from(textInputs).filter(
-        (input) => !input.hasAttribute("data-not-required")
-      );
-      const allInputsHaveValue = requiredInputs.every(
-        (input) => input.value.trim() !== ""
-      );
-
       const keyBack = inputElement.getAttribute("data-key-back");
 
-      if (keyBack === "email") {
-        if (!this.isValidEmail(inputElement.value)) {
-          this.disableButton();
-          validationResult = false;
-          return;
+      if (keyBack === "birth_date") {
+        const formattedBirthDate = this.formatBirthDate(inputElement.value);
+        inputElement.value = formattedBirthDate;
+        this.formData[keyBack] = formattedBirthDate;
+
+        const birthDateErrorElement = document.getElementById("birthDateError");
+        if (!this.validateDate(formattedBirthDate)) {
+          birthDateErrorElement.textContent = "Voer een geboortedatum in";
+          birthDateErrorElement.style.display = "block";
+        } else {
+          birthDateErrorElement.style.display = "none";
         }
-      }
-
-      this.formData[keyBack] = inputElement.value;
-
-      if (!allInputsHaveValue) {
-        this.disableButton();
-        validationResult = false;
       } else {
-        this.enableButton();
-        validationResult = true;
+        this.formData[keyBack] = inputElement.value;
       }
-      const isCheckboxChecked = document.getElementById("checkbox").checked;
-      if (validationResult && isCheckboxChecked) this.enableButton();
-      else this.disableButton();
+
+      let validationResult = this.isValidEmail(this.formData['email']) &&
+        this.validateDate(this.formData['birth_date']) &&
+        this.areAllRequiredInputsFilled();
+
+      validationResult = validationResult && document.getElementById("checkbox").checked;
+      validationResult ? this.enableButton() : this.disableButton();
     }
+  }
+
+  areAllRequiredInputsFilled() {
+    const textInputs = document.querySelectorAll('.form_step input[type="text"]');
+    return Array.from(textInputs).filter(input => !input.hasAttribute("data-not-required"))
+      .every(input => input.value.trim() !== "");
   }
 
   isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
