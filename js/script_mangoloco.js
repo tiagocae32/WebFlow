@@ -54,7 +54,7 @@ class FormManager {
         elementId: "courseTypeText",
         textMap: {
           online: ` Volledige online cursus
-  
+
                             Videocursus
                             CBR oefenexamens
                             E-book `,
@@ -545,8 +545,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -611,8 +611,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-        (this.currentStepIndex / this.calculateTotalSteps()) *
-          (100 - basePercentage)
+      (this.currentStepIndex / this.calculateTotalSteps()) *
+      (100 - basePercentage)
     );
   }
 
@@ -755,7 +755,7 @@ class FormManager {
   }
   toggleOptionSelection(option, divElement, isCity) {
     const key = isCity ? "cities" : "course_names";
-    const value = isCity ? option.name : option;
+    const value = isCity ? option.id : option;
 
     if (!Array.isArray(this.formData[key])) {
       this.formData[key] = [];
@@ -979,9 +979,8 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${
-        previousMonthDays - firstDayAdjusted + i + 1
-      }</td>`;
+      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1601,19 +1600,19 @@ class FormManager {
 
       isMijnOnlineFlow
         ? (objUrlPayload = {
-            url: this.urls.package_start,
-            payload: { package_starting_at: new Date() },
-          })
+          url: this.urls.package_start,
+          payload: { package_starting_at: new Date() },
+        })
         : (objUrlPayload = {
-            url: this.urls.payment_link,
-            payload: {
-              method: "ideal",
-              amount: payment_amount,
-              final_redirect_url: this.urls.final_redirect_url,
-              fail_redirect_url: this.urls.fail_redirect_url,
-            },
-            token: access,
-          });
+          url: this.urls.payment_link,
+          payload: {
+            method: "ideal",
+            amount: payment_amount,
+            final_redirect_url: this.urls.final_redirect_url,
+            fail_redirect_url: this.urls.fail_redirect_url,
+          },
+          token: access,
+        });
 
       const payment_link = await this.requestLinkPayment(objUrlPayload);
 
@@ -1630,6 +1629,9 @@ class FormManager {
           "formData",
           JSON.stringify(copyDeepPayloadStorage)
         );
+
+        localStorage.setItem('userLoggedIn', true);
+        updateLoginButton();
 
         //this.redirectTo("/bestellen");
         //const orderManager = new OrderManager();
@@ -1741,6 +1743,9 @@ formManager.initialize();
 //}
 
 //if (window.location.pathname === '/bestellen') {
+if (!localStorage.getItem('userLoggedIn')) {
+  window.location.href = '/inloggen';
+}
 class OrderManager {
   constructor() {
     this.initialize();
@@ -1767,3 +1772,24 @@ class OrderManager {
 }
 const orderManager = new OrderManager();
 //}
+
+function updateLoginButton() {
+  const loginButton = document.getElementById("btn-login");
+  if (localStorage.getItem('userLoggedIn')) {
+    loginButton.textContent = "Uitloggen";
+    loginButton.href = "/inloggen";
+  } else {
+    loginButton.textContent = "Inloggen";
+    loginButton.href = "/inloggen";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", updateLoginButton);
+
+document.getElementById("btn-login").addEventListener("click", (event) => {
+  if (localStorage.getItem('userLoggedIn')) {
+    localStorage.removeItem('userLoggedIn');
+    event.target.textContent = "Inloggen";
+    window.location.href = '/inloggen';
+  }
+});
