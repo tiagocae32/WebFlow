@@ -465,14 +465,16 @@ class FormManager {
   }
 
   formatBirthDate(value) {
-    let formattedValue = value.replace(/[^0-9]/g, '').slice(0, 8); // Eliminar guiones y limitar a 8 dígitos
+    let formattedValue = value.replace(/[^0-9\-]/g, '');
+    formattedValue = formattedValue.slice(0, 10);
 
-    if (formattedValue.length >= 2) {
-      formattedValue = formattedValue.slice(0, 2) + '-' + formattedValue.slice(2);
+    if (formattedValue.length === 2 || formattedValue.length === 5) {
+      if (this.lastFormattedValue && formattedValue.length > this.lastFormattedValue.length) {
+        formattedValue += '-';
+      }
     }
-    if (formattedValue.length >= 5) {
-      formattedValue = formattedValue.slice(0, 5) + '-' + formattedValue.slice(5);
-    }
+
+    this.lastFormattedValue = formattedValue;
 
     return formattedValue;
   }
