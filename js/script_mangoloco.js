@@ -311,6 +311,8 @@ class FormManager {
       (step) => step.id === nextStepId
     );
 
+    console.log(nextStepIndex);
+
     if (nextStepIndex !== -1) {
       this.currentStepIndex = nextStepIndex;
       this.stepHistory.push(nextStepId);
@@ -702,6 +704,16 @@ class FormManager {
       (this.currentStepIndex / this.calculateTotalSteps()) *
       (100 - basePercentage)
     );
+    const currentStepNumber = this.stepHistory.includes("overzicht")
+      ? this.stepHistory.length - 1
+      : this.stepHistory.length || 1;
+
+    const totalSteps = this.calculateTotalSteps();
+
+    const progressPercentage =
+      totalSteps > 1 ? Math.round((currentStepNumber / totalSteps) * 100) : 0;
+
+    return progressPercentage;
   }
 
   updateProgressBar() {
