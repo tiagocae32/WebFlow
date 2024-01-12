@@ -891,10 +891,11 @@ class FormManager {
   async getCbrLocations(createElements = true) {
     if (this.cbr_locations.length === 0) {
       try {
+        console.log("gfgfg");
         this.enableLoader();
         const resServer = await fetch(this.urls.cbrsLocations);
         const data = await resServer.json();
-        this.cbr_locations = data;
+        this.cbrs_list = data;
       } catch (error) {
         console.log(error);
       } finally {
@@ -902,9 +903,9 @@ class FormManager {
       }
     }
     if (createElements) {
-      this.createCbrElements(this.cbr_locations);
+      this.createCbrElements(this.cbrs_list);
     } else {
-      this.createCbrsSelect(this.cbr_locations);
+      this.createCbrsSelect(this.cbrs_list);
     }
   }
 
@@ -1009,18 +1010,6 @@ class FormManager {
       checkbox.style.position = "absolute";
       checkbox.style.zIndex = -1;
 
-      if (
-        this.formData["cbr_locations"] &&
-        this.formData["cbr_locations"].includes(element)
-      ) {
-        checkbox.checked = true;
-      }
-
-      checkbox.addEventListener("click", () => {
-        this.toggleCbrSelection(element);
-        this.updateNextButtonState();
-      });
-
       const span = document.createElement("span");
       span.className = "text-weight-bold w-form-label";
       span.setAttribute("for", element);
@@ -1032,18 +1021,32 @@ class FormManager {
       itemContainer.appendChild(label);
 
       container.appendChild(itemContainer);
+
+      if (
+        this.formData["cbr_locations"] &&
+        this.formData["cbr_locations"].includes(element)
+      ) {
+        checkbox.checked = true;
+      }
+
+      checkbox.addEventListener("click", () => {
+        this.toggleCbrSelection(element);
+        this.updateNextButtonState();
+      });
     });
   }
 
   toggleCbrSelection(element) {
-    const index = this.cbr_locations.indexOf(element);
-
-    if (index === -1) {
-      this.cbr_locations.push(element);
-    } else {
-      this.cbr_locations.splice(index, 1);
+    if (!this.formData["cbr_locations"]) {
+      this.formData["cbr_locations"] = [];
     }
 
+    if (!this.formData["cbr_locations"].includes(element)) {
+      this.cbr_locations.push(element);
+    } else {
+      const index = this.cbr_locations.indexOf(element);
+      this.cbr_locations.splice(index, 1);
+    }
     this.setData("cbr_locations", this.cbr_locations);
   }
 
