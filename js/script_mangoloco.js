@@ -617,9 +617,13 @@ class FormManager {
 
     const totalSteps = this.calculateTotalSteps();
     const stepIndexTextElement = document.getElementById("stepIndexText");
+    const stepIndexTextElementMobile = document.getElementById("stepIndexTextMobile");
 
     if (stepIndexTextElement) {
       stepIndexTextElement.textContent = `${currentStepNumber} van ${totalSteps}`;
+    }
+    if (stepIndexTextElementMobile) {
+      stepIndexTextElementMobile.textContent = `${currentStepNumber} van ${totalSteps}`;
     }
   }
 
