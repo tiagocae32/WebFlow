@@ -56,7 +56,7 @@ class FormManager {
         elementId: "courseTypeText",
         textMap: {
           online: ` Volledige online cursus
-  
+
                                 Videocursus
                                 CBR oefenexamens
                                 E-book `,
@@ -613,9 +613,13 @@ class FormManager {
 
     const totalSteps = this.calculateTotalSteps();
     const stepIndexTextElement = document.getElementById("stepIndexText");
+    const stepIndexTextElementMobile = document.getElementById("stepIndexTextMobile");
 
     if (stepIndexTextElement) {
       stepIndexTextElement.textContent = `${currentStepNumber} van ${totalSteps}`;
+    }
+    if (stepIndexTextElementMobile) {
+      stepIndexTextElementMobile.textContent = `${currentStepNumber} van ${totalSteps}`;
     }
   }
 
@@ -628,8 +632,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -694,8 +698,8 @@ class FormManager {
     const basePercentage = 15;
     return Math.round(
       basePercentage +
-        (this.currentStepIndex / this.calculateTotalSteps()) *
-          (100 - basePercentage)
+      (this.currentStepIndex / this.calculateTotalSteps()) *
+      (100 - basePercentage)
     );
   }
 
@@ -1082,9 +1086,8 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${
-        previousMonthDays - firstDayAdjusted + i + 1
-      }</td>`;
+      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1897,9 +1900,9 @@ const orderManager = new OrderManager();
       loginButton.href = "/inloggen";
     }
   }
-  
+
   document.addEventListener("DOMContentLoaded", updateLoginButton);
-  
+
   document.getElementById("btn-login").addEventListener("click", (event) => {
     if (localStorage.getItem("userLoggedIn")) {
       localStorage.removeItem("userLoggedIn");
@@ -1907,5 +1910,5 @@ const orderManager = new OrderManager();
       window.location.href = "/inloggen";
     }
   });
-  
+
   */
