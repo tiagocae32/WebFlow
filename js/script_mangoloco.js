@@ -596,13 +596,6 @@ class FormManager {
   isStepInvalid() {
     const currentStep = this.steps[this.currentStepIndex];
 
-    if (currentStep.id === "stepCalendar") {
-      return (
-        !Array.isArray(this.formData["course_dates"]) ||
-        this.formData["course_dates"].length === 0
-      );
-    }
-
     if (currentStep.keysBack) {
       return currentStep.keysBack.some((key) => {
         return !this.formData.hasOwnProperty(key) || !this.formData[key];
