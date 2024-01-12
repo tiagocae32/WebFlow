@@ -14,6 +14,7 @@ class FormManager {
     this.cbr_locations = [];
     this.stepHistory = [];
     this.initBirthDateInput();
+    this.initFormInputEvents();
     this.urls = {
       payment_link:
         "https://api.develop.nutheorie.be/api/applications/payment_link/",
@@ -333,7 +334,6 @@ class FormManager {
   }
 
   getCurrentStepId() {
-    console.log(this.stepHistory[this.stepHistory.length - 1]);
     return this.stepHistory[this.stepHistory.length - 1];
   }
 
@@ -510,6 +510,37 @@ class FormManager {
       const formattedValue = this.formatBirthDate(value);
       event.target.value = formattedValue;
     });
+  }
+
+  initFormInputEvents() {
+    const inputs = document.querySelectorAll('.form_step input[type="text"]');
+    inputs.forEach(input => {
+      input.addEventListener('blur', this.handleInputBlur.bind(this));
+    });
+  }
+
+  handleInputBlur(event) {
+    const inputElement = event.target;
+    const errorHintId = inputElement.getAttribute('data-error-hint-id');
+    const errorHintElement = document.getElementById(errorHintId);
+
+    let isValid = true;
+    let errorMessage = '';
+
+    if (!inputElement.value.trim()) {
+      errorMessage = 'Dit veld is verplicht';
+      isValid = false;
+    } else if (inputElement.getAttribute("data-key-back") === "email" && !this.isValidEmail(inputElement.value)) {
+      errorMessage = "E-mail is niet geldig";
+      isValid = false;
+    }
+
+    if (!isValid) {
+      errorHintElement.textContent = errorMessage;
+      errorHintElement.style.display = 'block';
+    } else {
+      errorHintElement.style.display = 'none';
+    }
   }
 
   handleFormInput(event) {
@@ -1084,7 +1115,6 @@ class FormManager {
           day.classList.add("selected-date");
         }
         this.updateChanceText();
-        console.log(this.selectedDates);
       });
     });
   }
@@ -1705,10 +1735,10 @@ class FormManager {
       }
 
       const resultado = await respuesta.json();
-      console.log("Respuesta exitosa:", resultado);
+      console.log("Success:", resultado);
       return resultado;
     } catch (error) {
-      console.error("Error en la solicitud:", error.message);
+      console.error("Error:", error.message);
       throw error;
     } finally {
       this.disableLoader();
@@ -1736,7 +1766,7 @@ class FormManager {
       //console.log("Respuesta del backend:", responseData);
       return responseData;
     } catch (error) {
-      console.error("Error al enviar datos al backend:", error);
+      console.error("Error when sending data:", error);
       return false;
     } finally {
       this.disableLoader();
