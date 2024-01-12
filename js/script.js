@@ -835,6 +835,8 @@ class FormManager {
   createOptions(options, containerId, isCity = true) {
     const newContainer = document.getElementById(containerId);
     this.cleanInterface(newContainer);
+    const key = isCity ? "cities" : "course_names";
+
     options.forEach((option) => {
       const divElement = document.createElement("div");
       divElement.className = "aanmelden_step4-checkbox-item";
@@ -850,8 +852,14 @@ class FormManager {
 
       divElement.appendChild(paragraph);
       newContainer.appendChild(divElement);
+
+      const value = isCity ? option.id : option;
+      if (this.formData[key] && this.formData[key].includes(value)) {
+        divElement.classList.add("active");
+      }
     });
   }
+
   toggleOptionSelection(option, divElement, isCity) {
     const key = isCity ? "cities" : "course_names";
     const value = isCity ? option.id : option;
@@ -1000,6 +1008,10 @@ class FormManager {
       checkbox.style.opacity = 0;
       checkbox.style.position = "absolute";
       checkbox.style.zIndex = -1;
+
+      if (this.formData['cbr_locations'] && this.formData['cbr_locations'].includes(element)) {
+        checkbox.checked = true;
+      }
 
       checkbox.addEventListener("click", () => {
         this.toggleCbrSelection(element);

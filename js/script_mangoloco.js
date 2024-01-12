@@ -889,22 +889,16 @@ class FormManager {
 
   // CBR LOCATIONS
   async getCbrLocations(createElements = true) {
-    if (this.cbr_locations.length === 0) {
-      try {
-        this.enableLoader();
-        const resServer = await fetch(this.urls.cbrsLocations);
-        const data = await resServer.json();
-        this.cbr_locations = data;
-      } catch (error) {
-        console.log(error);
-      } finally {
-        this.disableLoader();
-      }
-    }
-    if (createElements) {
-      this.createCbrElements(this.cbr_locations);
-    } else {
-      this.createCbrsSelect(this.cbr_locations);
+    try {
+      this.enableLoader();
+      const resServer = await fetch(this.urls.cbrsLocations);
+      const data = await resServer.json();
+      if (createElements) this.createCbrElements(data);
+      else this.createCbrsSelect(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      this.disableLoader();
     }
   }
 
