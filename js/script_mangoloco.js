@@ -198,6 +198,7 @@ class FormManager {
 
   initElements() {
     this.nextButton = document.getElementById("btn-next");
+    this.nextButtonText = document.getElementById("btnText");
     this.prevButton = document.getElementById("btn-prev");
     this.nextButton.addEventListener("click", () => this.nextStep());
     this.prevButton.addEventListener("click", () => this.prevStep());
@@ -420,7 +421,7 @@ class FormManager {
   }
 
   changeBtn(text) {
-    this.nextButton.innerText = text;
+    this.nextButtonText.innerText = text;
   }
 
   hideAllForms() {
