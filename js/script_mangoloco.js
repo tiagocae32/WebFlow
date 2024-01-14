@@ -56,7 +56,7 @@ class FormManager {
         elementId: "courseTypeText",
         textMap: {
           online: ` Volledige online cursus
-  
+
                                           Videocursus
                                           CBR oefenexamens
                                           E-book `,
@@ -269,8 +269,10 @@ class FormManager {
     if (courseType) {
       this.formData["course_type"] = courseType;
       if (this.formData["license_type"]) {
-        this.stepHistory.push(this.steps[2].id);
+        this.stepHistory = [this.steps[0].id, this.steps[1].id];
         this.currentStepIndex = 2;
+        this.calculateTotalSteps();
+        this.updateStepIndexText();
       }
     }
   }
@@ -330,8 +332,8 @@ class FormManager {
       );
 
       this.showFormForStep(this.currentStepIndex);
+      this.updateStepIndexText();
     }
-    this.updateStepIndexText();
   }
 
   getCurrentStepId() {
@@ -365,7 +367,6 @@ class FormManager {
       }
     }
 
-    // Si el paso actual tiene reglas en nextStepRules
     const nextStepRule = this.nextStepRules[currentStepId];
     if (nextStepRule) {
       if (typeof nextStepRule === "string") {
@@ -377,7 +378,6 @@ class FormManager {
       }
     }
 
-    // Si no hay reglas específicas, avanzar al siguiente paso en la lista
     return this.steps[this.currentStepIndex + 1]?.id;
   }
   // END
@@ -617,15 +617,21 @@ class FormManager {
   }
 
   updateStepIndexText() {
-    const currentStepNumber = this.stepHistory.includes("overzicht")
-      ? this.stepHistory.length - 1
-      : this.stepHistory.length || 1;
+    let currentStepNumber = this.stepHistory.length;
+
+    if (this.currentStepIndex === 2 && this.stepHistory.length === 2) {
+      currentStepNumber += 1;
+    } else if (currentStepNumber === 0) {
+      currentStepNumber = 1;
+    }
+
+    if (this.stepHistory.includes("overzicht")) {
+      currentStepNumber -= 1;
+    }
 
     const totalSteps = this.calculateTotalSteps();
     const stepIndexTextElement = document.getElementById("stepIndexText");
-    const stepIndexTextElementMobile = document.getElementById(
-      "stepIndexTextMobile"
-    );
+    const stepIndexTextElementMobile = document.getElementById("stepIndexTextMobile");
 
     if (stepIndexTextElement) {
       stepIndexTextElement.textContent = `${currentStepNumber} van ${totalSteps}`;
@@ -644,8 +650,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-      ? 6
-      : 8;
+        ? 6
+        : 8;
   }
 
   isMijnReservation() {
@@ -1032,6 +1038,7 @@ class FormManager {
         this.formData["cbr_locations"].includes(element)
       ) {
         checkbox.checked = true;
+        checkboxDiv.classList.add("checked");
       }
 
       checkbox.addEventListener("click", () => {
@@ -1132,9 +1139,8 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${
-        previousMonthDays - firstDayAdjusted + i + 1
-      }</td>`;
+      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1701,7 +1707,8 @@ class FormManager {
       this.resumeConfig["package_name"].elementId
     );
     if (this.formData["course_type"] === "offline") {
-      container.textContent = "Random text"; // reemplazar por el ID cuando modele el offline
+      const offlineContent = document.getElementById("overzichtOffline")
+      offlineContent.classList.add("active")
     } else {
       // Render package
       const selectedPackage = this.packageSelected;
@@ -1900,11 +1907,12 @@ formManager.initialize();
 
 //if (window.location.pathname === '/bestellen') {
 
-/*
-        if (!localStorage.getItem("userLoggedIn")) {
-          window.location.href = "/inloggen";
-        }
-        */
+
+/* if (!localStorage.getItem("userLoggedIn")) {
+   window.location.href = "/inloggen";
+ }
+ */
+
 class OrderManager {
   constructor() {
     this.initialize();
@@ -1933,25 +1941,24 @@ const orderManager = new OrderManager();
 //}
 
 /*
-        function updateLoginButton() {
-          const loginButton = document.getElementById("btn-login");
-          if (localStorage.getItem("userLoggedIn")) {
-            loginButton.textContent = "Uitloggen";
-            loginButton.href = "/inloggen";
-          } else {
-            loginButton.textContent = "Inloggen";
-            loginButton.href = "/inloggen";
-          }
-        }
-  
-        document.addEventListener("DOMContentLoaded", updateLoginButton);
-  
-        document.getElementById("btn-login").addEventListener("click", (event) => {
-          if (localStorage.getItem("userLoggedIn")) {
-            localStorage.removeItem("userLoggedIn");
-            event.target.textContent = "Inloggen";
-            window.location.href = "/inloggen";
-          }
-        });
-  
-        */
+  function updateLoginButton() {
+    const loginButton = document.getElementById("btn-login");
+    if (localStorage.getItem("userLoggedIn")) {
+      loginButton.textContent = "Uitloggen";
+      loginButton.href = "/inloggen";
+    } else {
+      loginButton.textContent = "Inloggen";
+      loginButton.href = "/inloggen";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", updateLoginButton);
+
+  document.getElementById("btn-login").addEventListener("click", (event) => {
+    if (localStorage.getItem("userLoggedIn")) {
+      localStorage.removeItem("userLoggedIn");
+      event.target.textContent = "Inloggen";
+      window.location.href = "/inloggen";
+    }
+  });
+*/
