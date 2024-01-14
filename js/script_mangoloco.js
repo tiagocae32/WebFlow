@@ -827,10 +827,10 @@ class FormManager {
       text = "- (selecteer data)";
     } else if (data.length === 1) {
       this.isActualMonth(data[0]) && isWithinFiveDays
-        ? (text = "klein-gemiggeld")
-        : (text = "gemiggeld-groot");
+        ? (text = " klein-gemiggeld")
+        : (text = " gemiggeld-groot");
     } else {
-      text = "gemiggeld-groot";
+      text = " gemiggeld-groot";
     }
 
     const chanceElement = document.getElementById("chanceMonths");
@@ -939,22 +939,13 @@ class FormManager {
 
   setTimeInput() {
     const fechaInput = document.getElementById("dateInput");
-
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().split("T")[0];
     fechaInput.min = formattedDate;
+    this.datePicked = fechaGlobalSeleccionada;
 
     fechaInput.addEventListener("change", (event) => {
-      let fechaSeleccionada = event.target.value;
-      const splitDate = fechaSeleccionada.split("-");
-
-      if (splitDate[0].length > 4) {
-        const truncatedYear = splitDate[0].slice(0, 4);
-        const truncatedDate = truncatedYear + splitDate[1] + splitDate[2];
-        fechaInput.value = truncatedDate;
-      } else {
-        this.datePicked = fechaSeleccionada;
-      }
+      this.datePicked = fechaGlobalSeleccionada;
     });
   }
 
@@ -981,18 +972,16 @@ class FormManager {
           this.setData("mijn_exam_datetime", this.timePicked);
         }
       } else {
-        timeError.style.display = "block";
+        timeError.style.display = "none";
       }
     });
   }
 
   formatDateMijnFlow() {
-    const mijn_exam_datetime = this.timePicked;
-    const valueDate = this.datePicked;
-    if (mijn_exam_datetime && valueDate) {
+    if (this.datePicked && this.timePicked) {
       this.setData(
         "mijn_exam_datetime",
-        `${valueDate}T${mijn_exam_datetime}:00+01:00`
+        `${this.datePicked}T${this.timePicked}:00+01:00`
       );
     } else {
       this.setData("mijn_exam_datetime", "");
@@ -1906,12 +1895,11 @@ formManager.initialize();
 //}
 
 //if (window.location.pathname === '/bestellen') {
-
-
-/* if (!localStorage.getItem("userLoggedIn")) {
-   window.location.href = "/inloggen";
- }
- */
+/*
+if (!localStorage.getItem("userLoggedIn")) {
+    window.location.href = "/inloggen";
+  }
+*/
 
 class OrderManager {
   constructor() {
@@ -1941,24 +1929,24 @@ const orderManager = new OrderManager();
 //}
 
 /*
-  function updateLoginButton() {
-    const loginButton = document.getElementById("btn-login");
-    if (localStorage.getItem("userLoggedIn")) {
-      loginButton.textContent = "Uitloggen";
-      loginButton.href = "/inloggen";
-    } else {
-      loginButton.textContent = "Inloggen";
-      loginButton.href = "/inloggen";
-    }
+function updateLoginButton() {
+  const loginButton = document.getElementById("btn-login");
+  if (localStorage.getItem("userLoggedIn")) {
+    loginButton.textContent = "Uitloggen";
+    loginButton.href = "/inloggen";
+  } else {
+    loginButton.textContent = "Inloggen";
+    loginButton.href = "/inloggen";
   }
+}
 
-  document.addEventListener("DOMContentLoaded", updateLoginButton);
+document.addEventListener("DOMContentLoaded", updateLoginButton);
 
-  document.getElementById("btn-login").addEventListener("click", (event) => {
-    if (localStorage.getItem("userLoggedIn")) {
-      localStorage.removeItem("userLoggedIn");
-      event.target.textContent = "Inloggen";
-      window.location.href = "/inloggen";
-    }
-  });
+document.getElementById("btn-login").addEventListener("click", (event) => {
+  if (localStorage.getItem("userLoggedIn")) {
+    localStorage.removeItem("userLoggedIn");
+    event.target.textContent = "Inloggen";
+    window.location.href = "/inloggen";
+  }
+});
 */
