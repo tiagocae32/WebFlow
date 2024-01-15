@@ -548,6 +548,7 @@ class FormManager {
     } else {
       errorHintElement.style.display = "none";
     }
+    this.updateButtonState();
   }
 
   handleFormInput(event) {
@@ -570,25 +571,29 @@ class FormManager {
       } else {
         this.formData[keyBack] = inputElement.value;
       }
-
-      let validationResult =
-        this.isValidEmail(this.formData["email"]) &&
-        this.validateDate(this.formData["birth_date"]) &&
-        this.areAllRequiredInputsFilled();
-
-      validationResult =
-        validationResult && document.getElementById("checkbox").checked;
-      validationResult ? this.enableButton() : this.disableButton();
+      this.updateButtonState();
     }
   }
 
+  updateButtonState() {
+    let validationResult =
+      this.isValidEmail(this.formData["email"]) &&
+      this.validateDate(this.formData["birth_date"]) &&
+      this.areAllRequiredInputsFilled() &&
+      document.getElementById("checkbox").checked;
+
+    validationResult ? this.enableButton() : this.disableButton();
+  }
+
   areAllRequiredInputsFilled() {
-    const textInputs = document.querySelectorAll(
-      '.form_step input[type="text"]'
-    );
-    return Array.from(textInputs)
-      .filter((input) => !input.hasAttribute("data-not-required"))
-      .every((input) => input.value.trim() !== "");
+    const requiredInputIDs = [
+      'first-name', 'last-name', 'tel', 'address',
+      'postal-code', 'woonplaats'
+    ];
+    return requiredInputIDs
+      .map(id => document.getElementById(id))
+      .filter(input => input != null)
+      .every(input => input.value.trim() !== "");
   }
 
   isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -1459,6 +1464,12 @@ class FormManager {
           "packageOldPriceSmall",
           "text-size-tiny text-weight-bold",
           `${((pkg.old_price % 1) * 100).toFixed(0).padStart(2, "0")}`
+        )
+      );
+      packageOldPriceContainer.appendChild(
+        this.createElementWithClass(
+          "div",
+          "online_pricing-separator is-aanmelden"
         )
       );
       packageLabelContainer.appendChild(packageOldPriceContainer);
