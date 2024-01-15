@@ -1683,27 +1683,17 @@ class FormManager {
   }
 
   completeCourseDates() {
-    const key = this.formData["course_dates"];
+    const courseDates = this.formData["course_dates"];
     const container = document.getElementById("specifiekeDates");
     container.innerHTML = "";
 
     const monthNames = [
-      "Jan",
-      "Feb",
-      "Mrt",
-      "Apr",
-      "Mei",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Okt",
-      "Nov",
-      "Dec",
+      "Jan", "Feb", "Mrt", "Apr", "Mei", "Jun",
+      "Jul", "Aug", "Sep", "Okt", "Nov", "Dec",
     ];
 
-    if (Array.isArray(this.formData[key]) && this.formData[key].length > 0) {
-      const sortedDates = this.formData[key].sort(
+    if (Array.isArray(courseDates) && courseDates.length > 0) {
+      const sortedDates = courseDates.sort(
         (a, b) => new Date(a) - new Date(b)
       );
       sortedDates.forEach((courseDate) => {
@@ -1949,8 +1939,217 @@ class OrderManager {
     const storedData = localStorage.getItem("formData");
     if (storedData) {
       const formData = JSON.parse(storedData);
+      this.displayOrderSummary(formData);
       this.handleStoredData(formData);
     }
+  }
+  updateRowVisibility(formData) {
+    const showLocations = (formData.cities && formData.cities.length > 0) ||
+      (formData.cbr_locations && formData.cbr_locations.length > 0);
+    const showDates = (formData.course_names && formData.course_names.length > 0) ||
+      (formData.course_dates && formData.course_dates.length > 0);
+
+    const locationsRow = document.getElementById("locationsRow");
+    const datesRow = document.getElementById("datesRow");
+
+    locationsRow.classList.toggle("active", showLocations);
+    datesRow.classList.toggle("active", showDates);
+  }
+
+  toggleElementVisibility(elementId, shouldShow) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      if (shouldShow) {
+        element.classList.remove("hide");
+      } else {
+        element.classList.add("hide");
+      }
+    }
+  }
+
+  getExamTypeText(product) {
+    const examTypeTextMap = {
+      bth: "Standaard CBR examen (30 min): 48,-",
+      bth_ve: "Verlengd CBR examen (45 min): 61,-",
+      ath: "Standaard CBR examen (30 min): 48,-",
+      ath_ve: "Verlengd CBR examen (45 min): 61,-",
+      amth: "Standaard CBR examen (30 min): 48,-",
+      amth_ve: "Verlengd CBR examen (45 min): 61,-",
+      mijn: "Ik heb zelf al een examen gereserveerd",
+    };
+    return examTypeTextMap[product];
+  }
+
+  displayOrderSummary(formData) {
+    const resumeConfig = {
+      license_type: {
+        elementId: "licenseText",
+        textMap: {
+          motor: "Motortheorie",
+          auto: "Autotheorie",
+          scooter: "Scootertheorie",
+        },
+      },
+      course_type: {
+        elementId: "courseTypeText",
+        textMap: {
+          online: "Volledige online cursus Videocursus CBR oefenexamens E-book",
+          offline: "Dagcursus met aansluitend het examen: 99,-",
+        },
+      },
+    };
+
+    Object.keys(resumeConfig).forEach((key) => {
+      const config = resumeConfig[key];
+      const element = document.getElementById(config.elementId);
+      if (!element) return;
+
+      const value = formData[key];
+      element.textContent = config.textMap[value] || value;
+    });
+
+    const courseCategoryTypeTextMap = {
+      per_dates: "zo-snel",
+      per_month: "maand",
+      calendar: "specifieke",
+    };
+    const courseCategoryElementId = courseCategoryTypeTextMap[formData.course_category];
+    if (courseCategoryElementId) {
+      const courseCategoryElement = document.getElementById(courseCategoryElementId);
+      courseCategoryElement.classList.add("active");
+    }
+
+    const examTypeText = this.getExamTypeText(formData.product);
+    if (examTypeText) {
+      const examTypeElement = document.getElementById("examTypeText");
+      examTypeElement.textContent = examTypeText;
+    }
+
+    this.toggleElementVisibility("citiesColumn", formData.cities && formData.cities.length > 0);
+    this.toggleElementVisibility("cbrsColumn", formData.cbr_locations && formData.cbr_locations.length > 0);
+
+    if (formData.license_type) {
+      const licenseTypeElement = document.getElementById('licenseText');
+      licenseTypeElement.textContent = formData.license_type;
+    }
+
+    if (formData.course_type) {
+      const courseTypeElement = document.getElementById('courseTypeText');
+      courseTypeElement.textContent = formData.course_type;
+    }
+
+    if (formData.exam_type) {
+      const examTypeElement = document.getElementById('examTypeText');
+      examTypeElement.textContent = formData.exam_type;
+    }
+
+    if (formData.cities && formData.cities.length > 0) {
+      const citiesElement = document.getElementById('citiesText');
+      citiesElement.textContent = formData.cities.join(', ');
+    }
+
+    if (formData.cbr_locations && formData.cbr_locations.length > 0) {
+      const cbrLocationsElement = document.getElementById('cbrLocationsText');
+      cbrLocationsElement.textContent = formData.cbr_locations.join(', ');
+    }
+
+    if (formData.first_name) {
+      const firstNameElement = document.getElementById('firstNameText');
+      firstNameElement.textContent = formData.first_name;
+    }
+
+    if (formData.last_name) {
+      const lastNameElement = document.getElementById('lastNameText');
+      lastNameElement.textContent = formData.last_name;
+    }
+    if (formData.nickname) {
+      const nicknameElement = document.getElementById('nicknameText');
+      nicknameElement.textContent = formData.nickname;
+    }
+
+    if (formData.birth_date) {
+      const birthDateElement = document.getElementById('birthDateText');
+      birthDateElement.textContent = formData.birth_date;
+    }
+
+    if (formData.phone) {
+      const phoneElement = document.getElementById('phoneText');
+      phoneElement.textContent = formData.phone;
+    }
+
+    if (formData.email) {
+      const emailElement = document.getElementById('emailText');
+      emailElement.textContent = formData.email;
+    }
+
+    if (formData.address_1) {
+      const address1Element = document.getElementById('address1Text');
+      address1Element.textContent = formData.address_1;
+    }
+
+    if (formData.address_2) {
+      const address2Element = document.getElementById('address2Text');
+      address2Element.textContent = formData.address_2;
+    }
+
+    if (formData.address_3) {
+      const address3Element = document.getElementById('address3Text');
+      address3Element.textContent = formData.address_3;
+    }
+
+    switch (formData.course_category) {
+      case 'per_dates':
+        if (formData.course_names && Array.isArray(formData.course_names)) {
+          const zoSnelResumeElement = document.getElementById('zo-snelResume');
+          zoSnelResumeElement.textContent = formData.course_names.join(', ');
+        }
+        break;
+
+      case 'per_month':
+        if (formData.course_names && Array.isArray(formData.course_names)) {
+          const maandResumeElement = document.getElementById('maandResume');
+          maandResumeElement.textContent = formData.course_names.join(', ');
+        }
+        break;
+
+      case 'calendar':
+        if (formData.course_dates && Array.isArray(formData.course_dates)) {
+          const specifiekeDatesElement = document.getElementById('specifiekeDates');
+          specifiekeDatesElement.innerHTML = '';
+
+          const monthNames = [
+            "Jan", "Feb", "Mrt", "Apr", "Mei", "Jun",
+            "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"
+          ];
+
+          const sortedDates = formData.course_dates.sort(
+            (a, b) => new Date(a) - new Date(b)
+          );
+
+          sortedDates.forEach(courseDate => {
+            const date = new Date(courseDate);
+
+            const dayDiv = document.createElement('div');
+            dayDiv.id = "daySelected";
+            dayDiv.classList.add('text-size-tiny', 'text-weight-bold');
+            dayDiv.textContent = date.getDate();
+
+            const monthDiv = document.createElement('div');
+            monthDiv.id = "monthSelected";
+            monthDiv.classList.add('text-size-xtiny', 'text-weight-bold');
+            monthDiv.textContent = monthNames[date.getMonth()];
+
+            const dateDiv = document.createElement('div');
+            dateDiv.classList.add('overzicht_info-date');
+            dateDiv.appendChild(dayDiv);
+            dateDiv.appendChild(monthDiv);
+
+            specifiekeDatesElement.appendChild(dateDiv);
+          });
+        }
+        break;
+    }
+    this.updateRowVisibility(formData);
   }
 
   handleStoredData(formData) {
@@ -1958,7 +2157,7 @@ class OrderManager {
     const text = document.getElementById("btnText");
     const amount = document.getElementById("btnAmount");
     text.textContent = formData.buttonText;
-    amount.textContent = `€ ${formData.payment_amount}`;
+    amount.textContent = `€ ${formData.payment_amount} `;
     link.addEventListener("click", function () {
       window.location.href = formData.payment_link;
     });
