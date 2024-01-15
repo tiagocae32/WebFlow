@@ -167,7 +167,7 @@ class FormManager {
     };
     this.submissionRules = {
       course_type: {
-        offline: ["cbr_locations"],
+        offline: ["cbr_locations", "cities"],
         online: ["cities"],
       },
       course_category: {
@@ -307,6 +307,10 @@ class FormManager {
     if (currentStepId === "overzicht") {
       this.handleFinalStep();
       return;
+    }
+
+    if (currentStepId === "step4Mijn") {
+      this.setTimeInput();
     }
 
     const nextStepIndex = this.steps.findIndex(
@@ -2005,7 +2009,8 @@ class OrderManager {
       if (!element) return;
 
       const value = formData[key];
-      element.textContent = config.textMap[value] || value;
+      const textToShow = config.textMap[value] ?? value;
+      element.textContent = textToShow;
     });
 
     const courseCategoryTypeTextMap = {
