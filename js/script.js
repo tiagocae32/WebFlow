@@ -1566,6 +1566,30 @@ class FormManager {
 
   // RESUME
 
+  updateRowVisibility() {
+    const locationsRow = document.getElementById("locationsRow");
+    const datesRow = document.getElementById("datesRow");
+
+    const showLocations = (this.formData["cities"] && this.formData["cities"].length > 0) ||
+      (this.formData["cbr_locations"] && this.formData["cbr_locations"].length > 0);
+
+    const showDates = (this.formData["course_names"] && this.formData["course_names"].length > 0) ||
+      (this.formData["course_dates"] && this.formData["course_dates"].length > 0);
+
+    if (showLocations) {
+      locationsRow.classList.add("active");
+    } else {
+      locationsRow.classList.remove("active");
+    }
+
+    if (showDates) {
+      datesRow.classList.add("active");
+    } else {
+      datesRow.classList.remove("active");
+    }
+  }
+
+
   completeResume() {
     Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
     this.completeDataInputs();
@@ -1608,6 +1632,7 @@ class FormManager {
     } else {
       container.classList.add("hide");
     }
+    this.updateRowVisibility();
   }
 
   completeCbrLocations() {
@@ -1623,6 +1648,7 @@ class FormManager {
     } else {
       container.classList.add("hide");
     }
+    this.updateRowVisibility();
   }
 
   completeCourseCategory() {
@@ -1653,6 +1679,7 @@ class FormManager {
     } else if (targetElement) {
       targetElement.classList.add("hide");
     }
+    this.updateRowVisibility();
   }
 
   completeCourseDates() {
@@ -1700,6 +1727,7 @@ class FormManager {
         container.appendChild(dateElement);
       });
     }
+    this.updateRowVisibility();
   }
 
   completePackage() {
