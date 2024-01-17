@@ -167,7 +167,7 @@ class FormManager {
     };
     this.submissionRules = {
       course_type: {
-        offline: ["cbr_locations", "cities"],
+        offline: ["cbr_locations"], //, "cities"
         online: ["cities"],
       },
       course_category: {
@@ -313,6 +313,12 @@ class FormManager {
       this.setTimeInput();
     }
 
+    if (currentStepId === "step4Mijn" && this.formData.course_type === 'offline') {
+      if (!this.formData.cities) {
+        this.formData.cities = [];
+      }
+    }
+
     const nextStepIndex = this.steps.findIndex(
       (step) => step.id === nextStepId
     );
@@ -439,8 +445,16 @@ class FormManager {
 
     const currentStepId = this.getCurrentStepId();
     const form = document.querySelector(
-      `.form-step[data-step-id="${currentStepId}"]` // Modificado
+      `.form-step[data-step-id="${currentStepId}"]`
     );
+
+    const stepIndexWrapper = document.getElementById("stepIndexWrapper");
+    if (currentStepId === "overzicht") {
+      stepIndexWrapper.classList.add("hide");
+    } else {
+      stepIndexWrapper.classList.remove("hide");
+    }
+
     if (form) {
       form.classList.add("active");
       this.updateNextButtonState();
@@ -2161,8 +2175,10 @@ class OrderManager {
     const link = document.getElementById("btnLink");
     const text = document.getElementById("btnText");
     const amount = document.getElementById("btnAmount");
+    const aanbetalingAmount = document.getElementById("aanbetalingTotal");
     text.textContent = formData.buttonText;
     amount.textContent = `€ ${formData.payment_amount} `;
+    aanbetalingAmount.textContent = ` ${formData.payment_amount},-`;
     link.addEventListener("click", function () {
       window.location.href = formData.payment_link;
     });
