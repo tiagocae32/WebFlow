@@ -444,6 +444,8 @@ class FormManager {
     this.hideAllForms();
 
     const currentStepId = this.getCurrentStepId();
+    const isOverzichtStep = currentStepId === 'overzicht';
+    this.toggleButtonsVisibility(!isOverzichtStep);
     const form = document.querySelector(
       `.form-step[data-step-id="${currentStepId}"]`
     );
@@ -451,8 +453,18 @@ class FormManager {
     const stepIndexWrapper = document.getElementById("stepIndexWrapper");
     if (currentStepId === "overzicht") {
       stepIndexWrapper.classList.add("hide");
+      this.prevButton.removeEventListener("click", this.prevStep);
+      this.nextButton.removeEventListener("click", this.nextStep);
+      this.prevButton.id = 'btnPrevLast';
+      this.nextButton.id = 'btnSend';
+      document.getElementById('btnPrevLast').addEventListener("click", this.prevStep.bind(this));
+      document.getElementById('btnSend').addEventListener("click", this.nextStep.bind(this));
     } else {
       stepIndexWrapper.classList.remove("hide");
+      this.prevButton.id = 'btn-prev';
+      this.nextButton.id = 'btn-next';
+      this.prevButton.addEventListener("click", this.prevStep.bind(this));
+      this.nextButton.addEventListener("click", this.nextStep.bind(this));
     }
 
     if (form) {
@@ -461,6 +473,16 @@ class FormManager {
     }
     this.handleSideEffects();
     this.updateProgressBar();
+  }
+
+  toggleButtonsVisibility(show) {
+    const btnWrapper = document.getElementById('btnWrapper');
+
+    if (show) {
+      btnWrapper.classList.remove('hide');
+    } else {
+      btnWrapper.classList.add('hide');
+    }
   }
 
   handleFormClick(event) {
