@@ -1604,6 +1604,25 @@ class FormManager {
 
   // RESUME
 
+  updateSvgVisibility() {
+    const licenseType = this.formData.license_type;
+    const licenseTypes = ['auto', 'scooter', 'motor'];
+
+    licenseTypes.forEach(type => {
+      const svgId = `${type}Svg`;
+      const svgElement = document.getElementById(svgId);
+
+      if (svgElement) {
+        if (type === licenseType) {
+          svgElement.classList.remove('hide');
+        } else {
+          svgElement.classList.add('hide');
+        }
+      }
+    });
+  }
+
+
   updateRowVisibility() {
     const locationsRow = document.getElementById("locationsRow");
     const datesRow = document.getElementById("datesRow");
@@ -1631,6 +1650,7 @@ class FormManager {
   completeResume() {
     Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
     this.completeDataInputs();
+    this.updateSvgVisibility();
   }
 
   completeField(key) {
