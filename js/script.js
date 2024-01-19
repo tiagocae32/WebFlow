@@ -463,8 +463,6 @@ class FormManager {
       stepIndexWrapper.classList.remove("hide");
       this.prevButton.id = 'btn-prev';
       this.nextButton.id = 'btn-next';
-      this.prevButton.addEventListener("click", this.prevStep.bind(this));
-      this.nextButton.addEventListener("click", this.nextStep.bind(this));
     }
 
     if (form) {
@@ -1401,7 +1399,7 @@ class FormManager {
       "div",
       "packagePrice",
       "heading-style-h4",
-      `€${parseInt(pkg.price)}`
+      `â‚¬${parseInt(pkg.price)}`
     );
     const packagePriceSmallElement = this.createTextElement(
       "div",
@@ -1495,7 +1493,7 @@ class FormManager {
           "div",
           "packageOldPrice",
           "heading-style-h6 text-weight-xbold",
-          `€${parseInt(pkg.old_price)}`
+          `â‚¬${parseInt(pkg.old_price)}`
         )
       );
       packageOldPriceContainer.appendChild(
@@ -1519,7 +1517,7 @@ class FormManager {
     }
     if (isFinalStep && pkg.old_price) {
       const discountAmount = pkg.old_price - pkg.price;
-      const formattedDiscountAmount = `€${discountAmount.toFixed(2)}`;
+      const formattedDiscountAmount = `â‚¬${discountAmount.toFixed(2)}`;
 
       const additionalSeparatorMargin = this.createElementWithClass(
         "div",
@@ -1547,7 +1545,7 @@ class FormManager {
         "text-weight-bold",
         "Subtotaal"
       );
-      const formattedOldPrice = `€${parseFloat(pkg.old_price).toFixed(2)}`;
+      const formattedOldPrice = `â‚¬${parseFloat(pkg.old_price).toFixed(2)}`;
       const oldPrice = this.createTextElement(
         "div",
         "",
@@ -1578,7 +1576,7 @@ class FormManager {
         "div",
         "overzicht_pricing-total"
       );
-      const formattedPrice = `Totaal: €${parseFloat(pkg.price).toFixed(2)}`;
+      const formattedPrice = `Totaal: â‚¬${parseFloat(pkg.price).toFixed(2)}`;
       const totalTextElement = this.createTextElement(
         "div",
         "",
@@ -1776,7 +1774,7 @@ class FormManager {
         this.addPackageItemElements(packageElement, selectedPackage, true);
         container.appendChild(packageElement);
       } else {
-        container.textContent = "No se ha seleccionado ningún paquete.";
+        container.textContent = "No se ha seleccionado ningÃºn paquete.";
       }
     }
   }
@@ -1965,7 +1963,7 @@ formManager.initialize();
 
 //if (window.location.pathname === '/bestellen') {
 /*
-if (!localStorage.getItem("userLoggedIn")) {
+  if (!localStorage.getItem("userLoggedIn")) {
     window.location.href = "/inloggen";
   }
 */
@@ -2199,7 +2197,7 @@ class OrderManager {
     const amount = document.getElementById("btnAmount");
     const aanbetalingAmount = document.getElementById("aanbetalingTotal");
     text.textContent = formData.buttonText;
-    amount.textContent = `€ ${formData.payment_amount} `;
+    amount.textContent = `â‚¬ ${formData.payment_amount} `;
     aanbetalingAmount.textContent = ` ${formData.payment_amount},-`;
     link.addEventListener("click", function () {
       window.location.href = formData.payment_link;
