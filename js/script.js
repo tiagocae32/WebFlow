@@ -752,18 +752,32 @@ class FormManager {
     console.log(dataToken);
   }
 
-  async getUserInfo() {
-    const userInfo = JSON.parse(localStorage.getItem("formData"));
-    if (userInfo) {
-      this.isReapplyFlow = userInfo.is_reapply_allowed;
-      const refresh = userInfo.auth_tokens.refresh;
-      const access = userInfo.auth_tokens.access;
-      console.log(refresh);
-      console.log(access);
-      console.log(this.isReapplyFlow);
+  async getUserInfoBack() {
+    const data = JSON.parse(localStorage.getItem("formData"));
+    if (data) {
+      this.token = data.auth_tokens.access;
+      try {
+        const resServer = await fetch(this.urls.userData, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await resServer.json();
+        console.log(data);
+
+        //this.refreshToken(this.token);
+
+        this.isReapplyFlow = data.is_reapply_allowed;
+      } catch (error) {
+        console.log(error.response);
+      }
     } else {
       this.isReapplyFlow = false;
     }
+
+    console.log(this.isReapplyFlow);
   }
 
   // Show dates for both flows
@@ -777,11 +791,8 @@ class FormManager {
 
   handleSideEffects() {
     const currentStepId = this.getCurrentStepId();
-
+    this.getUserInfoBack();
     switch (currentStepId) {
-      case "step1":
-        this.getUserInfo();
-        break;
       case "step4Cities":
         this.getCities();
         this.sideEffects = true;
