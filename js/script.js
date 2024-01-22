@@ -307,13 +307,8 @@ class FormManager {
   redirectTo(url) {
     window.location.href = url;
   }
-
-  scrollTo() {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
   nextStep() {
-    this.scrollTo();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     const currentStepId = this.getCurrentStepId();
     const nextStepId = this.getNextStepId(currentStepId);
 
@@ -349,7 +344,7 @@ class FormManager {
   }
 
   prevStep() {
-    this.scrollTo();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (this.stepHistory.length > 1) {
       this.stepHistory.pop();
       const previousStepId = this.stepHistory[this.stepHistory.length - 1];
