@@ -1401,7 +1401,7 @@ class FormManager {
       "div",
       "packagePrice",
       "heading-style-h4",
-      `â‚¬${parseInt(pkg.price)}`
+      `€ ${parseInt(pkg.price)}`
     );
     const packagePriceSmallElement = this.createTextElement(
       "div",
@@ -2004,8 +2004,8 @@ class OrderManager {
     }
   }
 
-  updateSvgVisibility() {
-    const licenseType = this.formData.license_type;
+  updateSvgVisibility(formData) {
+    const licenseType = formData.license_type;
     const licenseTypes = ['auto', 'scooter', 'motor'];
 
     licenseTypes.forEach(type => {
@@ -2107,6 +2107,23 @@ class OrderManager {
 
     this.toggleElementVisibility("citiesColumn", formData.cities && formData.cities.length > 0);
     this.toggleElementVisibility("cbrsColumn", formData.cbr_locations && formData.cbr_locations.length > 0);
+
+    const totaalTextElement = document.getElementById('totaalText');
+    const aanbetalingTextElement = document.getElementById('aanbetalingText');
+
+    if (formData.course_type === 'offline') {
+      if (totaalTextElement) {
+        totaalTextElement.textContent = `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
+      }
+
+      if (aanbetalingTextElement) {
+        aanbetalingTextElement.textContent = `We vragen om een aanbetaling om het CBR examen te reserveren en omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v. 29,-. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR.`;
+      }
+    } else if (formData.course_type === 'online') {
+      if (totaalTextElement) totaalTextElement.textContent = `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
+        `;
+      if (aanbetalingTextElement) aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
+    }
 
     if (formData.license_type) {
       const licenseTypeElement = document.getElementById('licenseText');
@@ -2230,7 +2247,7 @@ class OrderManager {
         break;
     }
     this.updateRowVisibility(formData);
-    this.updateSvgVisibility();
+    this.updateSvgVisibility(formData);
   }
 
   handleStoredData(formData) {
@@ -2240,13 +2257,17 @@ class OrderManager {
     const aanbetalingAmount = document.getElementById("aanbetalingTotal");
     text.textContent = formData.buttonText;
     amount.textContent = `€ ${formData.payment_amount}`;
-    const paymentAmount = formData.payment_amount;
-    let formattedAmount;
+    const paymentAmount = parseFloat(formData.payment_amount);
+    let formattedAmount = "";
 
-    if (Math.floor(paymentAmount) === paymentAmount) {
-      formattedAmount = `${paymentAmount},-`;
+    if (!isNaN(paymentAmount)) {
+      if (Math.floor(paymentAmount) === paymentAmount) {
+        formattedAmount = `${paymentAmount},-`;
+      } else {
+        formattedAmount = `${paymentAmount.toFixed(2)},-`;
+      }
     } else {
-      formattedAmount = `${paymentAmount.toFixed(2)},-`;
+      formattedAmount = "Error";
     }
 
     aanbetalingAmount.textContent = ` ${formattedAmount}`;
