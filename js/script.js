@@ -2072,7 +2072,11 @@ class OrderManager {
       course_type: {
         elementId: "courseTypeText",
         textMap: {
-          online: "Volledige online cursus Videocursus CBR oefenexamens E-book",
+          online: ` Volledige online cursus
+
+          Videocursus
+          CBR oefenexamens
+          E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
