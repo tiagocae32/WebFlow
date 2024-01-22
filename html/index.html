@@ -110,9 +110,17 @@
 
     <!-- Step 6: Course Names / Months / Calendar -->
     <div class="form-step" data-step-id="step6" id="step6">
-      <div data-course-name="Binnen een maand">Binnen een maand</div>
-      <div data-course-name="Binnen 1.5 maand">Binnen 1.5 maand</div>
-      <div data-course-name="Binnen 2 maanden">Binnen 2 maanden</div>
+      <div id="datesNoReapply" style="display: none">
+        <div data-course-name="Binnen een maand">Binnen een maand</div>
+        <div data-course-name="Binnen 1.5 maand">Binnen 1.5 maand</div>
+        <div data-course-name="Binnen 2 maanden">Binnen 2 maanden</div>
+      </div>
+
+      <div id="datesReapply" style="display: none">
+        <div data-course-name="Binnen 15 dagen">Binnen 15 dagen</div>
+        <div data-course-name="Binnen een maand">Binnen een maand</div>
+        <div data-course-name="Binnen 1.5 maand">Binnen 1.5 maand</div>
+      </div>
     </div>
     <div class="form-step" data-step-id="stepMonths" id="stepMonths">
       <!-- Meses para 'per_month' -->
@@ -275,6 +283,9 @@
         <div id="btnText"></div>
       </a>
     </div>
+
+    <div id="btnWrapper"></div>
+    <div id="stepIndexWrapper"></div>
 
     <script src="../js/script.js"></script>
   </body>
