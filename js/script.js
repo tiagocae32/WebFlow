@@ -1495,7 +1495,7 @@ class FormManager {
           "div",
           "packageOldPrice",
           "heading-style-h6 text-weight-xbold",
-          `â‚¬${parseInt(pkg.old_price)}`
+          `€ ${parseInt(pkg.old_price)}`
         )
       );
       packageOldPriceContainer.appendChild(
@@ -1519,7 +1519,7 @@ class FormManager {
     }
     if (isFinalStep && pkg.old_price) {
       const discountAmount = pkg.old_price - pkg.price;
-      const formattedDiscountAmount = `â‚¬${discountAmount.toFixed(2)}`;
+      const formattedDiscountAmount = `€ ${discountAmount.toFixed(2)}`;
 
       const additionalSeparatorMargin = this.createElementWithClass(
         "div",
@@ -1547,7 +1547,7 @@ class FormManager {
         "text-weight-bold",
         "Subtotaal"
       );
-      const formattedOldPrice = `â‚¬${parseFloat(pkg.old_price).toFixed(2)}`;
+      const formattedOldPrice = `€ ${parseFloat(pkg.old_price).toFixed(2)}`;
       const oldPrice = this.createTextElement(
         "div",
         "",
@@ -1578,7 +1578,7 @@ class FormManager {
         "div",
         "overzicht_pricing-total"
       );
-      const formattedPrice = `Totaal: â‚¬${parseFloat(pkg.price).toFixed(2)}`;
+      const formattedPrice = `Totaal: € ${parseFloat(pkg.price).toFixed(2)}`;
       const totalTextElement = this.createTextElement(
         "div",
         "",
@@ -2003,6 +2003,25 @@ class OrderManager {
       this.handleStoredData(formData);
     }
   }
+
+  updateSvgVisibility() {
+    const licenseType = this.formData.license_type;
+    const licenseTypes = ['auto', 'scooter', 'motor'];
+
+    licenseTypes.forEach(type => {
+      const svgId = `${type}Svg`;
+      const svgElement = document.getElementById(svgId);
+
+      if (svgElement) {
+        if (type === licenseType) {
+          svgElement.classList.remove('hide');
+        } else {
+          svgElement.classList.add('hide');
+        }
+      }
+    });
+  }
+
   updateRowVisibility(formData) {
     const showLocations = (formData.cities && formData.cities.length > 0) ||
       (formData.cbr_locations && formData.cbr_locations.length > 0);
@@ -2211,6 +2230,7 @@ class OrderManager {
         break;
     }
     this.updateRowVisibility(formData);
+    this.updateSvgVisibility();
   }
 
   handleStoredData(formData) {
@@ -2219,8 +2239,17 @@ class OrderManager {
     const amount = document.getElementById("btnAmount");
     const aanbetalingAmount = document.getElementById("aanbetalingTotal");
     text.textContent = formData.buttonText;
-    amount.textContent = `â‚¬ ${formData.payment_amount} `;
-    aanbetalingAmount.textContent = ` ${formData.payment_amount},-`;
+    amount.textContent = `€ ${formData.payment_amount}`;
+    const paymentAmount = formData.payment_amount;
+    let formattedAmount;
+
+    if (Math.floor(paymentAmount) === paymentAmount) {
+      formattedAmount = `${paymentAmount},-`;
+    } else {
+      formattedAmount = `${paymentAmount.toFixed(2)},-`;
+    }
+
+    aanbetalingAmount.textContent = ` ${formattedAmount}`;
     link.addEventListener("click", function () {
       window.location.href = formData.payment_link;
     });
