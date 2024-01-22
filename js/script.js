@@ -308,7 +308,7 @@ class FormManager {
     window.location.href = url;
   }
   nextStep() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     const currentStepId = this.getCurrentStepId();
     const nextStepId = this.getNextStepId(currentStepId);
 
@@ -344,7 +344,7 @@ class FormManager {
   }
 
   prevStep() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     if (this.stepHistory.length > 1) {
       this.stepHistory.pop();
       const previousStepId = this.stepHistory[this.stepHistory.length - 1];
@@ -716,8 +716,8 @@ class FormManager {
         ? 5
         : 7
       : isMijnReservation
-        ? 6
-        : 8;
+      ? 6
+      : 8;
   }
 
   isMijnReservation() {
@@ -1027,6 +1027,8 @@ class FormManager {
         this.cbrs_list = data;
         if (createElements) {
           this.createCbrElements(this.cbrs_list);
+        } else {
+          this.createCbrsSelect(this.cbrs_list);
         }
       } catch (error) {
         console.log(error);
@@ -1263,8 +1265,9 @@ class FormManager {
     const previousMonthDays = previousMonth.getDate();
 
     for (let i = 0; i < firstDayAdjusted; i++) {
-      calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+      calendar += `<td class="not-current-month disabled">${
+        previousMonthDays - firstDayAdjusted + i + 1
+      }</td>`;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
