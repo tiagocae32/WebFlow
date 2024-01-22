@@ -58,9 +58,9 @@ class FormManager {
         textMap: {
           online: ` Volledige online cursus
 
-                                                    Videocursus
-                                                    CBR oefenexamens
-                                                    E-book `,
+                                                        Videocursus
+                                                        CBR oefenexamens
+                                                        E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -906,7 +906,7 @@ class FormManager {
       });
 
       const paragraph = document.createElement("p");
-      paragraph.className = "text-weight-bold";
+      paragraph.className = "text-weight-bold is-tiny-mobile";
       paragraph.textContent = isCity ? option.name : option;
 
       divElement.appendChild(paragraph);
@@ -1467,15 +1467,15 @@ class FormManager {
       this.appendSvgToElement(
         packageDescriptionItem,
         `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <g clip-path="url(#clip0_410_3698)">
-                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
-                                        </g>
-                                        <defs>
-                                        <clipPath id="clip0_410_3698">
-                                        <rect width="10" height="8" fill="white"></rect>
-                                        </clipPath>
-                                        </defs>
-                                        </svg >`
+                                            <g clip-path="url(#clip0_410_3698)">
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
+                                            </g>
+                                            <defs>
+                                            <clipPath id="clip0_410_3698">
+                                            <rect width="10" height="8" fill="white"></rect>
+                                            </clipPath>
+                                            </defs>
+                                            </svg >`
       );
 
       const descriptionItem = this.createElementWithClass(
@@ -2092,9 +2092,9 @@ class OrderManager {
         textMap: {
           online: ` Volledige online cursus
 
-              Videocursus
-              CBR oefenexamens
-              E-book `,
+                  Videocursus
+                  CBR oefenexamens
+                  E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -2143,7 +2143,7 @@ class OrderManager {
       }
     } else if (formData.course_type === 'online') {
       if (totaalTextElement) totaalTextElement.textContent = `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
-            `;
+                `;
       if (aanbetalingTextElement) aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
     }
 
