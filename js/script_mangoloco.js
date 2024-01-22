@@ -29,7 +29,12 @@ class FormManager {
       plans: "https://api.develop.nutheorie.be/api/applications/online_plans/",
       urlPostMultiStepForm:
         "https://api.develop.nutheorie.be/api/applications/",
+      refreshToken:
+        "https://api.develop.nutheorie.be/authorization/token/refresh/",
+      userData: "https://api.develop.nutheorie.be/api/applications/",
     };
+    this.PLANS_DELTA = 29;
+    this.REAPPLY_PLANS_DELTA = 19;
     this.dutchMonths = [
       "Januari",
       "Februari",
@@ -58,9 +63,9 @@ class FormManager {
         textMap: {
           online: ` Volledige online cursus
 
-                                                  Videocursus
-                                                  CBR oefenexamens
-                                                  E-book `,
+                                                          Videocursus
+                                                          CBR oefenexamens
+                                                          E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -110,6 +115,8 @@ class FormManager {
     };
     this.loaderContainer = document.getElementById("loader");
     this.loaderFetch = false;
+
+    this.isReapplyFlow;
   }
 
   initStepRules() {
@@ -300,7 +307,6 @@ class FormManager {
   redirectTo(url) {
     window.location.href = url;
   }
-
   nextStep() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const currentStepId = this.getCurrentStepId();
@@ -315,7 +321,10 @@ class FormManager {
       this.setTimeInput();
     }
 
-    if (currentStepId === "step4Mijn" && this.formData.course_type === 'offline') {
+    if (
+      currentStepId === "step4Mijn" &&
+      this.formData.course_type === "offline"
+    ) {
       if (!this.formData.cities) {
         this.formData.cities = [];
       }
@@ -428,6 +437,7 @@ class FormManager {
     const data = this.applySubmissionRules();
     if (Number(data.exam_type) === 3) this.formatDateMijnFlow();
     this.completeResume();
+    console.log(data);
     this.nextButton.addEventListener("click", () => {
       this.sendDataBack(data);
     });
@@ -447,8 +457,8 @@ class FormManager {
     this.hideAllForms();
 
     const currentStepId = this.getCurrentStepId();
-    const isOverzichtStep = currentStepId === 'overzicht';
-    this.toggleButtonsVisibility(!isOverzichtStep);
+    const isOverzichtStep = currentStepId === "overzicht";
+    //this.toggleButtonsVisibility(!isOverzichtStep);
     const form = document.querySelector(
       `.form-step[data-step-id="${currentStepId}"]`
     );
@@ -458,14 +468,18 @@ class FormManager {
       stepIndexWrapper.classList.add("hide");
       this.prevButton.removeEventListener("click", this.prevStep);
       this.nextButton.removeEventListener("click", this.nextStep);
-      this.prevButton.id = 'btnPrevLast';
-      this.nextButton.id = 'btnSend';
-      document.getElementById('btnPrevLast').addEventListener("click", this.prevStep.bind(this));
-      document.getElementById('btnSend').addEventListener("click", this.nextStep.bind(this));
+      this.prevButton.id = "btnPrevLast";
+      this.nextButton.id = "btnSend";
+      document
+        .getElementById("btnPrevLast")
+        .addEventListener("click", this.prevStep.bind(this));
+      document
+        .getElementById("btnSend")
+        .addEventListener("click", this.nextStep.bind(this));
     } else {
       stepIndexWrapper.classList.remove("hide");
-      this.prevButton.id = 'btn-prev';
-      this.nextButton.id = 'btn-next';
+      this.prevButton.id = "btn-prev";
+      this.nextButton.id = "btn-next";
     }
 
     if (form) {
@@ -477,12 +491,12 @@ class FormManager {
   }
 
   toggleButtonsVisibility(show) {
-    const btnWrapper = document.getElementById('btnWrapper');
+    const btnWrapper = document.getElementById("btnWrapper");
 
     if (show) {
-      btnWrapper.classList.remove('hide');
+      btnWrapper.classList.remove("hide");
     } else {
-      btnWrapper.classList.add('hide');
+      btnWrapper.classList.add("hide");
     }
   }
 
@@ -628,13 +642,17 @@ class FormManager {
 
   areAllRequiredInputsFilled() {
     const requiredInputIDs = [
-      'first-name', 'last-name', 'tel', 'address',
-      'postal-code', 'woonplaats'
+      "first-name",
+      "last-name",
+      "tel",
+      "address",
+      "postal-code",
+      "woonplaats",
     ];
     return requiredInputIDs
-      .map(id => document.getElementById(id))
-      .filter(input => input != null)
-      .every(input => input.value.trim() !== "");
+      .map((id) => document.getElementById(id))
+      .filter((input) => input != null)
+      .every((input) => input.value.trim() !== "");
   }
 
   isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -677,7 +695,9 @@ class FormManager {
 
     const totalSteps = this.calculateTotalSteps();
     const stepIndexTextElement = document.getElementById("stepIndexText");
-    const stepIndexTextElementMobile = document.getElementById("stepIndexTextMobile");
+    const stepIndexTextElementMobile = document.getElementById(
+      "stepIndexTextMobile"
+    );
 
     if (stepIndexTextElement) {
       stepIndexTextElement.textContent = `${currentStepNumber} van ${totalSteps}`;
@@ -715,10 +735,48 @@ class FormManager {
     }
   }
 
+  async refreshToken(token) {
+    const resServerToken = await fetch(this.urls.refreshToken, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh: token }),
+    });
+    const dataToken = await resServerToken.json();
+    console.log(dataToken);
+  }
+
+  async getUserInfo() {
+    const userInfo = JSON.parse(localStorage.getItem("formData"));
+    if (userInfo) {
+      this.isReapplyFlow = userInfo.is_reapply_allowed;
+      const refresh = userInfo.auth_tokens.refresh;
+      const access = userInfo.auth_tokens.access;
+      console.log(refresh);
+      console.log(access);
+      console.log(this.isReapplyFlow);
+    } else {
+      this.isReapplyFlow = false;
+    }
+  }
+
+  // Show dates for both flows
+  showDates() {
+    if (this.isReapplyFlow) {
+      document.getElementById("datesReapply").style.display = "block";
+    } else {
+      document.getElementById("datesNoReapply").style.display = "block";
+    }
+  }
+
   handleSideEffects() {
     const currentStepId = this.getCurrentStepId();
 
     switch (currentStepId) {
+      case "step1":
+        this.getUserInfo();
+        break;
       case "step4Cities":
         this.getCities();
         this.sideEffects = true;
@@ -734,6 +792,8 @@ class FormManager {
         this.getCbrLocations(false);
         this.setTimeInput();
         this.buildInput();
+      case "step6":
+        this.showDates();
       case "stepMonths":
         this.handleStepMonths();
         break;
@@ -906,7 +966,7 @@ class FormManager {
       });
 
       const paragraph = document.createElement("p");
-      paragraph.className = "text-weight-bold";
+      paragraph.className = "text-weight-bold is-tiny-mobile";
       paragraph.textContent = isCity ? option.name : option;
 
       divElement.appendChild(paragraph);
@@ -1102,16 +1162,16 @@ class FormManager {
   }
 
   toggleCbrSelection(element) {
-    if (!Array.isArray(this.formData['cbr_locations'])) {
-      this.formData['cbr_locations'] = [];
+    if (!Array.isArray(this.formData["cbr_locations"])) {
+      this.formData["cbr_locations"] = [];
     }
 
-    const index = this.formData['cbr_locations'].indexOf(element);
+    const index = this.formData["cbr_locations"].indexOf(element);
 
     if (index === -1) {
-      this.formData['cbr_locations'].push(element);
+      this.formData["cbr_locations"].push(element);
     } else {
-      this.formData['cbr_locations'].splice(index, 1);
+      this.formData["cbr_locations"].splice(index, 1);
     }
   }
 
@@ -1314,20 +1374,35 @@ class FormManager {
       const resServer = await fetch(url);
       const data = await resServer.json();
 
+      const isReapply = this.isReapplyFlow;
+
       this.allAvailablePlans = data
         .filter(
           (item) =>
-            item.type === "PUBLIC" &&
+            item.type === (isReapply ? "REAPPLY" : "PUBLIC") &&
             item.license_type === this.formData.license_type
         )
         .map(
-          ({ name, description_items, price, old_price, discount_label }) => ({
-            name,
-            description_items: this.processDescriptionItems(description_items),
-            price,
-            old_price,
-            discount_label,
-          })
+          ({ name, description_items, price, old_price, discount_label }) => {
+            const reapplyValue = this.REAPPLY_PLANS_DELTA;
+            const nonReapplyValue = this.PLANS_DELTA;
+
+            const modifiedPrice = isReapply
+              ? price + reapplyValue
+              : price + nonReapplyValue;
+            const modifiedOldPrice = isReapply
+              ? old_price + reapplyValue
+              : old_price + nonReapplyValue;
+
+            return {
+              name,
+              description_items:
+                this.processDescriptionItems(description_items),
+              price: modifiedPrice,
+              old_price: modifiedOldPrice,
+              discount_label,
+            };
+          }
         );
       this.createPackages(this.allAvailablePlans);
     } catch (error) {
@@ -1467,15 +1542,15 @@ class FormManager {
       this.appendSvgToElement(
         packageDescriptionItem,
         `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <g clip-path="url(#clip0_410_3698)">
-                                      <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
-                                      </g>
-                                      <defs>
-                                      <clipPath id="clip0_410_3698">
-                                      <rect width="10" height="8" fill="white"></rect>
-                                      </clipPath>
-                                      </defs>
-                                      </svg >`
+                                              <g clip-path="url(#clip0_410_3698)">
+                                              <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
+                                              </g>
+                                              <defs>
+                                              <clipPath id="clip0_410_3698">
+                                              <rect width="10" height="8" fill="white"></rect>
+                                              </clipPath>
+                                              </defs>
+                                              </svg >`
       );
 
       const descriptionItem = this.createElementWithClass(
@@ -1627,32 +1702,36 @@ class FormManager {
 
   updateSvgVisibility() {
     const licenseType = this.formData.license_type;
-    const licenseTypes = ['auto', 'scooter', 'motor'];
+    const licenseTypes = ["auto", "scooter", "motor"];
 
-    licenseTypes.forEach(type => {
+    licenseTypes.forEach((type) => {
       const svgId = `${type}Svg`;
       const svgElement = document.getElementById(svgId);
 
       if (svgElement) {
         if (type === licenseType) {
-          svgElement.classList.remove('hide');
+          svgElement.classList.remove("hide");
         } else {
-          svgElement.classList.add('hide');
+          svgElement.classList.add("hide");
         }
       }
     });
   }
 
-
   updateRowVisibility() {
     const locationsRow = document.getElementById("locationsRow");
     const datesRow = document.getElementById("datesRow");
 
-    const showLocations = (this.formData["cities"] && this.formData["cities"].length > 0) ||
-      (this.formData["cbr_locations"] && this.formData["cbr_locations"].length > 0);
+    const showLocations =
+      (this.formData["cities"] && this.formData["cities"].length > 0) ||
+      (this.formData["cbr_locations"] &&
+        this.formData["cbr_locations"].length > 0);
 
-    const showDates = (this.formData["course_names"] && this.formData["course_names"].length > 0) ||
-      (this.formData["course_dates"] && this.formData["course_dates"].length > 0);
+    const showDates =
+      (this.formData["course_names"] &&
+        this.formData["course_names"].length > 0) ||
+      (this.formData["course_dates"] &&
+        this.formData["course_dates"].length > 0);
 
     if (showLocations) {
       locationsRow.classList.add("active");
@@ -1666,7 +1745,6 @@ class FormManager {
       datesRow.classList.remove("active");
     }
   }
-
 
   completeResume() {
     Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
@@ -1718,7 +1796,9 @@ class FormManager {
     const data = this.formData["cbr_locations"];
     if (!data) return;
     const container = document.getElementById("cbrsColumn");
-    const text = document.getElementById(this.resumeConfig["cbr_locations"].elementId);
+    const text = document.getElementById(
+      this.resumeConfig["cbr_locations"].elementId
+    );
 
     if (data.length > 0) {
       text.textContent = data.join(", ");
@@ -1766,14 +1846,22 @@ class FormManager {
     container.innerHTML = "";
 
     const monthNames = [
-      "Jan", "Feb", "Mrt", "Apr", "Mei", "Jun",
-      "Jul", "Aug", "Sep", "Okt", "Nov", "Dec",
+      "Jan",
+      "Feb",
+      "Mrt",
+      "Apr",
+      "Mei",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Dec",
     ];
 
     if (Array.isArray(courseDates) && courseDates.length > 0) {
-      const sortedDates = courseDates.sort(
-        (a, b) => new Date(a) - new Date(b)
-      );
+      const sortedDates = courseDates.sort((a, b) => new Date(a) - new Date(b));
       sortedDates.forEach((courseDate) => {
         const date = new Date(courseDate);
 
@@ -1803,8 +1891,8 @@ class FormManager {
       this.resumeConfig["package_name"].elementId
     );
     if (this.formData["course_type"] === "offline") {
-      const offlineContent = document.getElementById("overzichtOffline")
-      offlineContent.classList.add("active")
+      const offlineContent = document.getElementById("overzichtOffline");
+      offlineContent.classList.add("active");
     } else {
       // Render package
       const selectedPackage = this.packageSelected;
@@ -2024,26 +2112,28 @@ class OrderManager {
 
   updateSvgVisibility(formData) {
     const licenseType = formData.license_type;
-    const licenseTypes = ['auto', 'scooter', 'motor'];
+    const licenseTypes = ["auto", "scooter", "motor"];
 
-    licenseTypes.forEach(type => {
+    licenseTypes.forEach((type) => {
       const svgId = `${type}Svg`;
       const svgElement = document.getElementById(svgId);
 
       if (svgElement) {
         if (type === licenseType) {
-          svgElement.classList.remove('hide');
+          svgElement.classList.remove("hide");
         } else {
-          svgElement.classList.add('hide');
+          svgElement.classList.add("hide");
         }
       }
     });
   }
 
   updateRowVisibility(formData) {
-    const showLocations = (formData.cities && formData.cities.length > 0) ||
+    const showLocations =
+      (formData.cities && formData.cities.length > 0) ||
       (formData.cbr_locations && formData.cbr_locations.length > 0);
-    const showDates = (formData.course_names && formData.course_names.length > 0) ||
+    const showDates =
+      (formData.course_names && formData.course_names.length > 0) ||
       (formData.course_dates && formData.course_dates.length > 0);
 
     const locationsRow = document.getElementById("locationsRow");
@@ -2092,9 +2182,9 @@ class OrderManager {
         textMap: {
           online: ` Volledige online cursus
 
-            Videocursus
-            CBR oefenexamens
-            E-book `,
+                    Videocursus
+                    CBR oefenexamens
+                    E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -2115,9 +2205,12 @@ class OrderManager {
       per_month: "maand",
       calendar: "specifieke",
     };
-    const courseCategoryElementId = courseCategoryTypeTextMap[formData.course_category];
+    const courseCategoryElementId =
+      courseCategoryTypeTextMap[formData.course_category];
     if (courseCategoryElementId) {
-      const courseCategoryElement = document.getElementById(courseCategoryElementId);
+      const courseCategoryElement = document.getElementById(
+        courseCategoryElementId
+      );
       courseCategoryElement.classList.add("active");
     }
 
@@ -2127,13 +2220,19 @@ class OrderManager {
       examTypeElement.textContent = examTypeText;
     }
 
-    this.toggleElementVisibility("citiesColumn", formData.cities && formData.cities.length > 0);
-    this.toggleElementVisibility("cbrsColumn", formData.cbr_locations && formData.cbr_locations.length > 0);
+    this.toggleElementVisibility(
+      "citiesColumn",
+      formData.cities && formData.cities.length > 0
+    );
+    this.toggleElementVisibility(
+      "cbrsColumn",
+      formData.cbr_locations && formData.cbr_locations.length > 0
+    );
 
-    const totaalTextElement = document.getElementById('totaalText');
-    const aanbetalingTextElement = document.getElementById('aanbetalingText');
+    const totaalTextElement = document.getElementById("totaalText");
+    const aanbetalingTextElement = document.getElementById("aanbetalingText");
 
-    if (formData.course_type === 'offline') {
+    if (formData.course_type === "offline") {
       if (totaalTextElement) {
         totaalTextElement.textContent = `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
       }
@@ -2141,125 +2240,138 @@ class OrderManager {
       if (aanbetalingTextElement) {
         aanbetalingTextElement.textContent = `We vragen om een aanbetaling om het CBR examen te reserveren en omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v. 29,-. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR.`;
       }
-    } else if (formData.course_type === 'online') {
-      if (totaalTextElement) totaalTextElement.textContent = `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
-          `;
-      if (aanbetalingTextElement) aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
+    } else if (formData.course_type === "online") {
+      if (totaalTextElement)
+        totaalTextElement.textContent = `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
+              `;
+      if (aanbetalingTextElement)
+        aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
     }
 
     if (formData.license_type) {
-      const licenseTypeElement = document.getElementById('licenseText');
+      const licenseTypeElement = document.getElementById("licenseText");
       licenseTypeElement.textContent = formData.license_type;
     }
 
     if (formData.course_type) {
-      const courseTypeElement = document.getElementById('courseTypeText');
+      const courseTypeElement = document.getElementById("courseTypeText");
       courseTypeElement.textContent = formData.course_type;
     }
 
     if (formData.exam_type) {
-      const examTypeElement = document.getElementById('examTypeText');
+      const examTypeElement = document.getElementById("examTypeText");
       examTypeElement.textContent = formData.exam_type;
     }
 
     if (formData.cities && formData.cities.length > 0) {
-      const citiesElement = document.getElementById('citiesText');
-      citiesElement.textContent = formData.cities.join(', ');
+      const citiesElement = document.getElementById("citiesText");
+      citiesElement.textContent = formData.cities.join(", ");
     }
 
     if (formData.cbr_locations && formData.cbr_locations.length > 0) {
-      const cbrLocationsElement = document.getElementById('cbrLocationsText');
-      cbrLocationsElement.textContent = formData.cbr_locations.join(', ');
+      const cbrLocationsElement = document.getElementById("cbrLocationsText");
+      cbrLocationsElement.textContent = formData.cbr_locations.join(", ");
     }
 
     if (formData.first_name) {
-      const firstNameElement = document.getElementById('firstNameText');
+      const firstNameElement = document.getElementById("firstNameText");
       firstNameElement.textContent = formData.first_name;
     }
 
     if (formData.last_name) {
-      const lastNameElement = document.getElementById('lastNameText');
+      const lastNameElement = document.getElementById("lastNameText");
       lastNameElement.textContent = formData.last_name;
     }
     if (formData.nickname) {
-      const nicknameElement = document.getElementById('nicknameText');
+      const nicknameElement = document.getElementById("nicknameText");
       nicknameElement.textContent = formData.nickname;
     }
 
     if (formData.birth_date) {
-      const birthDateElement = document.getElementById('birthDateText');
+      const birthDateElement = document.getElementById("birthDateText");
       birthDateElement.textContent = formData.birth_date;
     }
 
     if (formData.phone) {
-      const phoneElement = document.getElementById('phoneText');
+      const phoneElement = document.getElementById("phoneText");
       phoneElement.textContent = formData.phone;
     }
 
     if (formData.email) {
-      const emailElement = document.getElementById('emailText');
+      const emailElement = document.getElementById("emailText");
       emailElement.textContent = formData.email;
     }
 
     if (formData.address_1) {
-      const address1Element = document.getElementById('address1Text');
+      const address1Element = document.getElementById("address1Text");
       address1Element.textContent = formData.address_1;
     }
 
     if (formData.address_2) {
-      const address2Element = document.getElementById('address2Text');
+      const address2Element = document.getElementById("address2Text");
       address2Element.textContent = formData.address_2;
     }
 
     if (formData.address_3) {
-      const address3Element = document.getElementById('address3Text');
+      const address3Element = document.getElementById("address3Text");
       address3Element.textContent = formData.address_3;
     }
 
     switch (formData.course_category) {
-      case 'per_dates':
+      case "per_dates":
         if (formData.course_names && Array.isArray(formData.course_names)) {
-          const zoSnelResumeElement = document.getElementById('zo-snelResume');
-          zoSnelResumeElement.textContent = formData.course_names.join(', ');
+          const zoSnelResumeElement = document.getElementById("zo-snelResume");
+          zoSnelResumeElement.textContent = formData.course_names.join(", ");
         }
         break;
 
-      case 'per_month':
+      case "per_month":
         if (formData.course_names && Array.isArray(formData.course_names)) {
-          const maandResumeElement = document.getElementById('maandResume');
-          maandResumeElement.textContent = formData.course_names.join(', ');
+          const maandResumeElement = document.getElementById("maandResume");
+          maandResumeElement.textContent = formData.course_names.join(", ");
         }
         break;
 
-      case 'calendar':
+      case "calendar":
         if (formData.course_dates && Array.isArray(formData.course_dates)) {
-          const specifiekeDatesElement = document.getElementById('specifiekeDates');
-          specifiekeDatesElement.innerHTML = '';
+          const specifiekeDatesElement =
+            document.getElementById("specifiekeDates");
+          specifiekeDatesElement.innerHTML = "";
 
           const monthNames = [
-            "Jan", "Feb", "Mrt", "Apr", "Mei", "Jun",
-            "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"
+            "Jan",
+            "Feb",
+            "Mrt",
+            "Apr",
+            "Mei",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Okt",
+            "Nov",
+            "Dec",
           ];
 
           const sortedDates = formData.course_dates.sort(
             (a, b) => new Date(a) - new Date(b)
           );
 
-          sortedDates.forEach(courseDate => {
+          sortedDates.forEach((courseDate) => {
             const date = new Date(courseDate);
 
-            const dayDiv = document.createElement('div');
+            const dayDiv = document.createElement("div");
             dayDiv.id = "daySelected";
-            dayDiv.classList.add('text-size-tiny', 'text-weight-bold');
+            dayDiv.classList.add("text-size-tiny", "text-weight-bold");
             dayDiv.textContent = date.getDate();
 
-            const monthDiv = document.createElement('div');
+            const monthDiv = document.createElement("div");
             monthDiv.id = "monthSelected";
-            monthDiv.classList.add('text-size-xtiny', 'text-weight-bold');
+            monthDiv.classList.add("text-size-xtiny", "text-weight-bold");
             monthDiv.textContent = monthNames[date.getMonth()];
 
-            const dateDiv = document.createElement('div');
-            dateDiv.classList.add('overzicht_info-date');
+            const dateDiv = document.createElement("div");
+            dateDiv.classList.add("overzicht_info-date");
             dateDiv.appendChild(dayDiv);
             dateDiv.appendChild(monthDiv);
 
