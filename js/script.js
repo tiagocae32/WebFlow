@@ -12,6 +12,7 @@ class FormManager {
     this.cities = [];
     this.citiesNameSelected = [];
     this.cbr_locations = [];
+    this.cbrs_list = [];
     this.stepHistory = [];
     this.initBirthDateInput();
     this.initFormInputEvents();
@@ -57,9 +58,9 @@ class FormManager {
         textMap: {
           online: ` Volledige online cursus
 
-                                                Videocursus
-                                                CBR oefenexamens
-                                                E-book `,
+                                                    Videocursus
+                                                    CBR oefenexamens
+                                                    E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -947,22 +948,22 @@ class FormManager {
 
   // CBR LOCATIONS
   async getCbrLocations(createElements = true) {
-    if (this.cbr_locations.length === 0) {
+    if (this.cbrs_list.length === 0) {
       try {
         this.enableLoader();
         const resServer = await fetch(this.urls.cbrsLocations);
         const data = await resServer.json();
         this.cbrs_list = data;
+        if (createElements) {
+          this.createCbrElements(this.cbrs_list);
+        }
       } catch (error) {
         console.log(error);
       } finally {
         this.disableLoader();
       }
-    }
-    if (createElements) {
+    } else if (createElements) {
       this.createCbrElements(this.cbrs_list);
-    } else {
-      this.createCbrsSelect(this.cbrs_list);
     }
   }
 
@@ -1035,65 +1036,83 @@ class FormManager {
 
   createCbrElements(elements) {
     const container = document.getElementById("step4check");
-    this.cleanInterface(container);
-    elements.forEach((element, index) => {
-      const itemContainer = document.createElement("div");
-      itemContainer.className = "aanmelden_step4-list_item";
+    if (!container.hasChildNodes()) {
+      this.cleanInterface(container);
+      elements.forEach((element, index) => {
+        const itemContainer = document.createElement("div");
+        itemContainer.className = "aanmelden_step4-list_item";
 
-      const label = document.createElement("label");
-      label.className = "w-checkbox aanmelden_step4-item";
+        const label = document.createElement("label");
+        label.className = "w-checkbox aanmelden_step4-item";
 
-      const checkboxDiv = document.createElement("div");
-      checkboxDiv.className =
-        "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
+        const checkboxDiv = document.createElement("div");
+        checkboxDiv.className =
+          "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.id = index;
-      checkbox.name = element;
-      checkbox.style.opacity = 0;
-      checkbox.style.position = "absolute";
-      checkbox.style.zIndex = -1;
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = index;
+        checkbox.name = element;
+        checkbox.style.opacity = 0;
+        checkbox.style.position = "absolute";
+        checkbox.style.zIndex = -1;
 
-      const span = document.createElement("span");
-      span.className = "text-weight-bold w-form-label";
-      span.setAttribute("for", element);
-      span.textContent = element;
+        const span = document.createElement("span");
+        span.className = "text-weight-bold w-form-label";
+        span.setAttribute("for", element);
+        span.textContent = element;
 
-      label.appendChild(checkboxDiv);
-      label.appendChild(checkbox);
-      label.appendChild(span);
-      itemContainer.appendChild(label);
+        label.appendChild(checkboxDiv);
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        itemContainer.appendChild(label);
 
-      container.appendChild(itemContainer);
+        container.appendChild(itemContainer);
 
-      if (
-        this.formData["cbr_locations"] &&
-        this.formData["cbr_locations"].includes(element)
-      ) {
-        checkbox.checked = true;
-        checkboxDiv.classList.add("checked");
-      }
+        if (this.formData["cbr_locations"]?.includes(element)) {
+          checkbox.checked = true;
+          checkboxDiv.classList.add("checked");
+        }
 
-      checkbox.addEventListener("click", () => {
-        this.toggleCbrSelection(element);
-        this.updateNextButtonState();
+        checkbox.addEventListener("click", () => {
+          this.toggleCbrSelection(element);
+          this.updateNextButtonState();
+        });
       });
-    });
+    } else {
+      elements.forEach((element, index) => {
+        const checkbox = container.querySelector(`input[name="${element}"]`);
+        if (checkbox) {
+          checkbox.checked = this.formData["cbr_locations"]?.includes(element);
+        }
+      });
+    }
   }
 
   toggleCbrSelection(element) {
-    if (!this.formData["cbr_locations"]) {
+    if (!Array.isArray(this.formData["cbr_locations"])) {
       this.formData["cbr_locations"] = [];
     }
-
-    if (!this.formData["cbr_locations"].includes(element)) {
-      this.cbr_locations.push(element);
+    const index = this.formData["cbr_locations"].indexOf(element);
+    if (index === -1) {
+      this.formData["cbr_locations"].push(element);
     } else {
-      const index = this.cbr_locations.indexOf(element);
-      this.cbr_locations.splice(index, 1);
+      this.formData["cbr_locations"].splice(index, 1);
     }
-    this.setData("cbr_locations", this.cbr_locations);
+  }
+
+  toggleCbrSelection(element) {
+    if (!Array.isArray(this.formData['cbr_locations'])) {
+      this.formData['cbr_locations'] = [];
+    }
+
+    const index = this.formData['cbr_locations'].indexOf(element);
+
+    if (index === -1) {
+      this.formData['cbr_locations'].push(element);
+    } else {
+      this.formData['cbr_locations'].splice(index, 1);
+    }
   }
 
   // END LOCATIONS
@@ -1401,7 +1420,7 @@ class FormManager {
       "div",
       "packagePrice",
       "heading-style-h4",
-      `€ ${parseInt(pkg.price)}`
+      `${parseInt(pkg.price)}`
     );
     const packagePriceSmallElement = this.createTextElement(
       "div",
@@ -1448,15 +1467,15 @@ class FormManager {
       this.appendSvgToElement(
         packageDescriptionItem,
         `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <g clip-path="url(#clip0_410_3698)">
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
-                                    </g>
-                                    <defs>
-                                    <clipPath id="clip0_410_3698">
-                                    <rect width="10" height="8" fill="white"></rect>
-                                    </clipPath>
-                                    </defs>
-                                    </svg >`
+                                        <g clip-path="url(#clip0_410_3698)">
+                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
+                                        </g>
+                                        <defs>
+                                        <clipPath id="clip0_410_3698">
+                                        <rect width="10" height="8" fill="white"></rect>
+                                        </clipPath>
+                                        </defs>
+                                        </svg >`
       );
 
       const descriptionItem = this.createElementWithClass(
@@ -1519,7 +1538,7 @@ class FormManager {
     }
     if (isFinalStep && pkg.old_price) {
       const discountAmount = pkg.old_price - pkg.price;
-      const formattedDiscountAmount = `€ ${discountAmount.toFixed(2)}`;
+      const formattedDiscountAmount = `${discountAmount.toFixed(2)}`;
 
       const additionalSeparatorMargin = this.createElementWithClass(
         "div",
@@ -1547,7 +1566,7 @@ class FormManager {
         "text-weight-bold",
         "Subtotaal"
       );
-      const formattedOldPrice = `€ ${parseFloat(pkg.old_price).toFixed(2)}`;
+      const formattedOldPrice = `${parseFloat(pkg.old_price).toFixed(2)}`;
       const oldPrice = this.createTextElement(
         "div",
         "",
@@ -1578,7 +1597,7 @@ class FormManager {
         "div",
         "overzicht_pricing-total"
       );
-      const formattedPrice = `Totaal: € ${parseFloat(pkg.price).toFixed(2)}`;
+      const formattedPrice = `Totaal: ${parseFloat(pkg.price).toFixed(2)}`;
       const totalTextElement = this.createTextElement(
         "div",
         "",
@@ -1699,11 +1718,10 @@ class FormManager {
     const data = this.formData["cbr_locations"];
     if (!data) return;
     const container = document.getElementById("cbrsColumn");
-    const text = document.getElementById(
-      this.resumeConfig["cbr_locations"].elementId
-    );
+    const text = document.getElementById(this.resumeConfig["cbr_locations"].elementId);
+
     if (data.length > 0) {
-      text.textContent = this.cbr_locations.join(", ");
+      text.textContent = data.join(", ");
       container.classList.remove("hide");
     } else {
       container.classList.add("hide");
@@ -2074,9 +2092,9 @@ class OrderManager {
         textMap: {
           online: ` Volledige online cursus
 
-          Videocursus
-          CBR oefenexamens
-          E-book `,
+              Videocursus
+              CBR oefenexamens
+              E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -2125,7 +2143,7 @@ class OrderManager {
       }
     } else if (formData.course_type === 'online') {
       if (totaalTextElement) totaalTextElement.textContent = `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
-        `;
+            `;
       if (aanbetalingTextElement) aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
     }
 

@@ -12,6 +12,7 @@ class FormManager {
     this.cities = [];
     this.citiesNameSelected = [];
     this.cbr_locations = [];
+    this.cbrs_list = [];
     this.stepHistory = [];
     this.initBirthDateInput();
     this.initFormInputEvents();
@@ -947,22 +948,22 @@ class FormManager {
 
   // CBR LOCATIONS
   async getCbrLocations(createElements = true) {
-    if (this.cbr_locations.length === 0) {
+    if (this.cbrs_list.length === 0) {
       try {
         this.enableLoader();
         const resServer = await fetch(this.urls.cbrsLocations);
         const data = await resServer.json();
         this.cbrs_list = data;
+        if (createElements) {
+          this.createCbrElements(this.cbrs_list);
+        }
       } catch (error) {
         console.log(error);
       } finally {
         this.disableLoader();
       }
-    }
-    if (createElements) {
+    } else if (createElements) {
       this.createCbrElements(this.cbrs_list);
-    } else {
-      this.createCbrsSelect(this.cbrs_list);
     }
   }
 
@@ -1035,65 +1036,83 @@ class FormManager {
 
   createCbrElements(elements) {
     const container = document.getElementById("step4check");
-    this.cleanInterface(container);
-    elements.forEach((element, index) => {
-      const itemContainer = document.createElement("div");
-      itemContainer.className = "aanmelden_step4-list_item";
+    if (!container.hasChildNodes()) {
+      this.cleanInterface(container);
+      elements.forEach((element, index) => {
+        const itemContainer = document.createElement("div");
+        itemContainer.className = "aanmelden_step4-list_item";
 
-      const label = document.createElement("label");
-      label.className = "w-checkbox aanmelden_step4-item";
+        const label = document.createElement("label");
+        label.className = "w-checkbox aanmelden_step4-item";
 
-      const checkboxDiv = document.createElement("div");
-      checkboxDiv.className =
-        "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
+        const checkboxDiv = document.createElement("div");
+        checkboxDiv.className =
+          "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.id = index;
-      checkbox.name = element;
-      checkbox.style.opacity = 0;
-      checkbox.style.position = "absolute";
-      checkbox.style.zIndex = -1;
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = index;
+        checkbox.name = element;
+        checkbox.style.opacity = 0;
+        checkbox.style.position = "absolute";
+        checkbox.style.zIndex = -1;
 
-      const span = document.createElement("span");
-      span.className = "text-weight-bold w-form-label";
-      span.setAttribute("for", element);
-      span.textContent = element;
+        const span = document.createElement("span");
+        span.className = "text-weight-bold w-form-label";
+        span.setAttribute("for", element);
+        span.textContent = element;
 
-      label.appendChild(checkboxDiv);
-      label.appendChild(checkbox);
-      label.appendChild(span);
-      itemContainer.appendChild(label);
+        label.appendChild(checkboxDiv);
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        itemContainer.appendChild(label);
 
-      container.appendChild(itemContainer);
+        container.appendChild(itemContainer);
 
-      if (
-        this.formData["cbr_locations"] &&
-        this.formData["cbr_locations"].includes(element)
-      ) {
-        checkbox.checked = true;
-        checkboxDiv.classList.add("checked");
-      }
+        if (this.formData["cbr_locations"]?.includes(element)) {
+          checkbox.checked = true;
+          checkboxDiv.classList.add("checked");
+        }
 
-      checkbox.addEventListener("click", () => {
-        this.toggleCbrSelection(element);
-        this.updateNextButtonState();
+        checkbox.addEventListener("click", () => {
+          this.toggleCbrSelection(element);
+          this.updateNextButtonState();
+        });
       });
-    });
+    } else {
+      elements.forEach((element, index) => {
+        const checkbox = container.querySelector(`input[name="${element}"]`);
+        if (checkbox) {
+          checkbox.checked = this.formData["cbr_locations"]?.includes(element);
+        }
+      });
+    }
   }
 
   toggleCbrSelection(element) {
-    if (!this.formData["cbr_locations"]) {
+    if (!Array.isArray(this.formData["cbr_locations"])) {
       this.formData["cbr_locations"] = [];
     }
-
-    if (!this.formData["cbr_locations"].includes(element)) {
-      this.cbr_locations.push(element);
+    const index = this.formData["cbr_locations"].indexOf(element);
+    if (index === -1) {
+      this.formData["cbr_locations"].push(element);
     } else {
-      const index = this.cbr_locations.indexOf(element);
-      this.cbr_locations.splice(index, 1);
+      this.formData["cbr_locations"].splice(index, 1);
     }
-    this.setData("cbr_locations", this.cbr_locations);
+  }
+
+  toggleCbrSelection(element) {
+    if (!Array.isArray(this.formData['cbr_locations'])) {
+      this.formData['cbr_locations'] = [];
+    }
+
+    const index = this.formData['cbr_locations'].indexOf(element);
+
+    if (index === -1) {
+      this.formData['cbr_locations'].push(element);
+    } else {
+      this.formData['cbr_locations'].splice(index, 1);
+    }
   }
 
   // END LOCATIONS
@@ -1401,7 +1420,7 @@ class FormManager {
       "div",
       "packagePrice",
       "heading-style-h4",
-      `€ ${parseInt(pkg.price)}`
+      `${parseInt(pkg.price)}`
     );
     const packagePriceSmallElement = this.createTextElement(
       "div",
@@ -1519,7 +1538,7 @@ class FormManager {
     }
     if (isFinalStep && pkg.old_price) {
       const discountAmount = pkg.old_price - pkg.price;
-      const formattedDiscountAmount = `€ ${discountAmount.toFixed(2)}`;
+      const formattedDiscountAmount = `${discountAmount.toFixed(2)}`;
 
       const additionalSeparatorMargin = this.createElementWithClass(
         "div",
@@ -1547,7 +1566,7 @@ class FormManager {
         "text-weight-bold",
         "Subtotaal"
       );
-      const formattedOldPrice = `€ ${parseFloat(pkg.old_price).toFixed(2)}`;
+      const formattedOldPrice = `${parseFloat(pkg.old_price).toFixed(2)}`;
       const oldPrice = this.createTextElement(
         "div",
         "",
@@ -1578,7 +1597,7 @@ class FormManager {
         "div",
         "overzicht_pricing-total"
       );
-      const formattedPrice = `Totaal: € ${parseFloat(pkg.price).toFixed(2)}`;
+      const formattedPrice = `Totaal: ${parseFloat(pkg.price).toFixed(2)}`;
       const totalTextElement = this.createTextElement(
         "div",
         "",
@@ -1699,11 +1718,10 @@ class FormManager {
     const data = this.formData["cbr_locations"];
     if (!data) return;
     const container = document.getElementById("cbrsColumn");
-    const text = document.getElementById(
-      this.resumeConfig["cbr_locations"].elementId
-    );
+    const text = document.getElementById(this.resumeConfig["cbr_locations"].elementId);
+
     if (data.length > 0) {
-      text.textContent = this.cbr_locations.join(", ");
+      text.textContent = data.join(", ");
       container.classList.remove("hide");
     } else {
       container.classList.add("hide");
