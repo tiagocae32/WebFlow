@@ -496,7 +496,7 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     setTextBtnNext() {
-      if (this.getCurrentStepId() === "overzicht") {
+      if (this.isLastStep()) {
         this.changeBtn("Verzenden");
       } else {
         this.changeBtn("Volgende");
