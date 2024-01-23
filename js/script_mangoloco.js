@@ -308,17 +308,13 @@ class FormManager {
     window.location.href = url;
   }
   nextStep() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     const currentStepId = this.getCurrentStepId();
     const nextStepId = this.getNextStepId(currentStepId);
 
     if (currentStepId === "overzicht") {
       this.handleFinalStep();
       return;
-    }
-
-    if (currentStepId === "step4Mijn") {
-      this.setTimeInput();
     }
 
     if (
@@ -344,7 +340,7 @@ class FormManager {
   }
 
   prevStep() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     if (this.stepHistory.length > 1) {
       this.stepHistory.pop();
       const previousStepId = this.stepHistory[this.stepHistory.length - 1];
@@ -435,7 +431,6 @@ class FormManager {
     this.convertDate();
     this.handleProductMijnReservation();
     const data = this.applySubmissionRules();
-    if (Number(data.exam_type) === 3) this.formatDateMijnFlow();
     this.completeResume();
     console.log(data);
     this.nextButton.addEventListener("click", () => {
@@ -747,18 +742,32 @@ class FormManager {
     console.log(dataToken);
   }
 
-  async getUserInfo() {
-    const userInfo = JSON.parse(localStorage.getItem("formData"));
-    if (userInfo) {
-      this.isReapplyFlow = userInfo.is_reapply_allowed;
-      const refresh = userInfo.auth_tokens.refresh;
-      const access = userInfo.auth_tokens.access;
-      console.log(refresh);
-      console.log(access);
-      console.log(this.isReapplyFlow);
+  async getUserInfoBack() {
+    const data = JSON.parse(localStorage.getItem("formData"));
+    if (data) {
+      this.token = data.auth_tokens.access;
+      try {
+        const resServer = await fetch(this.urls.userData, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await resServer.json();
+        console.log(data);
+
+        //this.refreshToken(this.token);
+
+        this.isReapplyFlow = data.is_reapply_allowed;
+      } catch (error) {
+        console.log(error);
+      }
     } else {
       this.isReapplyFlow = false;
     }
+
+    console.log(this.isReapplyFlow);
   }
 
   // Show dates for both flows
@@ -772,11 +781,8 @@ class FormManager {
 
   handleSideEffects() {
     const currentStepId = this.getCurrentStepId();
-
+    this.getUserInfoBack();
     switch (currentStepId) {
-      case "step1":
-        this.getUserInfo();
-        break;
       case "step4Cities":
         this.getCities();
         this.sideEffects = true;
@@ -790,8 +796,8 @@ class FormManager {
         this.sideEffects = true;
       case "step4Mijn":
         this.getCbrLocations(false);
+        this.setDateInput();
         this.setTimeInput();
-        this.buildInput();
       case "step6":
         this.showDates();
       case "stepMonths":
@@ -1016,6 +1022,8 @@ class FormManager {
         this.cbrs_list = data;
         if (createElements) {
           this.createCbrElements(this.cbrs_list);
+        } else {
+          this.createCbrsSelect(this.cbrs_list);
         }
       } catch (error) {
         console.log(error);
@@ -1043,43 +1051,42 @@ class FormManager {
     });
   }
 
-  setTimeInput() {
+  setDateInput() {
     const fechaInput = document.getElementById("dateInput");
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().split("T")[0];
     fechaInput.min = formattedDate;
-    this.datePicked = fechaGlobalSeleccionada;
-
     fechaInput.addEventListener("change", (event) => {
-      this.datePicked = fechaGlobalSeleccionada;
+      this.datePicked = event.target.value;
+      this.formatDateMijnFlow();
     });
   }
 
-  buildInput() {
+  setTimeInput() {
     const timeInput = document.getElementById("timeInput");
     const timeError = document.getElementById("timeError");
 
     timeInput.addEventListener("input", (e) => {
       let value = e.target.value.replace(/[^0-9]/g, "");
+
       if (value.length > 2) {
         value = value.substring(0, 2) + ":" + value.substring(2, 4);
       }
+
       e.target.value = value;
 
-      if (value.length === 5) {
-        const [hours, minutes] = value.split(":").map(Number);
-        if (hours > 23 || minutes > 59) {
-          timeError.style.display = "block";
-          this.setData("mijn_exam_datetime", "");
-          this.timePicked = "";
-        } else {
-          timeError.style.display = "none";
-          this.timePicked = `${hours}:${minutes}`;
-          this.setData("mijn_exam_datetime", this.timePicked);
-        }
+      const [hours, minutes] = value.split(":").map(Number);
+      const isValid = value.length === 5 && hours <= 23 && minutes <= 59;
+
+      if (!isValid) {
+        timeError.style.display = "block";
+        this.timePicked = null;
       } else {
         timeError.style.display = "none";
+        this.timePicked = `${hours}:${minutes}`;
       }
+
+      this.formatDateMijnFlow();
     });
   }
 
