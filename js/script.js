@@ -708,8 +708,8 @@ if (window.location.pathname === "/aanmelden") {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1278,9 +1278,8 @@ if (window.location.pathname === "/aanmelden") {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -2028,9 +2027,12 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     completePackage() {
-      const container = document.getElementById(
-        this.resumeConfig["package_name"].elementId
-      );
+      const container = document.getElementById(this.resumeConfig["package_name"].elementId);
+
+      const existingPackages = container.getElementsByClassName("overzicht_package-item");
+      while (existingPackages.length > 0) {
+        existingPackages[0].parentNode.removeChild(existingPackages[0]);
+      }
       if (this.formData["course_type"] === "offline") {
         const offlineContent = document.getElementById("overzichtOffline");
         offlineContent.classList.add("active");
@@ -2039,13 +2041,15 @@ if (window.location.pathname === "/aanmelden") {
         const selectedPackage = this.packageSelected;
         if (selectedPackage) {
           let packageElement = document.createElement("div");
+          packageElement.classList.add("overzicht_package-item");
           this.addPackageItemElements(packageElement, selectedPackage, true);
           container.appendChild(packageElement);
         } else {
-          container.textContent = "No se ha seleccionado ningÃºn paquete.";
+          container.textContent = "No se ha seleccionado ningún paquete.";
         }
       }
     }
+
     //END RESUME
 
     applySubmissionRules() {
