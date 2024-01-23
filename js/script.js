@@ -1954,9 +1954,13 @@ if (window.location.pathname === "/aanmelden") {
         calendar: "specifieke",
       };
 
-      const element = document.getElementById(courseCategoryTypeTextMap[key]);
-      if (element) element.classList.add("active");
+      const allCategoryElements = document.querySelectorAll('.overzicht_info-dates');
+      allCategoryElements.forEach(el => el.classList.remove("active"));
+
+      const selectedElement = document.getElementById(courseCategoryTypeTextMap[key]);
+      if (selectedElement) selectedElement.classList.add("active");
     }
+
 
     completeCourseNames() {
       const category = this.formData["course_category"];
