@@ -560,7 +560,7 @@ if (window.location.pathname === '/aanmelden') {
     }
 
     initFormInputEvents() {
-      const inputs = document.querySelectorAll('.form_step input[type="text"]');
+      const inputs = document.querySelectorAll('.form-step input[type="text"], .form-step input[type="email"], .form-step input[type="phone"]');
       inputs.forEach((input) => {
         input.addEventListener("blur", this.handleInputBlur.bind(this));
       });
@@ -568,7 +568,8 @@ if (window.location.pathname === '/aanmelden') {
 
     handleInputBlur(event) {
       const inputElement = event.target;
-      const errorHintId = inputElement.getAttribute("data-error-hint-id");
+      const inputId = inputElement.id;
+      const errorHintId = inputId + "Error";
       const errorHintElement = document.getElementById(errorHintId);
 
       let isValid = true;
