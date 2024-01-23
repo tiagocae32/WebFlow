@@ -403,11 +403,9 @@ if (window.location.pathname === '/aanmelden') {
     }
 
     enableButton() {
-      console.log("Entro");
       this.nextButton.classList.remove("disabled-button");
     }
     disableButton() {
-      console.log("Entro deshabilitado");
       this.nextButton.classList.add("disabled-button");
     }
 
@@ -453,7 +451,7 @@ if (window.location.pathname === '/aanmelden') {
 
       const currentStepId = this.getCurrentStepId();
       const isOverzichtStep = currentStepId === "overzicht";
-      this.toggleButtonsVisibility(!isOverzichtStep);
+      //this.toggleButtonsVisibility(!isOverzichtStep);
       const form = document.querySelector(
         `.form-step[data-step-id="${currentStepId}"]`
       );
