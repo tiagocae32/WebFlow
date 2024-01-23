@@ -1287,11 +1287,15 @@ if (window.location.pathname === '/aanmelden') {
 
     isDateEnabled(date) {
       const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
       const maxDate = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth() + 5,
         currentDate.getDate()
       );
+      maxDate.setHours(23, 59, 59, 999);
+      date.setHours(0, 0, 0, 0);
+
       return (
         date <= maxDate &&
         date >= currentDate &&
