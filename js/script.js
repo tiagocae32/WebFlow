@@ -663,9 +663,7 @@ if (window.location.pathname === '/aanmelden') {
     updateStepIndexText() {
       let currentStepNumber = this.stepHistory.length;
 
-      if (this.currentStepIndex === 2 && this.stepHistory.length === 2) {
-        currentStepNumber += 1;
-      } else if (currentStepNumber === 0) {
+      if (currentStepNumber === 0) {
         currentStepNumber = 1;
       }
 
@@ -796,6 +794,7 @@ if (window.location.pathname === '/aanmelden') {
           this.updateButtonState();
         case "overzicht":
           this.isReturning = true;
+          this.createEditStepButtons();
         default:
           this.sideEffects = false;
           break;
@@ -1704,8 +1703,6 @@ if (window.location.pathname === '/aanmelden') {
 
     // END PACKAGES
 
-    // RESUME
-
     updateSvgVisibility() {
       const licenseType = this.formData.license_type;
       const licenseTypes = ["auto", "scooter", "motor"];
@@ -1752,480 +1749,101 @@ if (window.location.pathname === '/aanmelden') {
       }
     }
 
-    completeResume() {
-      Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
-      this.completeDataInputs();
-      this.updateSvgVisibility();
-    }
+    // Edit information, go to step
 
-    completeField(key) {
-      const config = this.resumeConfig[key];
-      if (!config) return;
-
-      if (config.customHandler) {
-        config.customHandler.call(this);
-        return;
-      }
-
-      const element = document.getElementById(config.elementId);
-      if (!element) return;
-
-      const value = this.formData[key];
-      element.textContent = config.textMap[value] ?? value;
-
-      const existingList = element.querySelector('.overzicht_online-list');
-      if (existingList) {
-        element.removeChild(existingList);
-      }
-
-      if (key === 'course_type' && value === 'online') {
-        const list = document.createElement('ul');
-        list.className = 'overzicht_online-list';
-
-        const items = ["Videocursus", "CBR oefenexamens", "E-book"];
-        items.forEach(item => {
-          const listItem = document.createElement('li');
-          listItem.textContent = item;
-          list.appendChild(listItem);
-        });
-        element.appendChild(list);
-      }
-    }
-
-    completeDataInputs() {
-      Object.keys(this.resumeConfigInputs).forEach((key) => {
-        const config = this.resumeConfigInputs[key];
-        if (config && config.elementId) {
-          const element = document.getElementById(config.elementId);
-          if (element) {
-            element.textContent = this.formData[key] ?? "-";
-          }
-        }
-      });
-    }
-
-    completeCities() {
-      const container = document.getElementById("citiesColumn");
-      const text = document.getElementById(this.resumeConfig["cities"].elementId);
-      if (this.formData["cities"].length > 0) {
-        text.textContent = this.citiesNameSelected.join(", ");
-        container.classList.remove("hide");
-      } else {
-        container.classList.add("hide");
-      }
-      this.updateRowVisibility();
-    }
-
-    completeCbrLocations() {
-      const data = this.formData["cbr_locations"];
-      if (!data) return;
-      const container = document.getElementById("cbrsColumn");
-      const text = document.getElementById(
-        this.resumeConfig["cbr_locations"].elementId
-      );
-
-      if (data.length > 0) {
-        text.textContent = data.join(", ");
-        container.classList.remove("hide");
-      } else {
-        container.classList.add("hide");
-      }
-      this.updateRowVisibility();
-    }
-
-    completeCourseCategory() {
-      const key = this.formData["course_category"];
-      const courseCategoryTypeTextMap = {
-        per_dates: "zo-snel",
-        per_month: "maand",
-        calendar: "specifieke",
-      };
-
-      const element = document.getElementById(courseCategoryTypeTextMap[key]);
-      if (element) element.classList.add("active");
-    }
-
-    completeCourseNames() {
-      const category = this.formData["course_category"];
-      const elementId =
-        category === "per_dates" ? "zo-snelResume" : "maandResume";
-      const targetElement = document.getElementById(elementId);
-
-      if (
-        targetElement &&
-        Array.isArray(this.formData["course_names"]) &&
-        this.formData["course_names"].length > 0
-      ) {
-        targetElement.textContent = this.formData["course_names"].join(", ");
-        targetElement.classList.remove("hide");
-      } else if (targetElement) {
-        targetElement.classList.add("hide");
-      }
-      this.updateRowVisibility();
-    }
-
-    completeCourseDates() {
-      const courseDates = this.formData["course_dates"];
-      const container = document.getElementById("specifiekeDates");
-      container.innerHTML = "";
-
-      const monthNames = [
-        "Jan",
-        "Feb",
-        "Mrt",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Dec",
+    createEditStepButtons() {
+      const buttonsData = [
+        { id: 'editLocations', callback: () => this.determineLocationStep() },
+        { id: 'editDates', callback: () => this.determineDateStep() },
+        { id: 'editInputs', callback: () => this.goToStep('stepInputs') },
+        { id: 'editOnlinePackages', callback: () => this.goToStep('stepOnlinePackage') },
       ];
 
-      if (Array.isArray(courseDates) && courseDates.length > 0) {
-        const sortedDates = courseDates.sort((a, b) => new Date(a) - new Date(b));
-        sortedDates.forEach((courseDate) => {
-          const date = new Date(courseDate);
+      buttonsData.forEach(buttonData => {
+        const button = document.getElementById(buttonData.id);
+        if (button) {
+          button.addEventListener('click', buttonData.callback);
 
-          const dayElement = document.createElement("div");
-          dayElement.id = "daySelected";
-          dayElement.textContent = date.getDate();
-          dayElement.classList.add("text-size-tiny", "text-weight-bold");
-
-          const monthElement = document.createElement("div");
-          monthElement.id = "monthSelected";
-          monthElement.textContent = monthNames[date.getMonth()];
-          monthElement.classList.add("text-size-xtiny", "text-weight-bold");
-
-          const dateElement = document.createElement("div");
-          dateElement.classList.add("overzicht_info-date");
-          dateElement.appendChild(dayElement);
-          dateElement.appendChild(monthElement);
-
-          container.appendChild(dateElement);
-        });
-      }
-      this.updateRowVisibility();
-    }
-
-    completePackage() {
-      const container = document.getElementById(
-        this.resumeConfig["package_name"].elementId
-      );
-      if (this.formData["course_type"] === "offline") {
-        const offlineContent = document.getElementById("overzichtOffline");
-        offlineContent.classList.add("active");
-      } else {
-        // Render package
-        const selectedPackage = this.packageSelected;
-        if (selectedPackage) {
-          container.innerHTML = "";
-          let packageElement = document.createElement("div");
-          this.addPackageItemElements(packageElement, selectedPackage, true);
-          container.appendChild(packageElement);
-        } else {
-          container.textContent = "No se ha seleccionado ningÃºn paquete.";
-        }
-      }
-    }
-    //END RESUME
-
-    applySubmissionRules() {
-      Object.keys(this.submissionRules).forEach((key) => {
-        const value = this.formData[key];
-        const rules = this.submissionRules[key][value];
-
-        if (rules) {
-          rules.forEach((field) => {
-            this.formData[field] = [];
-          });
-        }
-      });
-      return this.formData;
-    }
-
-    //SEND DATA
-
-    async handleFinalStep() {
-      const dataResponse = await this.sendDataBack();
-
-      if (dataResponse) {
-        const {
-          course_type,
-          is_mijn_reservation,
-          payment_amount,
-          auth_tokens: { access },
-        } = dataResponse;
-
-        const isMijnOnline = course_type === "online" && is_mijn_reservation;
-        const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
-        const isMijnOnlineFlow = isMijnOnline;
-        let payment_link;
-
-        const objUrlPayloadPackage = {
-          url: this.urls.package_start,
-          payload: { package_starting_at: new Date() },
-          token: access,
-        };
-
-        const objUrlPayloadPayment = {
-          url: this.urls.payment_link,
-          payload: {
-            method: "ideal",
-            amount: payment_amount,
-            final_redirect_url: this.urls.final_redirect_url,
-            fail_redirect_url: this.urls.fail_redirect_url,
-          },
-          token: access,
-        };
-
-        if (isMijnOnlineFlow) {
-          await this.requestLinkPayment(objUrlPayloadPackage);
-          payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
-        } else {
-          payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
-        }
-
-        if (payment_link) {
-          const payloadStorage = {
-            ...dataResponse,
-            ...payment_link,
-            buttonText: buttonText,
-          };
-          const copyDeepPayloadStorage = JSON.parse(
-            JSON.stringify(payloadStorage)
-          );
-          localStorage.setItem(
-            "formData",
-            JSON.stringify(copyDeepPayloadStorage)
-          );
-
-          localStorage.setItem("userLoggedIn", true);
-          updateLoginButton();
-
-          this.redirectTo("/bestellen");
-          //const orderManager = new OrderManager();
-        }
-      }
-    }
-
-    async requestLinkPayment({ url, payload, token }) {
-      try {
-        this.enableLoader();
-        const respuesta = await fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!respuesta.ok) {
-          throw new Error(
-            `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
-          );
-        }
-
-        const resultado = await respuesta.json();
-        return resultado;
-      } catch (error) {
-        console.error("Error:", error.message);
-        throw error;
-      } finally {
-        this.disableLoader();
-      }
-    }
-
-    async sendDataBack() {
-      const data = this.getFormData();
-      const url = this.urls.urlPostMultiStepForm;
-
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      };
-
-      try {
-        this.enableLoader();
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          throw new Error("Error en la respuesta de la red");
-        }
-        const responseData = await response.json();
-        return responseData;
-      } catch (error) {
-        console.error("Error when sending data:", error);
-        return false;
-      } finally {
-        this.disableLoader();
-      }
-    }
-    // END SEND DATA
-  }
-
-  const steps = [
-    { id: "step1", keyBack: "license_type", attribute: "data-license-type" },
-    { id: "step2", keyBack: "course_type", attribute: "data-course-type" },
-    { id: "step3", keyBack: "exam_type", attribute: "data-exam-type" },
-    { id: "step4Cities", keyBack: "cities" },
-    { id: "step4Cbr", keyBack: "cbr_locations" },
-    { id: "step4Mijn", keysBack: ["mijn_exam_location", "mijn_exam_datetime"] },
-    {
-      id: "step5",
-      keyBack: "course_category",
-      attribute: "data-course-category",
-    },
-    {
-      id: "step6",
-      keyBack: "course_names",
-      attribute: "data-course-name",
-      keyArray: true,
-    },
-    { id: "stepMonths", keyBack: "course_names", attribute: "data-course-name" },
-    {
-      id: "stepCalendar",
-      keyBack: "course_dates",
-      attribute: "data-course-name",
-    },
-    {
-      id: "stepOnlinePackage",
-      attribute: "data-package-name",
-      form: "package_name",
-      keyBack: "package_name",
-    },
-    {
-      id: "stepInputs",
-      form: "allInputs",
-      validations: {
-        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-      },
-    },
-    { id: "overzicht", form: "Resume" },
-  ];
-
-  const formManager = new FormManager(steps);
-  formManager.initialize();
-}
-
-if (window.location.pathname === '/bestellen') {
-
-  if (!localStorage.getItem("userLoggedIn")) {
-    window.location.href = "/inloggen";
-  }
-
-
-  class OrderManager {
-    constructor() {
-      this.initialize();
-    }
-
-    initialize() {
-      const storedData = localStorage.getItem("formData");
-      if (storedData) {
-        const formData = JSON.parse(storedData);
-        this.displayOrderSummary(formData);
-        this.handleStoredData(formData);
-      }
-    }
-
-    updateSvgVisibility(formData) {
-      const licenseType = formData.license_type;
-      const licenseTypes = ["auto", "scooter", "motor"];
-
-      licenseTypes.forEach((type) => {
-        const svgId = `${type}Svg`;
-        const svgElement = document.getElementById(svgId);
-
-        if (svgElement) {
-          if (type === licenseType) {
-            svgElement.classList.remove("hide");
-          } else {
-            svgElement.classList.add("hide");
+          if (buttonData.id === 'editOnlinePackages') {
+            if (this.formData.course_type === 'online') {
+              button.classList.remove('hide');
+            } else {
+              button.classList.add('hide');
+            }
           }
         }
       });
     }
 
-    updateRowVisibility(formData) {
-      const showLocations =
-        (formData.cities && formData.cities.length > 0) ||
-        (formData.cbr_locations && formData.cbr_locations.length > 0);
-      const showDates =
-        (formData.course_names && formData.course_names.length > 0) ||
-        (formData.course_dates && formData.course_dates.length > 0);
-
-      const locationsRow = document.getElementById("locationsRow");
-      const datesRow = document.getElementById("datesRow");
-
-      locationsRow.classList.toggle("active", showLocations);
-      datesRow.classList.toggle("active", showDates);
-    }
-
-    toggleElementVisibility(elementId, shouldShow) {
-      const element = document.getElementById(elementId);
-      if (element) {
-        if (shouldShow) {
-          element.classList.remove("hide");
-        } else {
-          element.classList.add("hide");
-        }
+    determineLocationStep() {
+      if (this.formData.cities && this.formData.cities.length > 0) {
+        this.goToStep('step4Cities');
+      } else if (this.formData.cbr_locations && this.formData.cbr_locations.length > 0) {
+        this.goToStep('step4Cbr');
       }
     }
 
-    getExamTypeText(product) {
-      const examTypeTextMap = {
-        bth: "Standaard CBR examen (30 min): 48,-",
-        bth_ve: "Verlengd CBR examen (45 min): 61,-",
-        ath: "Standaard CBR examen (30 min): 48,-",
-        ath_ve: "Verlengd CBR examen (45 min): 61,-",
-        amth: "Standaard CBR examen (30 min): 48,-",
-        amth_ve: "Verlengd CBR examen (45 min): 61,-",
-        mijn: "Ik heb zelf al een examen gereserveerd",
-      };
-      return examTypeTextMap[product];
+    determineDateStep() {
+      const category = this.formData.course_category;
+      if (category === 'per_dates') {
+        this.goToStep('step6');
+      } else if (category === 'per_month') {
+        this.goToStep('stepMonths');
+      } else if (category === 'calendar') {
+        this.goToStep('stepCalendar');
+      }
     }
 
-    displayOrderSummary(formData) {
-      const resumeConfig = {
-        license_type: {
-          elementId: "licenseText",
-          textMap: {
-            motor: "Motortheorie",
-            auto: "Autotheorie",
-            scooter: "Scootertheorie",
-          },
-        },
-        course_type: {
-          elementId: "courseTypeText",
-          textMap: {
-            online: "Volledige online cursus",
-            offline: "Dagcursus met aansluitend het examen: 99,-",
-          },
-        },
-      };
+    goToStep(targetStepId) {
+      const stepIndex = this.steps.findIndex((step) => step.id === targetStepId);
+      if (stepIndex === -1) return;
 
-      Object.keys(resumeConfig).forEach((key) => {
-        const config = resumeConfig[key];
+      let currentStepId = this.steps[0].id;
+      const newStepHistory = [currentStepId];
+
+      while (currentStepId !== targetStepId) {
+        currentStepId = this.getNextStepId(currentStepId);
+        if (!currentStepId || !this.steps.find(step => step.id === currentStepId)) {
+          console.error('No se puede alcanzar el paso objetivo desde el paso actual.');
+          return;
+        }
+        newStepHistory.push(currentStepId);
+      }
+
+      // End edit information
+
+      // RESUME
+
+      completeResume() {
+        Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
+        this.completeDataInputs();
+        this.updateSvgVisibility();
+      }
+
+      completeField(key) {
+        const config = this.resumeConfig[key];
+        if (!config) return;
+
+        if (config.customHandler) {
+          config.customHandler.call(this);
+          return;
+        }
+
         const element = document.getElementById(config.elementId);
         if (!element) return;
 
         const value = this.formData[key];
         element.textContent = config.textMap[value] ?? value;
 
-        if (key === 'course_type' && value === 'online') {
-          const existingList = element.querySelector('.overzicht_online-list');
-          if (existingList) {
-            element.removeChild(existingList);
-          }
+        const existingList = element.querySelector('.overzicht_online-list');
+        if (existingList) {
+          element.removeChild(existingList);
+        }
 
+        if (key === 'course_type' && value === 'online') {
           const list = document.createElement('ul');
           list.className = 'overzicht_online-list';
+
           const items = ["Videocursus", "CBR oefenexamens", "E-book"];
           items.forEach(item => {
             const listItem = document.createElement('li');
@@ -2234,185 +1852,629 @@ if (window.location.pathname === '/bestellen') {
           });
           element.appendChild(list);
         }
-      });
+      }
 
-      const courseCategoryTypeTextMap = {
-        per_dates: "zo-snel",
-        per_month: "maand",
-        calendar: "specifieke",
-      };
-      const courseCategoryElementId =
-        courseCategoryTypeTextMap[formData.course_category];
-      if (courseCategoryElementId) {
-        const courseCategoryElement = document.getElementById(
-          courseCategoryElementId
+      completeDataInputs() {
+        Object.keys(this.resumeConfigInputs).forEach((key) => {
+          const config = this.resumeConfigInputs[key];
+          if (config && config.elementId) {
+            const element = document.getElementById(config.elementId);
+            if (element) {
+              element.textContent = this.formData[key] ?? "-";
+            }
+          }
+        });
+      }
+
+      completeCities() {
+        const container = document.getElementById("citiesColumn");
+        const text = document.getElementById(this.resumeConfig["cities"].elementId);
+        if (this.formData["cities"].length > 0) {
+          text.textContent = this.citiesNameSelected.join(", ");
+          container.classList.remove("hide");
+        } else {
+          container.classList.add("hide");
+        }
+        this.updateRowVisibility();
+      }
+
+      completeCbrLocations() {
+        const data = this.formData["cbr_locations"];
+        if (!data) return;
+        const container = document.getElementById("cbrsColumn");
+        const text = document.getElementById(
+          this.resumeConfig["cbr_locations"].elementId
         );
-        courseCategoryElement.classList.add("active");
-      }
 
-      const examTypeText = this.getExamTypeText(formData.product);
-      if (examTypeText) {
-        const examTypeElement = document.getElementById("examTypeText");
-        examTypeElement.textContent = examTypeText;
-      }
-
-      this.toggleElementVisibility(
-        "citiesColumn",
-        formData.cities && formData.cities.length > 0
-      );
-      this.toggleElementVisibility(
-        "cbrsColumn",
-        formData.cbr_locations && formData.cbr_locations.length > 0
-      );
-
-      const totaalTextElement = document.getElementById("totaalText");
-      const aanbetalingTextElement = document.getElementById("aanbetalingText");
-
-      if (formData.course_type === "offline") {
-        if (totaalTextElement) {
-          totaalTextElement.textContent = `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
+        if (data.length > 0) {
+          text.textContent = data.join(", ");
+          container.classList.remove("hide");
+        } else {
+          container.classList.add("hide");
         }
+        this.updateRowVisibility();
+      }
 
-        if (aanbetalingTextElement) {
-          aanbetalingTextElement.textContent = `We vragen om een aanbetaling om het CBR examen te reserveren en omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v. 29,-. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR.`;
+      completeCourseCategory() {
+        const key = this.formData["course_category"];
+        const courseCategoryTypeTextMap = {
+          per_dates: "zo-snel",
+          per_month: "maand",
+          calendar: "specifieke",
+        };
+
+        const element = document.getElementById(courseCategoryTypeTextMap[key]);
+        if (element) element.classList.add("active");
+      }
+
+      completeCourseNames() {
+        const category = this.formData["course_category"];
+        const elementId =
+          category === "per_dates" ? "zo-snelResume" : "maandResume";
+        const targetElement = document.getElementById(elementId);
+
+        if (
+          targetElement &&
+          Array.isArray(this.formData["course_names"]) &&
+          this.formData["course_names"].length > 0
+        ) {
+          targetElement.textContent = this.formData["course_names"].join(", ");
+          targetElement.classList.remove("hide");
+        } else if (targetElement) {
+          targetElement.classList.add("hide");
         }
-      } else if (formData.course_type === "online") {
-        if (totaalTextElement)
-          totaalTextElement.textContent = `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
-              `;
-        if (aanbetalingTextElement)
-          aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
+        this.updateRowVisibility();
       }
 
-      if (formData.exam_type) {
-        const examTypeElement = document.getElementById("examTypeText");
-        examTypeElement.textContent = formData.exam_type;
+      completeCourseDates() {
+        const courseDates = this.formData["course_dates"];
+        const container = document.getElementById("specifiekeDates");
+        container.innerHTML = "";
+
+        const monthNames = [
+          "Jan",
+          "Feb",
+          "Mrt",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Dec",
+        ];
+
+        if (Array.isArray(courseDates) && courseDates.length > 0) {
+          const sortedDates = courseDates.sort((a, b) => new Date(a) - new Date(b));
+          sortedDates.forEach((courseDate) => {
+            const date = new Date(courseDate);
+
+            const dayElement = document.createElement("div");
+            dayElement.id = "daySelected";
+            dayElement.textContent = date.getDate();
+            dayElement.classList.add("text-size-tiny", "text-weight-bold");
+
+            const monthElement = document.createElement("div");
+            monthElement.id = "monthSelected";
+            monthElement.textContent = monthNames[date.getMonth()];
+            monthElement.classList.add("text-size-xtiny", "text-weight-bold");
+
+            const dateElement = document.createElement("div");
+            dateElement.classList.add("overzicht_info-date");
+            dateElement.appendChild(dayElement);
+            dateElement.appendChild(monthElement);
+
+            container.appendChild(dateElement);
+          });
+        }
+        this.updateRowVisibility();
       }
 
-      if (formData.cities && formData.cities.length > 0) {
-        const citiesElement = document.getElementById("citiesText");
-        citiesElement.textContent = formData.cities.join(", ");
-      }
-
-      if (formData.cbr_locations && formData.cbr_locations.length > 0) {
-        const cbrLocationsElement = document.getElementById("cbrLocationsText");
-        cbrLocationsElement.textContent = formData.cbr_locations.join(", ");
-      }
-
-      switch (formData.course_category) {
-        case "per_dates":
-          if (formData.course_names && Array.isArray(formData.course_names)) {
-            const zoSnelResumeElement = document.getElementById("zo-snelResume");
-            zoSnelResumeElement.textContent = formData.course_names.join(", ");
+      completePackage() {
+        const container = document.getElementById(
+          this.resumeConfig["package_name"].elementId
+        );
+        if (this.formData["course_type"] === "offline") {
+          const offlineContent = document.getElementById("overzichtOffline");
+          offlineContent.classList.add("active");
+        } else {
+          // Render package
+          const selectedPackage = this.packageSelected;
+          if (selectedPackage) {
+            container.innerHTML = "";
+            let packageElement = document.createElement("div");
+            this.addPackageItemElements(packageElement, selectedPackage, true);
+            container.appendChild(packageElement);
+          } else {
+            container.textContent = "No se ha seleccionado ningÃºn paquete.";
           }
-          break;
+        }
+      }
+      //END RESUME
 
-        case "per_month":
-          if (formData.course_names && Array.isArray(formData.course_names)) {
-            const maandResumeElement = document.getElementById("maandResume");
-            maandResumeElement.textContent = formData.course_names.join(", ");
-          }
-          break;
+      applySubmissionRules() {
+        Object.keys(this.submissionRules).forEach((key) => {
+          const value = this.formData[key];
+          const rules = this.submissionRules[key][value];
 
-        case "calendar":
-          if (formData.course_dates && Array.isArray(formData.course_dates)) {
-            const specifiekeDatesElement =
-              document.getElementById("specifiekeDates");
-            specifiekeDatesElement.innerHTML = "";
-
-            const monthNames = [
-              "Jan",
-              "Feb",
-              "Mrt",
-              "Apr",
-              "Mei",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Okt",
-              "Nov",
-              "Dec",
-            ];
-
-            const sortedDates = formData.course_dates.sort(
-              (a, b) => new Date(a) - new Date(b)
-            );
-
-            sortedDates.forEach((courseDate) => {
-              const date = new Date(courseDate);
-
-              const dayDiv = document.createElement("div");
-              dayDiv.id = "daySelected";
-              dayDiv.classList.add("text-size-tiny", "text-weight-bold");
-              dayDiv.textContent = date.getDate();
-
-              const monthDiv = document.createElement("div");
-              monthDiv.id = "monthSelected";
-              monthDiv.classList.add("text-size-xtiny", "text-weight-bold");
-              monthDiv.textContent = monthNames[date.getMonth()];
-
-              const dateDiv = document.createElement("div");
-              dateDiv.classList.add("overzicht_info-date");
-              dateDiv.appendChild(dayDiv);
-              dateDiv.appendChild(monthDiv);
-
-              specifiekeDatesElement.appendChild(dateDiv);
+          if (rules) {
+            rules.forEach((field) => {
+              this.formData[field] = [];
             });
           }
-          break;
+        });
+        return this.formData;
       }
-      this.updateRowVisibility(formData);
-      this.updateSvgVisibility(formData);
-    }
 
-    handleStoredData(formData) {
-      const link = document.getElementById("btnLink");
-      const text = document.getElementById("btnText");
-      const amount = document.getElementById("btnAmount");
-      const aanbetalingAmount = document.getElementById("aanbetalingTotal");
-      text.textContent = formData.buttonText;
-      amount.textContent = `€ ${formData.payment_amount}`;
-      const paymentAmount = parseFloat(formData.payment_amount);
-      let formattedAmount = "";
+    //SEND DATA
 
-      if (!isNaN(paymentAmount)) {
-        if (Math.floor(paymentAmount) === paymentAmount) {
-          formattedAmount = `${paymentAmount},-`;
-        } else {
-          formattedAmount = `${paymentAmount.toFixed(2)},-`;
+    async handleFinalStep() {
+        const dataResponse = await this.sendDataBack();
+
+        if (dataResponse) {
+          const {
+            course_type,
+            is_mijn_reservation,
+            payment_amount,
+            auth_tokens: { access },
+          } = dataResponse;
+
+          const isMijnOnline = course_type === "online" && is_mijn_reservation;
+          const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
+          const isMijnOnlineFlow = isMijnOnline;
+          let payment_link;
+
+          const objUrlPayloadPackage = {
+            url: this.urls.package_start,
+            payload: { package_starting_at: new Date() },
+            token: access,
+          };
+
+          const objUrlPayloadPayment = {
+            url: this.urls.payment_link,
+            payload: {
+              method: "ideal",
+              amount: payment_amount,
+              final_redirect_url: this.urls.final_redirect_url,
+              fail_redirect_url: this.urls.fail_redirect_url,
+            },
+            token: access,
+          };
+
+          if (isMijnOnlineFlow) {
+            await this.requestLinkPayment(objUrlPayloadPackage);
+            payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+          } else {
+            payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+          }
+
+          if (payment_link) {
+            const payloadStorage = {
+              ...dataResponse,
+              ...payment_link,
+              buttonText: buttonText,
+            };
+            const copyDeepPayloadStorage = JSON.parse(
+              JSON.stringify(payloadStorage)
+            );
+            localStorage.setItem(
+              "formData",
+              JSON.stringify(copyDeepPayloadStorage)
+            );
+
+            localStorage.setItem("userLoggedIn", true);
+            updateLoginButton();
+
+            this.redirectTo("/bestellen");
+            //const orderManager = new OrderManager();
+          }
         }
-      } else {
-        formattedAmount = "Error";
       }
 
-      aanbetalingAmount.textContent = ` ${formattedAmount}`;
-      link.addEventListener("click", function () {
-        window.location.href = formData.payment_link;
-      });
+    async requestLinkPayment({ url, payload, token }) {
+        try {
+          this.enableLoader();
+          const respuesta = await fetch(url, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!respuesta.ok) {
+            throw new Error(
+              `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
+            );
+          }
+
+          const resultado = await respuesta.json();
+          return resultado;
+        } catch (error) {
+          console.error("Error:", error.message);
+          throw error;
+        } finally {
+          this.disableLoader();
+        }
+      }
+
+    async sendDataBack() {
+        const data = this.getFormData();
+        const url = this.urls.urlPostMultiStepForm;
+
+        const options = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        };
+
+        try {
+          this.enableLoader();
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            throw new Error("Error en la respuesta de la red");
+          }
+          const responseData = await response.json();
+          return responseData;
+        } catch (error) {
+          console.error("Error when sending data:", error);
+          return false;
+        } finally {
+          this.disableLoader();
+        }
+      }
+      // END SEND DATA
+    }
+
+    const steps = [
+      { id: "step1", keyBack: "license_type", attribute: "data-license-type" },
+      { id: "step2", keyBack: "course_type", attribute: "data-course-type" },
+      { id: "step3", keyBack: "exam_type", attribute: "data-exam-type" },
+      { id: "step4Cities", keyBack: "cities" },
+      { id: "step4Cbr", keyBack: "cbr_locations" },
+      { id: "step4Mijn", keysBack: ["mijn_exam_location", "mijn_exam_datetime"] },
+      {
+        id: "step5",
+        keyBack: "course_category",
+        attribute: "data-course-category",
+      },
+      {
+        id: "step6",
+        keyBack: "course_names",
+        attribute: "data-course-name",
+        keyArray: true,
+      },
+      { id: "stepMonths", keyBack: "course_names", attribute: "data-course-name" },
+      {
+        id: "stepCalendar",
+        keyBack: "course_dates",
+        attribute: "data-course-name",
+      },
+      {
+        id: "stepOnlinePackage",
+        attribute: "data-package-name",
+        form: "package_name",
+        keyBack: "package_name",
+      },
+      {
+        id: "stepInputs",
+        form: "allInputs",
+        validations: {
+          email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        },
+      },
+      { id: "overzicht", form: "Resume" },
+    ];
+
+    const formManager = new FormManager(steps);
+  formManager.initialize();
+  }
+
+  if (window.location.pathname === '/bestellen') {
+
+    if (!localStorage.getItem("userLoggedIn")) {
+      window.location.href = "/inloggen";
+    }
+
+
+    class OrderManager {
+      constructor() {
+        this.initialize();
+      }
+
+      initialize() {
+        const storedData = localStorage.getItem("formData");
+        if (storedData) {
+          const formData = JSON.parse(storedData);
+          this.displayOrderSummary(formData);
+          this.handleStoredData(formData);
+        }
+      }
+
+      updateSvgVisibility(formData) {
+        const licenseType = formData.license_type;
+        const licenseTypes = ["auto", "scooter", "motor"];
+
+        licenseTypes.forEach((type) => {
+          const svgId = `${type}Svg`;
+          const svgElement = document.getElementById(svgId);
+
+          if (svgElement) {
+            if (type === licenseType) {
+              svgElement.classList.remove("hide");
+            } else {
+              svgElement.classList.add("hide");
+            }
+          }
+        });
+      }
+
+      updateRowVisibility(formData) {
+        const showLocations =
+          (formData.cities && formData.cities.length > 0) ||
+          (formData.cbr_locations && formData.cbr_locations.length > 0);
+        const showDates =
+          (formData.course_names && formData.course_names.length > 0) ||
+          (formData.course_dates && formData.course_dates.length > 0);
+
+        const locationsRow = document.getElementById("locationsRow");
+        const datesRow = document.getElementById("datesRow");
+
+        locationsRow.classList.toggle("active", showLocations);
+        datesRow.classList.toggle("active", showDates);
+      }
+
+      toggleElementVisibility(elementId, shouldShow) {
+        const element = document.getElementById(elementId);
+        if (element) {
+          if (shouldShow) {
+            element.classList.remove("hide");
+          } else {
+            element.classList.add("hide");
+          }
+        }
+      }
+
+      getExamTypeText(product) {
+        const examTypeTextMap = {
+          bth: "Standaard CBR examen (30 min): 48,-",
+          bth_ve: "Verlengd CBR examen (45 min): 61,-",
+          ath: "Standaard CBR examen (30 min): 48,-",
+          ath_ve: "Verlengd CBR examen (45 min): 61,-",
+          amth: "Standaard CBR examen (30 min): 48,-",
+          amth_ve: "Verlengd CBR examen (45 min): 61,-",
+          mijn: "Ik heb zelf al een examen gereserveerd",
+        };
+        return examTypeTextMap[product];
+      }
+
+      displayOrderSummary(formData) {
+        const resumeConfig = {
+          license_type: {
+            elementId: "licenseText",
+            textMap: {
+              motor: "Motortheorie",
+              auto: "Autotheorie",
+              scooter: "Scootertheorie",
+            },
+          },
+          course_type: {
+            elementId: "courseTypeText",
+            textMap: {
+              online: "Volledige online cursus",
+              offline: "Dagcursus met aansluitend het examen: 99,-",
+            },
+          },
+        };
+
+        Object.keys(resumeConfig).forEach((key) => {
+          const config = resumeConfig[key];
+          const element = document.getElementById(config.elementId);
+          if (!element) return;
+
+          const value = this.formData[key];
+          element.textContent = config.textMap[value] ?? value;
+
+          if (key === 'course_type' && value === 'online') {
+            const existingList = element.querySelector('.overzicht_online-list');
+            if (existingList) {
+              element.removeChild(existingList);
+            }
+
+            const list = document.createElement('ul');
+            list.className = 'overzicht_online-list';
+            const items = ["Videocursus", "CBR oefenexamens", "E-book"];
+            items.forEach(item => {
+              const listItem = document.createElement('li');
+              listItem.textContent = item;
+              list.appendChild(listItem);
+            });
+            element.appendChild(list);
+          }
+        });
+
+        const courseCategoryTypeTextMap = {
+          per_dates: "zo-snel",
+          per_month: "maand",
+          calendar: "specifieke",
+        };
+        const courseCategoryElementId =
+          courseCategoryTypeTextMap[formData.course_category];
+        if (courseCategoryElementId) {
+          const courseCategoryElement = document.getElementById(
+            courseCategoryElementId
+          );
+          courseCategoryElement.classList.add("active");
+        }
+
+        const examTypeText = this.getExamTypeText(formData.product);
+        if (examTypeText) {
+          const examTypeElement = document.getElementById("examTypeText");
+          examTypeElement.textContent = examTypeText;
+        }
+
+        this.toggleElementVisibility(
+          "citiesColumn",
+          formData.cities && formData.cities.length > 0
+        );
+        this.toggleElementVisibility(
+          "cbrsColumn",
+          formData.cbr_locations && formData.cbr_locations.length > 0
+        );
+
+        const totaalTextElement = document.getElementById("totaalText");
+        const aanbetalingTextElement = document.getElementById("aanbetalingText");
+
+        if (formData.course_type === "offline") {
+          if (totaalTextElement) {
+            totaalTextElement.textContent = `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
+          }
+
+          if (aanbetalingTextElement) {
+            aanbetalingTextElement.textContent = `We vragen om een aanbetaling om het CBR examen te reserveren en omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v. 29,-. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR.`;
+          }
+        } else if (formData.course_type === "online") {
+          if (totaalTextElement)
+            totaalTextElement.textContent = `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
+              `;
+          if (aanbetalingTextElement)
+            aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
+        }
+
+        if (formData.exam_type) {
+          const examTypeElement = document.getElementById("examTypeText");
+          examTypeElement.textContent = formData.exam_type;
+        }
+
+        if (formData.cities && formData.cities.length > 0) {
+          const citiesElement = document.getElementById("citiesText");
+          citiesElement.textContent = formData.cities.join(", ");
+        }
+
+        if (formData.cbr_locations && formData.cbr_locations.length > 0) {
+          const cbrLocationsElement = document.getElementById("cbrLocationsText");
+          cbrLocationsElement.textContent = formData.cbr_locations.join(", ");
+        }
+
+        switch (formData.course_category) {
+          case "per_dates":
+            if (formData.course_names && Array.isArray(formData.course_names)) {
+              const zoSnelResumeElement = document.getElementById("zo-snelResume");
+              zoSnelResumeElement.textContent = formData.course_names.join(", ");
+            }
+            break;
+
+          case "per_month":
+            if (formData.course_names && Array.isArray(formData.course_names)) {
+              const maandResumeElement = document.getElementById("maandResume");
+              maandResumeElement.textContent = formData.course_names.join(", ");
+            }
+            break;
+
+          case "calendar":
+            if (formData.course_dates && Array.isArray(formData.course_dates)) {
+              const specifiekeDatesElement =
+                document.getElementById("specifiekeDates");
+              specifiekeDatesElement.innerHTML = "";
+
+              const monthNames = [
+                "Jan",
+                "Feb",
+                "Mrt",
+                "Apr",
+                "Mei",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Okt",
+                "Nov",
+                "Dec",
+              ];
+
+              const sortedDates = formData.course_dates.sort(
+                (a, b) => new Date(a) - new Date(b)
+              );
+
+              sortedDates.forEach((courseDate) => {
+                const date = new Date(courseDate);
+
+                const dayDiv = document.createElement("div");
+                dayDiv.id = "daySelected";
+                dayDiv.classList.add("text-size-tiny", "text-weight-bold");
+                dayDiv.textContent = date.getDate();
+
+                const monthDiv = document.createElement("div");
+                monthDiv.id = "monthSelected";
+                monthDiv.classList.add("text-size-xtiny", "text-weight-bold");
+                monthDiv.textContent = monthNames[date.getMonth()];
+
+                const dateDiv = document.createElement("div");
+                dateDiv.classList.add("overzicht_info-date");
+                dateDiv.appendChild(dayDiv);
+                dateDiv.appendChild(monthDiv);
+
+                specifiekeDatesElement.appendChild(dateDiv);
+              });
+            }
+            break;
+        }
+        this.updateRowVisibility(formData);
+        this.updateSvgVisibility(formData);
+      }
+
+      handleStoredData(formData) {
+        const link = document.getElementById("btnLink");
+        const text = document.getElementById("btnText");
+        const amount = document.getElementById("btnAmount");
+        const aanbetalingAmount = document.getElementById("aanbetalingTotal");
+        text.textContent = formData.buttonText;
+        amount.textContent = `€ ${formData.payment_amount}`;
+        const paymentAmount = parseFloat(formData.payment_amount);
+        let formattedAmount = "";
+
+        if (!isNaN(paymentAmount)) {
+          if (Math.floor(paymentAmount) === paymentAmount) {
+            formattedAmount = `${paymentAmount},-`;
+          } else {
+            formattedAmount = `${paymentAmount.toFixed(2)},-`;
+          }
+        } else {
+          formattedAmount = "Error";
+        }
+
+        aanbetalingAmount.textContent = ` ${formattedAmount}`;
+        link.addEventListener("click", function () {
+          window.location.href = formData.payment_link;
+        });
+      }
+    }
+    const orderManager = new OrderManager();
+  }
+
+
+  function updateLoginButton() {
+    const loginButton = document.getElementById("btn-login");
+    if (localStorage.getItem("userLoggedIn")) {
+      loginButton.textContent = "Uitloggen";
+      loginButton.href = "/inloggen";
+    } else {
+      loginButton.textContent = "Inloggen";
+      loginButton.href = "/inloggen";
     }
   }
-  const orderManager = new OrderManager();
-}
 
+  document.addEventListener("DOMContentLoaded", updateLoginButton);
 
-function updateLoginButton() {
-  const loginButton = document.getElementById("btn-login");
-  if (localStorage.getItem("userLoggedIn")) {
-    loginButton.textContent = "Uitloggen";
-    loginButton.href = "/inloggen";
-  } else {
-    loginButton.textContent = "Inloggen";
-    loginButton.href = "/inloggen";
-  }
-}
-
-document.addEventListener("DOMContentLoaded", updateLoginButton);
-
-document.getElementById("btn-login").addEventListener("click", (event) => {
-  if (localStorage.getItem("userLoggedIn")) {
-    localStorage.removeItem("userLoggedIn");
-    event.target.textContent = "Inloggen";
-    window.location.href = "/inloggen";
-  }
-});
+  document.getElementById("btn-login").addEventListener("click", (event) => {
+    if (localStorage.getItem("userLoggedIn")) {
+      localStorage.removeItem("userLoggedIn");
+      //event.target.textContent = "Inloggen";
+      window.location.href = "/inloggen";
+    }
+  });
