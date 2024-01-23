@@ -9,6 +9,7 @@ class FormManager {
     this.initStepRules();
     this.initElements();
     this.sideEffects = false;
+    this.isDateComplete = false;
     this.cities = [];
     this.citiesNameSelected = [];
     this.cbr_locations = [];
@@ -63,9 +64,9 @@ class FormManager {
         textMap: {
           online: ` Volledige online cursus
 
-                                                            Videocursus
-                                                            CBR oefenexamens
-                                                            E-book `,
+                                                          Videocursus
+                                                          CBR oefenexamens
+                                                          E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -406,9 +407,11 @@ class FormManager {
   }
 
   enableButton() {
+    console.log("Entro");
     this.nextButton.classList.remove("disabled-button");
   }
   disableButton() {
+    console.log("Entro deshabilitado");
     this.nextButton.classList.add("disabled-button");
   }
 
@@ -484,6 +487,7 @@ class FormManager {
     }
     this.handleSideEffects();
     this.updateProgressBar();
+    console.log(this.formData);
   }
 
   toggleButtonsVisibility(show) {
@@ -534,27 +538,21 @@ class FormManager {
   }
 
   validateDate(dateString) {
-    const parts = dateString.split("-");
-    if (parts.length !== 3) return false;
+    if (this.isReturning && this.isDateComplete) return true;
 
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10);
-    const year = parseInt(parts[2], 10);
+    const dateParts = dateString.split("-").map(part => parseInt(part, 10));
+    if (dateParts.length !== 3 || dateParts.some(isNaN)) return false;
 
-    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+    const [day, month, year] = dateParts;
+    const date = new Date(year, month - 1, day);
 
-    if (year < 1900 || year > new Date().getFullYear()) return false;
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
-
-    if (month === 2) {
-      const isLeapYear =
-        year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-      if (day > 29 || (day === 29 && !isLeapYear)) return false;
-    } else if ([4, 6, 9, 11].includes(month) && day > 30) {
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
       return false;
     }
 
+    if (year < 1900 || year > new Date().getFullYear()) return false;
+
+    this.isDateComplete = true;
     return true;
   }
 
@@ -632,8 +630,12 @@ class FormManager {
       this.validateDate(this.formData["birth_date"]) &&
       this.areAllRequiredInputsFilled() &&
       document.getElementById("checkbox").checked;
-
-    validationResult ? this.enableButton() : this.disableButton();
+    console.log(validationResult);
+    if (validationResult) {
+      this.enableButton();
+    } else {
+      this.disableButton();
+    }
   }
 
   areAllRequiredInputsFilled() {
@@ -725,8 +727,11 @@ class FormManager {
       this.applyLastStepChanges();
     } else {
       this.changeBtn("Volgende");
-      const isInvalid = this.isStepInvalid();
-      isInvalid ? this.disableButton() : this.enableButton();
+
+      if (this.getCurrentStepId() !== 'stepInputs') {
+        const isInvalid = this.isStepInvalid();
+        isInvalid ? this.disableButton() : this.enableButton();
+      }
     }
   }
 
@@ -767,7 +772,7 @@ class FormManager {
       this.isReapplyFlow = false;
     }
 
-    console.log(this.isReapplyFlow);
+    //console.log(this.isReapplyFlow);
   }
 
   // Show dates for both flows
@@ -781,7 +786,7 @@ class FormManager {
 
   handleSideEffects() {
     const currentStepId = this.getCurrentStepId();
-    this.getUserInfoBack();
+    //this.getUserInfoBack();
     switch (currentStepId) {
       case "step4Cities":
         this.getCities();
@@ -805,6 +810,10 @@ class FormManager {
         break;
       case "stepCalendar":
         this.initializeCalendar();
+      case "stepInputs":
+        this.updateButtonState();
+      case "overzicht":
+        this.isReturning = true;
       default:
         this.sideEffects = false;
         break;
@@ -1557,15 +1566,15 @@ class FormManager {
       this.appendSvgToElement(
         packageDescriptionItem,
         `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <g clip-path="url(#clip0_410_3698)">
-                                                <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
-                                                </g>
-                                                <defs>
-                                                <clipPath id="clip0_410_3698">
-                                                <rect width="10" height="8" fill="white"></rect>
-                                                </clipPath>
-                                                </defs>
-                                                </svg >`
+                                              <g clip-path="url(#clip0_410_3698)">
+                                              <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
+                                              </g>
+                                              <defs>
+                                              <clipPath id="clip0_410_3698">
+                                              <rect width="10" height="8" fill="white"></rect>
+                                              </clipPath>
+                                              </defs>
+                                              </svg >`
       );
 
       const descriptionItem = this.createElementWithClass(
@@ -2143,7 +2152,7 @@ class OrderManager {
     });
   }
 
-  /*updateRowVisibility(formData) {
+  updateRowVisibility(formData) {
     const showLocations =
       (formData.cities && formData.cities.length > 0) ||
       (formData.cbr_locations && formData.cbr_locations.length > 0);
@@ -2156,7 +2165,7 @@ class OrderManager {
 
     locationsRow.classList.toggle("active", showLocations);
     datesRow.classList.toggle("active", showDates);
-  }*/
+  }
 
   toggleElementVisibility(elementId, shouldShow) {
     const element = document.getElementById(elementId);
@@ -2197,9 +2206,9 @@ class OrderManager {
         textMap: {
           online: ` Volledige online cursus
 
-                      Videocursus
-                      CBR oefenexamens
-                      E-book `,
+                    Videocursus
+                    CBR oefenexamens
+                    E-book `,
           offline: "Dagcursus met aansluitend het examen: 99,-",
         },
       },
@@ -2258,7 +2267,7 @@ class OrderManager {
     } else if (formData.course_type === "online") {
       if (totaalTextElement)
         totaalTextElement.textContent = `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
-                `;
+              `;
       if (aanbetalingTextElement)
         aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
     }
