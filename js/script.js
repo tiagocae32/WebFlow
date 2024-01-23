@@ -560,7 +560,7 @@ if (window.location.pathname === '/aanmelden') {
     }
 
     initFormInputEvents() {
-      const inputs = document.querySelectorAll('.form-step input[type="text"], .form-step input[type="email"], .form-step input[type="phone"]');
+      const inputs = document.querySelectorAll('.form-step input[type="text"], .form-step input[type="email"], .form-step input[type="number"]');
       inputs.forEach((input) => {
         input.addEventListener("blur", this.handleInputBlur.bind(this));
       });
@@ -578,7 +578,8 @@ if (window.location.pathname === '/aanmelden') {
       if (!inputElement.value.trim()) {
         errorMessage = "Dit veld is verplicht";
         isValid = false;
-      } else if (
+      }
+      if (
         inputElement.getAttribute("data-key-back") === "email" &&
         !this.isValidEmail(inputElement.value)
       ) {
@@ -625,7 +626,6 @@ if (window.location.pathname === '/aanmelden') {
         this.validateDate(this.formData["birth_date"]) &&
         this.areAllRequiredInputsFilled() &&
         document.getElementById("checkbox").checked;
-      console.log(validationResult);
       if (validationResult) {
         this.enableButton();
       } else {
