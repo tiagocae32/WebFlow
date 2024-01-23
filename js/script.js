@@ -62,11 +62,7 @@ if (window.location.pathname === '/aanmelden') {
         course_type: {
           elementId: "courseTypeText",
           textMap: {
-            online: ` Volledige online cursus
-
-                                                          Videocursus
-                                                          CBR oefenexamens
-                                                          E-book `,
+            online: "Volledige online cursus",
             offline: "Dagcursus met aansluitend het examen: 99,-",
           },
         },
@@ -1790,6 +1786,24 @@ if (window.location.pathname === '/aanmelden') {
 
       const value = this.formData[key];
       element.textContent = config.textMap[value] ?? value;
+
+      const existingList = element.querySelector('.overzicht_online-list');
+      if (existingList) {
+        element.removeChild(existingList);
+      }
+
+      if (key === 'course_type' && value === 'online') {
+        const list = document.createElement('ul');
+        list.className = 'overzicht_online-list';
+
+        const items = ["Videocursus", "CBR oefenexamens", "E-book"];
+        items.forEach(item => {
+          const listItem = document.createElement('li');
+          listItem.textContent = item;
+          list.appendChild(listItem);
+        });
+        element.appendChild(list);
+      }
     }
 
     completeDataInputs() {
@@ -2204,11 +2218,7 @@ if (window.location.pathname === '/bestellen') {
         course_type: {
           elementId: "courseTypeText",
           textMap: {
-            online: ` Volledige online cursus
-
-                    Videocursus
-                    CBR oefenexamens
-                    E-book `,
+            online: "Volledige online cursus",
             offline: "Dagcursus met aansluitend het examen: 99,-",
           },
         },
@@ -2220,8 +2230,28 @@ if (window.location.pathname === '/bestellen') {
         if (!element) return;
 
         const value = formData[key];
-        const textToShow = config.textMap[value] ?? value;
-        element.textContent = textToShow;
+        if (config.textMap[value]) {
+          element.textContent = config.textMap[value];
+        } else {
+          element.textContent = value;
+        }
+
+        if (key === 'course_type' && value === 'online') {
+          const existingList = element.querySelector('.overzicht_online-list');
+          if (existingList) {
+            element.removeChild(existingList);
+          }
+
+          const list = document.createElement('ul');
+          list.className = 'overzicht_online-list';
+          const items = ["Videocursus", "CBR oefenexamens", "E-book"];
+          items.forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.textContent = item;
+            list.appendChild(listItem);
+          });
+          element.appendChild(list);
+        }
       });
 
       const courseCategoryTypeTextMap = {
