@@ -898,6 +898,7 @@ class FormManager {
       this.citiesList.length === 0 ||
       this.prevLicenseType !== this.formData.license_type
     ) {
+      delete this.formData.cities;
       this.prevLicenseType = this.formData.license_type;
       try {
         this.enableLoader();

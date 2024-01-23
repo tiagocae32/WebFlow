@@ -423,10 +423,11 @@ class FormManager {
   //END
 
   isLastStep() {
-    return this.currentStepIndex === this.steps.length - 1;
+    return this.getCurrentStepId() === "overzicht";
   }
 
   applyLastStepChanges() {
+    this.enableButton();
     this.changeBtn("Verzenden");
     this.convertDate();
     this.handleProductMijnReservation();
@@ -721,7 +722,6 @@ class FormManager {
 
   updateNextButtonState() {
     if (this.isLastStep()) {
-      this.enableButton();
       this.applyLastStepChanges();
     } else {
       this.changeBtn("Volgende");
@@ -894,7 +894,12 @@ class FormManager {
 
   // CITIES
   async getCities() {
-    if (this.citiesList.length === 0) {
+    if (
+      this.citiesList.length === 0 ||
+      this.prevLicenseType !== this.formData.license_type
+    ) {
+      delete this.formData.cities;
+      this.prevLicenseType = this.formData.license_type;
       try {
         this.enableLoader();
         const resServer = await fetch(this.urls.cities);
@@ -2138,7 +2143,7 @@ class OrderManager {
     });
   }
 
-  updateRowVisibility(formData) {
+  /*updateRowVisibility(formData) {
     const showLocations =
       (formData.cities && formData.cities.length > 0) ||
       (formData.cbr_locations && formData.cbr_locations.length > 0);
@@ -2151,7 +2156,7 @@ class OrderManager {
 
     locationsRow.classList.toggle("active", showLocations);
     datesRow.classList.toggle("active", showDates);
-  }
+  }*/
 
   toggleElementVisibility(elementId, shouldShow) {
     const element = document.getElementById(elementId);
