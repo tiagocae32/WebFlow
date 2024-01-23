@@ -364,6 +364,10 @@ if (window.location.pathname === "/aanmelden") {
       return this.stepHistory[this.stepHistory.length - 1];
     }
 
+    getCurrentObjectStep() {
+      return this.steps.find((step) => step.id === this.getCurrentStepId());
+    }
+
     getNextStepId(currentStepId) {
       const currentStepData = this.steps.find(
         (step) => step.id === currentStepId
@@ -648,7 +652,6 @@ if (window.location.pathname === "/aanmelden") {
         this.validateDate(this.formData["birth_date"]) &&
         this.areAllRequiredInputsFilled() &&
         document.getElementById("checkbox").checked;
-      console.log(validationResult);
       if (validationResult) {
         this.enableButton();
       } else {
@@ -741,7 +744,8 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     updateNextButtonState() {
-      if (this.getCurrentStepId() !== "stepInputs") {
+      const actualStep = this.getCurrentObjectStep();
+      if (!actualStep.hasOwnValidations) {
         const isInvalid = this.isStepInvalid();
         isInvalid ? this.disableButton() : this.enableButton();
       }
@@ -2134,9 +2138,7 @@ if (window.location.pathname === "/aanmelden") {
     {
       id: "stepInputs",
       form: "allInputs",
-      validations: {
-        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-      },
+      hasOwnValidations: true,
     },
     { id: "overzicht", form: "Resume" },
   ];
