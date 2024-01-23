@@ -1195,10 +1195,13 @@ if (window.location.pathname === '/aanmelden') {
       this.chanceElement = document.getElementById("chance");
 
       this.initializeCalendarButtons();
-      this.renderCalendarForMonthYear(
-        this.currentMonthCalendar,
-        this.currentYearCalendar
-      );
+      if (!this.isAlreadyRender) {
+        this.renderCalendarForMonthYear(
+          this.currentMonthCalendar,
+          this.currentYearCalendar
+        );
+      }
+      this.isAlreadyRender = true;
     }
 
     initializeCalendarButtons() {
