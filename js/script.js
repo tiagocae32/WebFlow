@@ -2215,12 +2215,8 @@ if (window.location.pathname === '/bestellen') {
         const element = document.getElementById(config.elementId);
         if (!element) return;
 
-        const value = formData[key];
-        if (config.textMap[value]) {
-          element.textContent = config.textMap[value];
-        } else {
-          element.textContent = value;
-        }
+        const value = this.formData[key];
+        element.textContent = config.textMap[value] ?? value;
 
         if (key === 'course_type' && value === 'online') {
           const existingList = element.querySelector('.overzicht_online-list');
@@ -2288,16 +2284,6 @@ if (window.location.pathname === '/bestellen') {
           aanbetalingTextElement.textContent = `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
       }
 
-      if (formData.license_type) {
-        const licenseTypeElement = document.getElementById("licenseText");
-        licenseTypeElement.textContent = formData.license_type;
-      }
-
-      if (formData.course_type) {
-        const courseTypeElement = document.getElementById("courseTypeText");
-        courseTypeElement.textContent = formData.course_type;
-      }
-
       if (formData.exam_type) {
         const examTypeElement = document.getElementById("examTypeText");
         examTypeElement.textContent = formData.exam_type;
@@ -2311,50 +2297,6 @@ if (window.location.pathname === '/bestellen') {
       if (formData.cbr_locations && formData.cbr_locations.length > 0) {
         const cbrLocationsElement = document.getElementById("cbrLocationsText");
         cbrLocationsElement.textContent = formData.cbr_locations.join(", ");
-      }
-
-      if (formData.first_name) {
-        const firstNameElement = document.getElementById("firstNameText");
-        firstNameElement.textContent = formData.first_name;
-      }
-
-      if (formData.last_name) {
-        const lastNameElement = document.getElementById("lastNameText");
-        lastNameElement.textContent = formData.last_name;
-      }
-      if (formData.nickname) {
-        const nicknameElement = document.getElementById("nicknameText");
-        nicknameElement.textContent = formData.nickname;
-      }
-
-      if (formData.birth_date) {
-        const birthDateElement = document.getElementById("birthDateText");
-        birthDateElement.textContent = formData.birth_date;
-      }
-
-      if (formData.phone) {
-        const phoneElement = document.getElementById("phoneText");
-        phoneElement.textContent = formData.phone;
-      }
-
-      if (formData.email) {
-        const emailElement = document.getElementById("emailText");
-        emailElement.textContent = formData.email;
-      }
-
-      if (formData.address_1) {
-        const address1Element = document.getElementById("address1Text");
-        address1Element.textContent = formData.address_1;
-      }
-
-      if (formData.address_2) {
-        const address2Element = document.getElementById("address2Text");
-        address2Element.textContent = formData.address_2;
-      }
-
-      if (formData.address_3) {
-        const address3Element = document.getElementById("address3Text");
-        address3Element.textContent = formData.address_3;
       }
 
       switch (formData.course_category) {
