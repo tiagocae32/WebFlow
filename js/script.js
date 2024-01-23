@@ -175,7 +175,7 @@ class FormManager {
     };
     this.submissionRules = {
       course_type: {
-        offline: ["cbr_locations"], //, "cities"
+        offline: ["cbr_locations"],
         online: ["cities"],
       },
       course_category: {
@@ -453,7 +453,7 @@ class FormManager {
 
     const currentStepId = this.getCurrentStepId();
     const isOverzichtStep = currentStepId === "overzicht";
-    //this.toggleButtonsVisibility(!isOverzichtStep);
+    this.toggleButtonsVisibility(!isOverzichtStep);
     const form = document.querySelector(
       `.form-step[data-step-id="${currentStepId}"]`
     );
@@ -773,9 +773,9 @@ class FormManager {
   // Show dates for both flows
   showDates() {
     if (this.isReapplyFlow) {
-      document.getElementById("datesReapply").style.display = "block";
+      document.getElementById("datesReapply").style.display = "flex";
     } else {
-      document.getElementById("datesNoReapply").style.display = "block";
+      document.getElementById("datesNoReapply").style.display = "flex";
     }
   }
 
@@ -1056,8 +1056,10 @@ class FormManager {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().split("T")[0];
     fechaInput.min = formattedDate;
+
     fechaInput.addEventListener("change", (event) => {
-      this.datePicked = event.target.value;
+      console.log("Fecha");
+      this.datePicked = fechaGlobalSeleccionada;
       this.formatDateMijnFlow();
     });
   }
@@ -1087,6 +1089,7 @@ class FormManager {
       }
 
       this.formatDateMijnFlow();
+      console.log(this.timePicked);
     });
   }
 
