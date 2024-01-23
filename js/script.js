@@ -230,8 +230,12 @@ if (window.location.pathname === "/aanmelden") {
     // HELPERS
 
     convertDate() {
-      const change = this.convertDateToISO(this.formData["birth_date"]);
-      this.formData["birth_date"] = change;
+
+      if (!this.isAlreadyFilled) {
+        const change = this.convertDateToISO(this.formData["birth_date"]);
+        this.formData["birth_date"] = change;
+      }
+      this.isAlreadyFilled = true;
     }
 
     convertDateToISO(dateString) {
