@@ -309,11 +309,6 @@ if (window.location.pathname === '/aanmelden') {
       const currentStepId = this.getCurrentStepId();
       const nextStepId = this.getNextStepId(currentStepId);
 
-      if (currentStepId === "overzicht") {
-        this.handleFinalStep();
-        return;
-      }
-
       if (
         currentStepId === "step4Mijn" &&
         this.formData.course_type === "offline"
@@ -428,12 +423,8 @@ if (window.location.pathname === '/aanmelden') {
       this.changeBtn("Verzenden");
       this.convertDate();
       this.handleProductMijnReservation();
-      const data = this.applySubmissionRules();
+      this.applySubmissionRules();
       this.completeResume();
-      console.log(data);
-      this.nextButton.addEventListener("click", () => {
-        this.sendDataBack(data);
-      });
     }
 
     changeBtn(text) {
@@ -451,28 +442,16 @@ if (window.location.pathname === '/aanmelden') {
 
       const currentStepId = this.getCurrentStepId();
       const isOverzichtStep = currentStepId === "overzicht";
-      //this.toggleButtonsVisibility(!isOverzichtStep);
-      const form = document.querySelector(
-        `.form-step[data-step-id="${currentStepId}"]`
-      );
+      this.toggleButtonsVisibility(!isOverzichtStep);
+
+      const form = document.querySelector(`.form-step[data-step-id="${currentStepId}"]`);
 
       const stepIndexWrapper = document.getElementById("stepIndexWrapper");
       if (currentStepId === "overzicht") {
         stepIndexWrapper.classList.add("hide");
-        this.prevButton.removeEventListener("click", this.prevStep);
-        this.nextButton.removeEventListener("click", this.nextStep);
-        this.prevButton.id = "btnPrevLast";
-        this.nextButton.id = "btnSend";
-        document
-          .getElementById("btnPrevLast")
-          .addEventListener("click", this.prevStep.bind(this));
-        document
-          .getElementById("btnSend")
-          .addEventListener("click", this.nextStep.bind(this));
+        this.setupOverzichtStepButtons();
       } else {
         stepIndexWrapper.classList.remove("hide");
-        this.prevButton.id = "btn-prev";
-        this.nextButton.id = "btn-next";
       }
 
       if (form) {
@@ -482,6 +461,14 @@ if (window.location.pathname === '/aanmelden') {
       this.handleSideEffects();
       this.updateProgressBar();
       console.log(this.formData);
+    }
+
+    setupOverzichtStepButtons() {
+      const btnPrevLast = document.getElementById("btnPrevLast");
+      const btnSend = document.getElementById("btnSend");
+
+      btnSend.addEventListener("click", () => this.handleFinalStep());
+      btnPrevLast.addEventListener("click", this.prevStep.bind(this));
     }
 
     toggleButtonsVisibility(show) {
@@ -817,11 +804,11 @@ if (window.location.pathname === '/aanmelden') {
     //END
 
     // GET/SET DATA
-    getData() {
+    getFormData() {
       return this.formData;
     }
 
-    setData(key, value) {
+    setFormData(key, value) {
       this.formData[key] = value;
     }
     //END
@@ -853,8 +840,8 @@ if (window.location.pathname === '/aanmelden') {
     handleProductMijnReservation() {
       const product = this.getProduct();
       const isMijnReservation = this.isMijnReservation();
-      this.setData("product", product);
-      this.setData("is_mijn_reservation", isMijnReservation);
+      this.setFormData("product", product);
+      this.setFormData("is_mijn_reservation", isMijnReservation);
     }
 
     isMijnReservation() {
@@ -1056,7 +1043,7 @@ if (window.location.pathname === '/aanmelden') {
 
       selectElement.addEventListener("change", (event) => {
         const selectedValue = event.target.value;
-        this.setData("mijn_exam_location", selectedValue);
+        this.setFormData("mijn_exam_location", selectedValue);
       });
     }
 
@@ -1104,12 +1091,12 @@ if (window.location.pathname === '/aanmelden') {
 
     formatDateMijnFlow() {
       if (this.datePicked && this.timePicked) {
-        this.setData(
+        this.setFormData(
           "mijn_exam_datetime",
           `${this.datePicked}T${this.timePicked}:00+01:00`
         );
       } else {
-        this.setData("mijn_exam_datetime", "");
+        this.setFormData("mijn_exam_datetime", "");
       }
     }
 
@@ -1442,7 +1429,7 @@ if (window.location.pathname === '/aanmelden') {
         packageItem.setAttribute("data-package-name", pkg.name);
 
         packageItem.addEventListener("click", () => {
-          this.setData("package_name", pkg.name);
+          this.setFormData("package_name", pkg.name);
           this.packageSelected = pkg;
           const allPackageItems = document.querySelectorAll(
             ".aanmelden_package-item"
@@ -1962,8 +1949,7 @@ if (window.location.pathname === '/aanmelden') {
     //SEND DATA
 
     async handleFinalStep() {
-      const data = this.getData();
-      const dataResponse = await this.sendDataBack(data);
+      const dataResponse = await this.sendDataBack();
 
       if (dataResponse) {
         const {
@@ -2053,7 +2039,8 @@ if (window.location.pathname === '/aanmelden') {
       }
     }
 
-    async sendDataBack(data) {
+    async sendDataBack() {
+      const data = this.getFormData();
       const url = this.urls.urlPostMultiStepForm;
 
       const options = {
