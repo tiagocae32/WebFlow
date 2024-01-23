@@ -317,10 +317,6 @@ class FormManager {
       return;
     }
 
-    if (currentStepId === "step4Mijn") {
-      this.setTimeInput();
-    }
-
     if (
       currentStepId === "step4Mijn" &&
       this.formData.course_type === "offline"
@@ -435,7 +431,6 @@ class FormManager {
     this.convertDate();
     this.handleProductMijnReservation();
     const data = this.applySubmissionRules();
-    if (Number(data.exam_type) === 3) this.formatDateMijnFlow();
     this.completeResume();
     console.log(data);
     this.nextButton.addEventListener("click", () => {
@@ -766,7 +761,7 @@ class FormManager {
 
         this.isReapplyFlow = data.is_reapply_allowed;
       } catch (error) {
-        console.log(error.response);
+        console.log(error);
       }
     } else {
       this.isReapplyFlow = false;
@@ -801,8 +796,8 @@ class FormManager {
         this.sideEffects = true;
       case "step4Mijn":
         this.getCbrLocations(false);
+        this.setDateInput();
         this.setTimeInput();
-        this.buildInput();
       case "step6":
         this.showDates();
       case "stepMonths":
@@ -1056,43 +1051,42 @@ class FormManager {
     });
   }
 
-  setTimeInput() {
+  setDateInput() {
     const fechaInput = document.getElementById("dateInput");
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().split("T")[0];
     fechaInput.min = formattedDate;
-    this.datePicked = fechaGlobalSeleccionada;
-
     fechaInput.addEventListener("change", (event) => {
-      this.datePicked = fechaGlobalSeleccionada;
+      this.datePicked = event.target.value;
+      this.formatDateMijnFlow();
     });
   }
 
-  buildInput() {
+  setTimeInput() {
     const timeInput = document.getElementById("timeInput");
     const timeError = document.getElementById("timeError");
 
     timeInput.addEventListener("input", (e) => {
       let value = e.target.value.replace(/[^0-9]/g, "");
+
       if (value.length > 2) {
         value = value.substring(0, 2) + ":" + value.substring(2, 4);
       }
+
       e.target.value = value;
 
-      if (value.length === 5) {
-        const [hours, minutes] = value.split(":").map(Number);
-        if (hours > 23 || minutes > 59) {
-          timeError.style.display = "block";
-          this.setData("mijn_exam_datetime", "");
-          this.timePicked = "";
-        } else {
-          timeError.style.display = "none";
-          this.timePicked = `${hours}:${minutes}`;
-          this.setData("mijn_exam_datetime", this.timePicked);
-        }
+      const [hours, minutes] = value.split(":").map(Number);
+      const isValid = value.length === 5 && hours <= 23 && minutes <= 59;
+
+      if (!isValid) {
+        timeError.style.display = "block";
+        this.timePicked = null;
       } else {
         timeError.style.display = "none";
+        this.timePicked = `${hours}:${minutes}`;
       }
+
+      this.formatDateMijnFlow();
     });
   }
 
