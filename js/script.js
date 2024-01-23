@@ -475,7 +475,9 @@ if (window.location.pathname === "/aanmelden") {
       const btnSend = document.getElementById("btnSend");
 
       btnSend.addEventListener("click", () => this.handleFinalStep());
-      btnPrevLast.addEventListener("click", this.prevStep.bind(this));
+      btnPrevLast.addEventListener("click", () => {
+        this.goToStep('stepInputs');
+      });
     }
 
     toggleButtonsVisibility(show) {
