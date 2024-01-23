@@ -1941,24 +1941,15 @@ if (window.location.pathname === '/aanmelden') {
       container.innerHTML = "";
 
       const monthNames = [
-        "Jan",
-        "Feb",
-        "Mrt",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Dec",
+        "Jan", "Feb", "Mrt", "Apr", "Mei", "Jun",
+        "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"
       ];
 
       if (Array.isArray(courseDates) && courseDates.length > 0) {
         const sortedDates = courseDates.sort((a, b) => new Date(a) - new Date(b));
         sortedDates.forEach((courseDate) => {
-          const date = new Date(courseDate);
+          const dateParts = courseDate.split('-');
+          const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
 
           const dayElement = document.createElement("div");
           dayElement.id = "daySelected";
@@ -1980,6 +1971,7 @@ if (window.location.pathname === '/aanmelden') {
       }
       this.updateRowVisibility();
     }
+
 
     completePackage() {
       const container = document.getElementById(
