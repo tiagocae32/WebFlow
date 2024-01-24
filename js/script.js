@@ -518,52 +518,72 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     formatBirthDate(value) {
-      let formattedValue = value.replace(/[^0-9\-]/g, "");
-      formattedValue = formattedValue.slice(0, 10);
+      // Eliminar caracteres que no sean dígitos o guiones
+      value = value.replace(/[^0-9\-]/g, "");
 
-      if (formattedValue.length === 2 || formattedValue.length === 5) {
-        if (
-          this.lastFormattedValue &&
-          formattedValue.length > this.lastFormattedValue.length
-        ) {
-          formattedValue += "-";
+      // Dividir la fecha en partes y limitar su longitud
+      let parts = value.split('-');
+      parts[0] = parts[0] ? parts[0].slice(0, 2) : ''; // Día
+      parts[1] = parts[1] ? parts[1].slice(0, 2) : ''; // Mes
+      parts[2] = parts[2] ? parts[2].slice(0, 4) : ''; // Año
+
+      // Reensamblar la fecha con los guiones
+      let formattedValue = '';
+      if (parts[0]) {
+        formattedValue = parts[0];
+        if (parts[0].length === 2 || parts[1]) {
+          formattedValue += '-';
         }
+      }
+      if (parts[1]) {
+        formattedValue += parts[1];
+        if (parts[1].length === 2 || parts[2]) {
+          formattedValue += '-';
+        }
+      }
+      if (parts[2]) {
+        formattedValue += parts[2];
       }
 
       this.lastFormattedValue = formattedValue;
-
       return formattedValue;
     }
 
     validateDate(dateString) {
-      if (this.isReturning && this.isDateComplete) return true;
-
-      const dateParts = dateString.split("-").map((part) => parseInt(part, 10));
-      if (dateParts.length !== 3 || dateParts.some(isNaN)) return false;
-
-      const [day, month, year] = dateParts;
-      const date = new Date(year, month - 1, day);
-
-      if (
-        date.getFullYear() !== year ||
-        date.getMonth() !== month - 1 ||
-        date.getDate() !== day
-      ) {
+      const regex = /^\d{2}-\d{2}-\d{4}$/;
+      if (!regex.test(dateString)) {
         return false;
       }
 
-      if (year < 1900 || year > new Date().getFullYear()) return false;
+      const [day, month, year] = dateString.split("-").map(Number);
 
-      this.isDateComplete = true;
-      return true;
+      if (year < 1900 || year > new Date().getFullYear() || month < 1 || month > 12) {
+        return false;
+      }
+
+      const date = new Date(year, month - 1, day);
+      return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
     }
 
     initBirthDateInput() {
       const birthDateInput = document.getElementById("birthDateInput");
+
+      birthDateInput.addEventListener("keydown", (event) => {
+        if (event.key === "Backspace") {
+          const cursorPos = birthDateInput.selectionStart;
+
+          if (birthDateInput.value[cursorPos - 1] === '-') {
+            event.preventDefault();
+            birthDateInput.setSelectionRange(cursorPos - 1, cursorPos - 1);
+          }
+        }
+      });
+
       birthDateInput.addEventListener("input", (event) => {
-        const value = event.target.value;
-        const formattedValue = this.formatBirthDate(value);
+        const formattedValue = this.formatBirthDate(event.target.value);
         event.target.value = formattedValue;
+        this.formData["birth_date"] = formattedValue;
+        this.updateButtonState();
       });
     }
 
