@@ -1252,8 +1252,8 @@ if (window.location.pathname === "/aanmelden") {
       this.yearLabel = document.getElementById("yearLabel");
       this.chanceElement = document.getElementById("chance");
 
-      this.initializeCalendarButtons();
       if (!this.isAlreadyRender) {
+        this.initializeCalendarButtons();
         this.renderCalendarForMonthYear(
           this.currentMonthCalendar,
           this.currentYearCalendar
@@ -1275,10 +1275,7 @@ if (window.location.pathname === "/aanmelden") {
           } else {
             this.currentMonthCalendar--;
           }
-          this.renderCalendarForMonthYear(
-            this.currentMonthCalendar,
-            this.currentYearCalendar
-          );
+          this.renderCalendarForMonthYear(this.currentMonthCalendar, this.currentYearCalendar);
         });
       }
 
@@ -1291,10 +1288,7 @@ if (window.location.pathname === "/aanmelden") {
           } else {
             this.currentMonthCalendar++;
           }
-          this.renderCalendarForMonthYear(
-            this.currentMonthCalendar,
-            this.currentYearCalendar
-          );
+          this.renderCalendarForMonthYear(this.currentMonthCalendar, this.currentYearCalendar);
         });
       }
     }
