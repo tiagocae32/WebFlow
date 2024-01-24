@@ -22,7 +22,7 @@ if (window.location.pathname === "/aanmelden") {
           "https://api.develop.nutheorie.be/api/applications/payment_link/",
         package_start:
           "https://api.develop.nutheorie.be/api/applications/set_package_start/",
-        final_redirect_url: "https://develop.nutheorie.be/user-profile",
+        final_redirect_url: "https://develop.nutheorie.be/user-profile?a=from_landing&t={refreshToken}",
         fail_redirect_url: "https://develop.nutheorie.be/betaling/failed",
         cities: "https://api.develop.nutheorie.be/api/cities/",
         cbrsLocations:
@@ -656,7 +656,7 @@ if (window.location.pathname === "/aanmelden") {
         .every((input) => input.value.trim() !== "");
     }
 
-    isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 
     isStepInvalid() {
       const currentStep = this.steps[this.currentStepIndex];
