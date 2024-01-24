@@ -207,6 +207,7 @@ if (window.location.pathname === "/aanmelden") {
       this.nextButtonText = document.getElementById("btnText");
       this.prevButton = document.getElementById("btn-prev");
       this.btnEditSave = document.getElementById("btnEditSave");
+      console.log(fechaGlobalSeleccionada);
       this.nextButton.addEventListener("click", () => this.nextStep());
       this.prevButton.addEventListener("click", () => this.prevStep());
       document.addEventListener("click", (event) =>
@@ -1076,10 +1077,23 @@ if (window.location.pathname === "/aanmelden") {
       const formattedDate = currentDate.toISOString().split("T")[0];
       fechaInput.min = formattedDate;
 
+      let lastDatePicked = localStorage.getItem('fechaGlobalSeleccionada');
+      this.datePicked = lastDatePicked;
+
       fechaInput.addEventListener("change", (event) => {
-        this.datePicked = fechaGlobalSeleccionada;
+        this.datePicked = event.target.value;
         this.formatDateMijnFlow();
       });
+
+      setInterval(() => {
+        let getDatePicked = localStorage.getItem('fechaGlobalSeleccionada');
+        if (getDatePicked !== lastDatePicked) {
+          lastDatePicked = getDatePicked;
+          this.datePicked = getDatePicked;
+          console.log("Fecha cambiada: ", this.datePicked);
+          this.formatDateMijnFlow();
+        }
+      }, 1000);
     }
 
     setTimeInput() {
