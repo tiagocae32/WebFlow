@@ -519,16 +519,13 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     formatBirthDate(value) {
-      // Eliminar caracteres que no sean dígitos o guiones
       value = value.replace(/[^0-9\-]/g, "");
 
-      // Dividir la fecha en partes y limitar su longitud
       let parts = value.split('-');
-      parts[0] = parts[0] ? parts[0].slice(0, 2) : ''; // Día
-      parts[1] = parts[1] ? parts[1].slice(0, 2) : ''; // Mes
-      parts[2] = parts[2] ? parts[2].slice(0, 4) : ''; // Año
+      parts[0] = parts[0] ? parts[0].slice(0, 2) : '';
+      parts[1] = parts[1] ? parts[1].slice(0, 2) : '';
+      parts[2] = parts[2] ? parts[2].slice(0, 4) : '';
 
-      // Reensamblar la fecha con los guiones
       let formattedValue = '';
       if (parts[0]) {
         formattedValue = parts[0];
@@ -551,6 +548,11 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     validateDate(dateString) {
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        dateString = dateString.split('-').reverse().join('-');
+      }
+
       const regex = /^\d{2}-\d{2}-\d{4}$/;
       if (!regex.test(dateString)) {
         return false;
@@ -562,8 +564,7 @@ if (window.location.pathname === "/aanmelden") {
         return false;
       }
 
-      const date = new Date(year, month - 1, day);
-      return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+      return true;
     }
 
     initBirthDateInput() {
@@ -845,7 +846,6 @@ if (window.location.pathname === "/aanmelden") {
           this.initFormInputEvents();
           break;
         case "overzicht":
-          this.isReturning = true;
           this.createEditStepButtons();
           break;
         default:
@@ -1887,7 +1887,6 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     backupFormData() {
-      console.log('hola');
       this.originalFormData = JSON.parse(JSON.stringify(this.formData));
     }
     determineLocationStep() {
@@ -1953,7 +1952,6 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     initializeEditButtons() {
-      console.log(this.originalFormData);
       const btnEditWrapper = document.getElementById("btnEditWrapper");
       const btnSendWrapper = document.getElementById("btnSendWrapper");
 
@@ -1963,7 +1961,6 @@ if (window.location.pathname === "/aanmelden") {
       btnEditCancel.addEventListener("click", () => {
         this.formData = JSON.parse(JSON.stringify(this.originalFormData));
         this.goToStep("overzicht");
-        console.log(this.originalFormData);
         btnEditWrapper.classList.add("hide");
         btnSendWrapper.classList.remove("hide");
       });
