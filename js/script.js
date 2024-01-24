@@ -16,7 +16,6 @@ if (window.location.pathname === "/aanmelden") {
       this.cbrs_list = [];
       this.stepHistory = [];
       this.initBirthDateInput();
-      this.initFormInputEvents();
       this.handleFinalStepBound = this.handleFinalStep.bind(this);
       this.urls = {
         payment_link:
@@ -569,9 +568,9 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     initFormInputEvents() {
-      const inputs = document.querySelectorAll(
-        '.form-step input[type="text"], .form-step input[type="email"], .form-step input[type="number"]'
-      );
+      const contenedorId = 'stepInputs'
+      const inputs = document.querySelectorAll(`#${contenedorId} input[type="text"], #${contenedorId} input[type="number"], #${contenedorId} input[type="email"]`);
+
       inputs.forEach((input) => {
         input.addEventListener("blur", this.handleInputBlur.bind(this));
       });
@@ -817,6 +816,7 @@ if (window.location.pathname === "/aanmelden") {
           this.initializeCalendar();
         case "stepInputs":
           this.updateButtonState();
+          this.initFormInputEvents();
         case "overzicht":
           this.isReturning = true;
           this.createEditStepButtons();
@@ -1351,6 +1351,11 @@ if (window.location.pathname === "/aanmelden") {
       );
       days.forEach((day) => {
         day.addEventListener("click", () => {
+
+          const storedDates = JSON.parse(localStorage.getItem('selectedDates'));
+          if (storedDates) {
+            this.selectedDates = new Set(storedDates);
+          }
           const date = day.getAttribute("data-date");
           if (this.selectedDates.has(date)) {
             this.selectedDates.delete(date);
@@ -1359,6 +1364,7 @@ if (window.location.pathname === "/aanmelden") {
             this.selectedDates.add(date);
             day.classList.add("selected-date");
           }
+          localStorage.setItem('selectedDates', JSON.stringify(Array.from(this.selectedDates)));
           this.updateChanceText();
         });
       });
@@ -2245,6 +2251,7 @@ if (window.location.pathname === "/aanmelden") {
 
     async sendDataBack() {
       const data = this.getFormData();
+      localStorage.removeItem("selectedDates");
       const url = this.urls.urlPostMultiStepForm;
 
       const options = {
