@@ -806,10 +806,8 @@ if (window.location.pathname === "/aanmelden") {
           this.setTimeInput();
         case "step6":
           this.showDates();
-          this.handleCourseCategoryChange('per_dates');
         case "stepMonths":
           this.handleStepMonths();
-          this.handleCourseCategoryChange('per_month');
           break;
         case "stepCalendar":
           this.initializeCalendar();
@@ -971,7 +969,6 @@ if (window.location.pathname === "/aanmelden") {
         this.formData['course_names'] = [];
       }
     }
-
 
     isActualMonth(month) {
       return this.dutchMonths.indexOf(month) === new Date().getMonth();
@@ -1416,6 +1413,10 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     async getPackages() {
+      if (this.formData['package_name']) {
+        return;
+      }
+
       const url = this.urls.plans;
 
       try {
@@ -1668,7 +1669,7 @@ if (window.location.pathname === "/aanmelden") {
       }
       if (isFinalStep && pkg.old_price) {
         const discountAmount = pkg.old_price - pkg.price;
-        const formattedDiscountAmount = `${discountAmount.toFixed(2)}`;
+        const formattedDiscountAmount = `- ${discountAmount.toFixed(2)}`;
 
         const additionalSeparatorMargin = this.createElementWithClass(
           "div",
@@ -1819,6 +1820,7 @@ if (window.location.pathname === "/aanmelden") {
             this.backupFormData();
             this.isEditing = true;
             buttonData.callback();
+            window.scrollTo({ top: 0, behavior: "smooth" });
             this.initializeEditButtons();
             this.showEditButtons();
           });
