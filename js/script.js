@@ -207,7 +207,6 @@ if (window.location.pathname === "/aanmelden") {
       this.nextButtonText = document.getElementById("btnText");
       this.prevButton = document.getElementById("btn-prev");
       this.btnEditSave = document.getElementById("btnEditSave");
-      console.log(fechaGlobalSeleccionada);
       this.nextButton.addEventListener("click", () => this.nextStep());
       this.prevButton.addEventListener("click", () => this.prevStep());
       document.addEventListener("click", (event) =>
@@ -872,32 +871,25 @@ if (window.location.pathname === "/aanmelden") {
     getProduct() {
       const licenseType = this.formData.license_type;
       const examType = Number(this.formData.exam_type);
-
       const PRODUCTS_LIST = this.PRODUCTS_LIST;
 
       let product;
 
       switch (licenseType) {
         case this.LicenseTypesEnum.MOTOR:
-          product =
-            examType === 1 || examType === 3
-              ? PRODUCTS_LIST.ATH
-              : PRODUCTS_LIST.ATH_VE;
+          product = (examType === 1 || examType === 3) ? PRODUCTS_LIST.ATH : PRODUCTS_LIST.ATH_VE;
           break;
 
         case this.LicenseTypesEnum.SCOOTER:
-          product =
-            examType === 1 || examType === 3
-              ? PRODUCTS_LIST.AMTH
-              : PRODUCTS_LIST.AMTH_VE;
+          product = (examType === 1 || examType === 3) ? PRODUCTS_LIST.AMTH : PRODUCTS_LIST.AMTH_VE;
+          break;
+
+        case this.LicenseTypesEnum.AUTO:
+          product = (examType === 1 || examType === 3) ? PRODUCTS_LIST.BTH : PRODUCTS_LIST.BTH_VE;
           break;
 
         default:
-          // AUTO
-          product =
-            examType === 1 || examType === 3
-              ? PRODUCTS_LIST.BTH
-              : PRODUCTS_LIST.BTH_VE;
+          break;
       }
 
       return product;
