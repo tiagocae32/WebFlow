@@ -1024,7 +1024,7 @@ if (window.location.pathname === "/aanmelden") {
       }
     }
 
-    // CBR LOCATIONS
+    // CBR LOCATIONS GET
     async getCbrLocations(createElements = true) {
       if (this.cbrs_list.length === 0) {
         try {
@@ -1046,6 +1046,8 @@ if (window.location.pathname === "/aanmelden") {
         this.createCbrElements(this.cbrs_list);
       }
     }
+
+    // MIJN STEP
 
     createCbrsSelect(data) {
       const selectElement = document.getElementById("selectCbrs");
@@ -1072,17 +1074,16 @@ if (window.location.pathname === "/aanmelden") {
       let lastDatePicked = localStorage.getItem('fechaGlobalSeleccionada');
       this.datePicked = lastDatePicked;
 
-      fechaInput.addEventListener("change", (event) => {
-        this.datePicked = event.target.value;
-        this.formatDateMijnFlow();
-      });
+      if (!this.formData.examType) {
+        localStorage.removeItem('fechaGlobalSeleccionada');
+        this.datePicked = null;
+      }
 
       setInterval(() => {
         let getDatePicked = localStorage.getItem('fechaGlobalSeleccionada');
         if (getDatePicked !== lastDatePicked) {
           lastDatePicked = getDatePicked;
           this.datePicked = getDatePicked;
-          console.log("Fecha cambiada: ", this.datePicked);
           this.formatDateMijnFlow();
         }
       }, 1000);
@@ -1095,38 +1096,34 @@ if (window.location.pathname === "/aanmelden") {
       timeInput.addEventListener("input", (e) => {
         let value = e.target.value.replace(/[^0-9]/g, "");
 
-        if (value.length > 2) {
-          value = value.substring(0, 2) + ":" + value.substring(2, 4);
+        if (value.length >= 2) {
+          value = value.substring(0, 2) + (value.length > 2 ? ":" + value.substring(2, 4) : "");
         }
-
         e.target.value = value;
 
-        const [hours, minutes] = value.split(":").map(Number);
-        const isValid = value.length === 5 && hours <= 23 && minutes <= 59;
+        const isValid = value.length === 5 && parseInt(value.substring(0, 2), 10) <= 23 && parseInt(value.substring(3, 5), 10) <= 59;
 
-        if (!isValid) {
+        if (isValid) {
+          timeError.style.display = "none";
+          this.timePicked = value;
+        } else {
           timeError.style.display = "block";
           this.timePicked = null;
-        } else {
-          timeError.style.display = "none";
-          this.timePicked = `${hours}:${minutes}`;
         }
 
         this.formatDateMijnFlow();
-        console.log(this.timePicked);
       });
     }
 
     formatDateMijnFlow() {
       if (this.datePicked && this.timePicked) {
-        this.setFormData(
-          "mijn_exam_datetime",
-          `${this.datePicked}T${this.timePicked}:00+01:00`
-        );
-      } else {
-        this.setFormData("mijn_exam_datetime", "");
+        this.setFormData("mijn_exam_datetime", `${this.datePicked}T${this.timePicked}:00+01:00`);
       }
+      this.updateNextButtonState();
     }
+
+
+    // CBR step
 
     createCbrElements(elements) {
       const container = document.getElementById("step4check");
