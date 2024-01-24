@@ -1960,7 +1960,12 @@ if (window.location.pathname === "/aanmelden") {
         if (config && config.elementId) {
           const element = document.getElementById(config.elementId);
           if (element) {
-            element.textContent = this.formData[key] ?? "-";
+            if (key === 'birth_date' && this.formData[key]) {
+              const dateParts = this.formData[key].split('-');
+              element.textContent = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+            } else {
+              element.textContent = this.formData[key] ?? "-";
+            }
           }
         }
       });
