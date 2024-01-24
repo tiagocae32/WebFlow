@@ -949,18 +949,18 @@ if (window.location.pathname === "/aanmelden") {
 
     // MONTHS
 
-    generateDutchMonths() {
+    generateDutchMonths(months) {
       const currentMonth = new Date().getMonth();
       const monthsToShow = this.dutchMonths.slice(
         currentMonth,
-        currentMonth + 6
+        currentMonth + months
       );
 
       return monthsToShow.map((month) => month);
     }
 
     handleStepMonths() {
-      const months = this.generateDutchMonths();
+      const months = this.generateDutchMonths(6);
       this.createOptions(months, "stepMonthsList", false);
     }
 
@@ -1294,7 +1294,7 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     renderCalendarForMonthYear(month, year) {
-      this.monthLabel.textContent = this.generateDutchMonths()[month];
+      this.monthLabel.textContent = this.generateDutchMonths(12)[month];
       this.yearLabel.textContent = year.toString();
 
       const dayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
