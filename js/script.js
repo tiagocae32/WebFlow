@@ -806,8 +806,10 @@ if (window.location.pathname === "/aanmelden") {
           this.setTimeInput();
         case "step6":
           this.showDates();
+          this.handleCourseCategoryChange('per_dates');
         case "stepMonths":
           this.handleStepMonths();
+          this.handleCourseCategoryChange('per_month');
           break;
         case "stepCalendar":
           this.initializeCalendar();
@@ -962,6 +964,14 @@ if (window.location.pathname === "/aanmelden") {
         chanceElement.textContent = text;
       }
     }
+
+    handleCourseCategoryChange(newCategory) {
+      this.formData['course_category'] = newCategory;
+      if (!this.isEditing) {
+        this.formData['course_names'] = [];
+      }
+    }
+
 
     isActualMonth(month) {
       return this.dutchMonths.indexOf(month) === new Date().getMonth();
@@ -1807,6 +1817,7 @@ if (window.location.pathname === "/aanmelden") {
         if (button) {
           button.addEventListener("click", () => {
             this.backupFormData();
+            this.isEditing = true;
             buttonData.callback();
             this.initializeEditButtons();
             this.showEditButtons();
