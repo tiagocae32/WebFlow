@@ -206,6 +206,7 @@ if (window.location.pathname === "/aanmelden") {
       this.nextButton = document.getElementById("btn-next");
       this.nextButtonText = document.getElementById("btnText");
       this.prevButton = document.getElementById("btn-prev");
+      this.btnEditSave = document.getElementById("btnEditSave");
       this.nextButton.addEventListener("click", () => this.nextStep());
       this.prevButton.addEventListener("click", () => this.prevStep());
       document.addEventListener("click", (event) =>
@@ -1803,7 +1804,12 @@ if (window.location.pathname === "/aanmelden") {
       buttonsData.forEach((buttonData) => {
         const button = document.getElementById(buttonData.id);
         if (button) {
-          button.addEventListener("click", buttonData.callback);
+          button.addEventListener("click", () => {
+            this.backupFormData();
+            buttonData.callback();
+            this.initializeEditButtons();
+            this.showEditButtons();
+          });
 
           if (buttonData.id === "editOnlinePackages") {
             if (this.formData.course_type === "online") {
@@ -1816,6 +1822,9 @@ if (window.location.pathname === "/aanmelden") {
       });
     }
 
+    backupFormData() {
+      this.originalFormData = JSON.parse(JSON.stringify(this.formData));
+    }
     determineLocationStep() {
       if (this.formData.cities && this.formData.cities.length > 0) {
         this.goToStep("step4Cities");
@@ -1867,6 +1876,40 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     // End edit information
+
+    // Cancel edit of the data and save new data
+
+    showEditButtons() {
+      const btnEditWrapper = document.getElementById("btnEditWrapper");
+      const btnWrapper = document.getElementById("btnWrapper");
+
+      btnEditWrapper.classList.remove("hide");
+      btnWrapper.classList.add("hide");
+    }
+
+    initializeEditButtons() {
+      console.log(this.originalFormData);
+      const btnEditWrapper = document.getElementById("btnEditWrapper");
+      const btnSendWrapper = document.getElementById("btnSendWrapper");
+
+      this.btnEditSave.classList.remove("disabled-button");
+      const btnEditCancel = document.getElementById("btnEditCancel");
+
+      btnEditCancel.addEventListener("click", () => {
+        this.formData = JSON.parse(JSON.stringify(this.originalFormData));
+        this.goToStep("overzicht");
+        console.log(this.originalFormData);
+        btnEditWrapper.classList.add("hide");
+        btnSendWrapper.classList.remove("hide");
+      });
+
+      this.btnEditSave.addEventListener("click", () => {
+        this.goToStep("overzicht");
+        btnEditWrapper.classList.add("hide");
+        btnSendWrapper.classList.remove("hide");
+      });
+
+    }
 
     // RESUME
 
