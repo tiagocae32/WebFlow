@@ -1971,7 +1971,12 @@ if (window.location.pathname === "/aanmelden") {
         this.resumeConfig["cities"].elementId
       );
       if (this.formData["cities"].length > 0) {
-        text.textContent = this.citiesNameSelected.join(", ");
+        const selectedCityNames = this.formData["cities"].map(cityId => {
+          const city = this.citiesList.find(c => c.id === cityId);
+          return city ? city.name : '';
+        });
+
+        text.textContent = selectedCityNames.join(", ");
         container.classList.remove("hide");
       } else {
         container.classList.add("hide");
