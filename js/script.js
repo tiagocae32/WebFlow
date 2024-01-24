@@ -473,7 +473,6 @@ if (window.location.pathname === "/aanmelden") {
       }
       this.handleSideEffects();
       this.updateProgressBar();
-      console.log(this.formData);
     }
 
     setupOverzichtStepButtons() {
@@ -1078,7 +1077,6 @@ if (window.location.pathname === "/aanmelden") {
       fechaInput.min = formattedDate;
 
       fechaInput.addEventListener("change", (event) => {
-        console.log("Fecha");
         this.datePicked = fechaGlobalSeleccionada;
         this.formatDateMijnFlow();
       });
@@ -2396,7 +2394,8 @@ if (window.location.pathname === "/bestellen") {
         const element = document.getElementById(config.elementId);
         if (!element) return;
 
-        const value = this.formData[key];
+        console.log(formData[key]);
+        const value = formData[key];
         element.textContent = config.textMap[value] ?? value;
 
         if (key === "course_type" && value === "online") {
