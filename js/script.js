@@ -834,6 +834,7 @@ if (window.location.pathname === "/aanmelden") {
           break;
         case "stepCalendar":
           this.initializeCalendar();
+          this.checkDates();
         case "stepInputs":
           this.updateButtonState();
           this.initFormInputEvents();
@@ -1357,6 +1358,22 @@ if (window.location.pathname === "/aanmelden") {
         date.getDay() !== 6 &&
         date.getDay() !== 0
       );
+    }
+
+    checkDates() {
+      const storedDates = JSON.parse(localStorage.getItem('selectedDates'));
+      if (storedDates) {
+        this.selectedDates = new Set(storedDates);
+        const days = this.calendarElement.querySelectorAll("td:not(.disabled):not(.not-current-month)");
+        days.forEach((day) => {
+          const date = day.getAttribute("data-date");
+          if (this.selectedDates.has(date)) {
+            day.classList.add("selected-date");
+          } else {
+            day.classList.remove("selected-date");
+          }
+        });
+      }
     }
 
     addEventListenersToDays() {
