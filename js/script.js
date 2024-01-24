@@ -16,6 +16,7 @@ if (window.location.pathname === "/aanmelden") {
       this.cbrs_list = [];
       this.stepHistory = [];
       this.initBirthDateInput();
+      this.isEditButtonsInitialized = false;
       this.handleFinalStepBound = this.handleFinalStep.bind(this);
       this.urls = {
         payment_link:
@@ -823,24 +824,30 @@ if (window.location.pathname === "/aanmelden") {
         case "stepOnlinePackage":
           this.getPackages();
           this.sideEffects = true;
+          break;
         case "step4Mijn":
           this.getCbrLocations(false);
           this.setDateInput();
           this.setTimeInput();
+          break;
         case "step6":
           this.showDates();
+          break;
         case "stepMonths":
           this.handleStepMonths();
           break;
         case "stepCalendar":
           this.initializeCalendar();
           this.checkDates();
+          break;
         case "stepInputs":
           this.updateButtonState();
           this.initFormInputEvents();
+          break;
         case "overzicht":
           this.isReturning = true;
           this.createEditStepButtons();
+          break;
         default:
           this.sideEffects = false;
           break;
@@ -1844,42 +1851,43 @@ if (window.location.pathname === "/aanmelden") {
     // Edit information, go to step
 
     createEditStepButtons() {
+      if (!this.isEditButtonsInitialized) {
+        const buttonsData = [
+          { id: "editLocations", callback: () => this.determineLocationStep() },
+          { id: "editDates", callback: () => this.determineDateStep() },
+          { id: "editInputs", callback: () => this.goToStep("stepInputs") },
+          {
+            id: "editOnlinePackages",
+            callback: () => this.goToStep("stepOnlinePackage"),
+          },
+        ];
+        this.backupFormData();
+        buttonsData.forEach((buttonData) => {
+          const button = document.getElementById(buttonData.id);
+          if (button) {
+            button.addEventListener("click", () => {
+              this.isEditing = true;
+              buttonData.callback();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              this.initializeEditButtons();
+              this.showEditButtons();
+            });
 
-
-      const buttonsData = [
-        { id: "editLocations", callback: () => this.determineLocationStep() },
-        { id: "editDates", callback: () => this.determineDateStep() },
-        { id: "editInputs", callback: () => this.goToStep("stepInputs") },
-        {
-          id: "editOnlinePackages",
-          callback: () => this.goToStep("stepOnlinePackage"),
-        },
-      ];
-
-      buttonsData.forEach((buttonData) => {
-        const button = document.getElementById(buttonData.id);
-        if (button) {
-          button.addEventListener("click", () => {
-            this.backupFormData();
-            this.isEditing = true;
-            buttonData.callback();
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            this.initializeEditButtons();
-            this.showEditButtons();
-          });
-
-          if (buttonData.id === "editOnlinePackages") {
-            if (this.formData.course_type === "online") {
-              button.classList.remove("hide");
-            } else {
-              button.classList.add("hide");
+            if (buttonData.id === "editOnlinePackages") {
+              if (this.formData.course_type === "online") {
+                button.classList.remove("hide");
+              } else {
+                button.classList.add("hide");
+              }
             }
           }
-        }
-      });
+        });
+      }
+      this.isEditButtonsInitialized = true;
     }
 
     backupFormData() {
+      console.log('hola');
       this.originalFormData = JSON.parse(JSON.stringify(this.formData));
     }
     determineLocationStep() {
