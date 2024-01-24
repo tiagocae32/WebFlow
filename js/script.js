@@ -17,12 +17,13 @@ if (window.location.pathname === "/aanmelden") {
       this.stepHistory = [];
       this.initBirthDateInput();
       this.initFormInputEvents();
+      this.handleFinalStepBound = this.handleFinalStep.bind(this);
       this.urls = {
         payment_link:
           "https://api.develop.nutheorie.be/api/applications/payment_link/",
         package_start:
           "https://api.develop.nutheorie.be/api/applications/set_package_start/",
-        final_redirect_url: "https://develop.nutheorie.be/user-profile?a=from_landing&t={refreshToken}",
+        final_redirect_url: "https://develop.nutheorie.be/user-profile",
         fail_redirect_url: "https://develop.nutheorie.be/betaling/failed",
         cities: "https://api.develop.nutheorie.be/api/cities/",
         cbrsLocations:
@@ -476,13 +477,16 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     setupOverzichtStepButtons() {
+
       const btnPrevLast = document.getElementById("btnPrevLast");
       const btnSend = document.getElementById("btnSend");
 
-      btnSend.addEventListener("click", () => this.handleFinalStep());
+      btnSend.removeEventListener("click", this.handleFinalStepBound);
+      btnSend.addEventListener("click", this.handleFinalStepBound);
       btnPrevLast.addEventListener("click", () => {
         this.goToStep('stepInputs');
       });
+
     }
 
     toggleButtonsVisibility(show) {
@@ -1803,6 +1807,8 @@ if (window.location.pathname === "/aanmelden") {
     // Edit information, go to step
 
     createEditStepButtons() {
+
+
       const buttonsData = [
         { id: "editLocations", callback: () => this.determineLocationStep() },
         { id: "editDates", callback: () => this.determineDateStep() },
@@ -2154,7 +2160,7 @@ if (window.location.pathname === "/aanmelden") {
           course_type,
           is_mijn_reservation,
           payment_amount,
-          auth_tokens: { access },
+          auth_tokens: { access, refresh },
         } = dataResponse;
 
         const isMijnOnline = course_type === "online" && is_mijn_reservation;
@@ -2173,7 +2179,7 @@ if (window.location.pathname === "/aanmelden") {
           payload: {
             method: "ideal",
             amount: payment_amount,
-            final_redirect_url: this.urls.final_redirect_url,
+            final_redirect_url: `${this.urls.final_redirect_url}`,// ?a=from_landing&t=${refresh}
             fail_redirect_url: this.urls.fail_redirect_url,
           },
           token: access,
