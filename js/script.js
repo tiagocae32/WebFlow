@@ -32,9 +32,6 @@ if (window.location.pathname.includes("/aanmelden")) {
           "https://api.develop.nutheorie.be/api/applications/online_plans/",
         urlPostMultiStepForm:
           "https://api.develop.nutheorie.be/api/applications/",
-        refreshToken:
-          "https://api.develop.nutheorie.be/authorization/token/refresh/",
-        userData: "https://api.develop.nutheorie.be/api/applications/",
       };
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
@@ -2229,7 +2226,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           payload: {
             method: "ideal",
             amount: payment_amount,
-            final_redirect_url: `${this.urls.final_redirect_url}`,// ?a=from_landing&t=${refresh}
+            final_redirect_url: this.urls.final_redirect_url,
             fail_redirect_url: this.urls.fail_redirect_url,
           },
           token: access,
@@ -2311,6 +2308,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         if (!response.ok) {
           throw new Error("Error en la respuesta de la red");
         }
+        localStorage.removeItem("fechaGlobalSeleccionada");
         const responseData = await response.json();
         return responseData;
       } catch (error) {
@@ -2434,7 +2432,7 @@ if (window.location.pathname === "/bestellen") {
       }
     }
 
-    getExamTypeText(product) {
+    getExamTypeText(product, is_mijn_reservation) {
       const examTypeTextMap = {
         bth: "Standaard CBR examen (30 min): 48,-",
         bth_ve: "Verlengd CBR examen (45 min): 61,-",
@@ -2442,9 +2440,9 @@ if (window.location.pathname === "/bestellen") {
         ath_ve: "Verlengd CBR examen (45 min): 61,-",
         amth: "Standaard CBR examen (30 min): 48,-",
         amth_ve: "Verlengd CBR examen (45 min): 61,-",
-        mijn: "Ik heb zelf al een examen gereserveerd",
       };
-      return examTypeTextMap[product];
+      if (is_mijn_reservation) return "Ik heb zelf al een examen gereserveerd"
+      else return examTypeTextMap[product]
     }
 
     displayOrderSummary(formData) {
@@ -2506,7 +2504,7 @@ if (window.location.pathname === "/bestellen") {
         courseCategoryElement.classList.add("active");
       }
 
-      const examTypeText = this.getExamTypeText(formData.product);
+      const examTypeText = this.getExamTypeText(formData.product, formData.is_mijn_reservation);
       if (examTypeText) {
         const examTypeElement = document.getElementById("examTypeText");
         examTypeElement.textContent = examTypeText;
