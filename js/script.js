@@ -2216,95 +2216,11 @@ if (window.location.pathname.includes("/aanmelden")) {
     //SEND DATA
 
     async handleFinalStep() {
-      const dataResponse = await this.sendDataBack();
-
-      if (dataResponse) {
-        const {
-          course_type,
-          is_mijn_reservation,
-          payment_amount,
-          auth_tokens: { access, refresh },
-        } = dataResponse;
-
-        this.reapplyAllowed = true;
-
-        const isMijnOnline = course_type === "online" && is_mijn_reservation;
-        const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
-        const isMijnOnlineFlow = isMijnOnline;
-        let payment_link;
-
-        const objUrlPayloadPackage = {
-          url: this.urls.package_start,
-          payload: { package_starting_at: new Date() },
-          token: access,
-        };
-
-        const objUrlPayloadPayment = {
-          url: this.urls.payment_link,
-          payload: {
-            method: "ideal",
-            amount: payment_amount,
-            final_redirect_url: this.urls.final_redirect_url,
-            fail_redirect_url: this.urls.fail_redirect_url,
-          },
-          token: access,
-        };
-
-        if (isMijnOnlineFlow) {
-          await this.requestLinkPayment(objUrlPayloadPackage);
-          payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
-        } else {
-          payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
-        }
-
-        if (payment_link) {
-          const payloadStorage = {
-            ...dataResponse,
-            ...payment_link,
-            buttonText: buttonText,
-          };
-          const copyDeepPayloadStorage = JSON.parse(
-            JSON.stringify(payloadStorage)
-          );
-          localStorage.setItem(
-            "formData",
-            JSON.stringify(copyDeepPayloadStorage)
-          );
-
-          localStorage.setItem("userLoggedIn", true);
-          updateLoginButton();
-
-          this.redirectTo("/bestellen");
-          //const orderManager = new OrderManager();
-        }
-      }
-    }
-
-    async requestLinkPayment({ url, payload, token }) {
-      try {
-        this.enableLoader();
-        const respuesta = await fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!respuesta.ok) {
-          throw new Error(
-            `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
-          );
-        }
-
-        const resultado = await respuesta.json();
-        return resultado;
-      } catch (error) {
-        console.error("Error:", error.message);
-        throw error;
-      } finally {
-        this.disableLoader();
+      const data = await this.sendDataBack();
+      if (data) {
+        localStorage.setItem('formData', JSON.stringify(data));
+        localStorage.setItem('userLoggedIn', true);
+        return this.redirectTo('/bestellen');
       }
     }
 
@@ -2328,6 +2244,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
         localStorage.removeItem("fechaGlobalSeleccionada");
         const responseData = await response.json();
+        console.log(responseData);
         return responseData;
       } catch (error) {
         console.error("Error when sending data:", error);
@@ -2387,6 +2304,7 @@ if (window.location.pathname.includes("/aanmelden")) {
   formManager.initialize();
 }
 
+
 if (window.location.pathname === "/bestellen") {
   if (!localStorage.getItem("userLoggedIn")) {
     window.location.href = "/inloggen";
@@ -2394,6 +2312,11 @@ if (window.location.pathname === "/bestellen") {
 
   class OrderManager {
     constructor() {
+      this.isMijnOnline = null;
+      this.containerMijn = document.getElementById("bestellenMijn");
+      this.containerDefault = document.getElementById("bestellenDefault");
+      this.buttonLink = document.getElementById("btnLink");
+      this.buttonText = document.getElementById("btnText");
       this.initialize();
     }
 
@@ -2403,8 +2326,75 @@ if (window.location.pathname === "/bestellen") {
         const formData = JSON.parse(storedData);
         this.displayOrderSummary(formData);
         this.handleStoredData(formData);
+        this.isMijnOnline = formData.course_type === 'online' && formData.is_mijn_reservation
+        this.buttonText.textContent = this.isMijnOnline ? "Betalen" : "Aanbetaling";
+        this.handleContainer();
       }
     }
+
+    handleContainer() {
+      if (this.isMijnOnline) {
+        this.containerMijn.style.display = 'flex';
+        this.containerDefault.style.display = 'none';
+        this.generateContainerMijn();
+      } else {
+        this.containerMijn.style.display = 'none';
+        this.containerDefault.style.display = 'flex';
+      }
+    }
+
+    generateContainerMijn() {
+
+      const radio1 = document.createElement('input');
+      radio1.type = 'radio';
+      radio1.id = 'radio1';
+      radio1.name = 'mijnOption';
+      radio1.value = 'direct';
+      radio1.addEventListener('change', () => this.getCurrentDateTime());
+
+      const radio2 = document.createElement('input');
+      radio2.type = 'radio';
+      radio2.id = 'radio2';
+      radio2.name = 'mijnOption';
+      radio2.value = 'option2';
+      radio2.addEventListener('change', () => this.handleRadioChange());
+
+      this.containerMijn.appendChild(radio1);
+      this.containerMijn.appendChild(radio2);
+
+      const calendarInput = document.createElement('input');
+      calendarInput.type = 'date';
+      calendarInput.id = 'calendarInput';
+      calendarInput.style.display = 'none';
+
+      const today = new Date().toISOString().split('T')[0];
+      calendarInput.min = today;
+
+      this.containerMijn.appendChild(calendarInput);
+    }
+
+    handleRadioChange() {
+      const radio2 = document.getElementById('radio2');
+      const calendarInput = document.getElementById('calendarInput');
+
+      calendarInput.style.display = radio2.checked ? 'block' : 'none';
+    }
+
+    getCurrentDateTime() {
+      const currentDateTime = new Date();
+      const year = currentDateTime.getFullYear();
+      const month = currentDateTime.getMonth() + 1;
+      const day = currentDateTime.getDate();
+      const hour = currentDateTime.getHours();
+      const minutes = currentDateTime.getMinutes();
+      const seconds = currentDateTime.getSeconds();
+      const finalDate = `${year}-${month}-${day} ${hour}:${minutes}:${seconds}`;
+      "2024-01-25T19:41:53+01:00"
+    }
+
+    //const currentDateTime = getCurrentDateTime();
+    //console.log(currentDateTime);
+
 
     updateSvgVisibility(formData) {
       const licenseType = formData.license_type;
@@ -2644,7 +2634,6 @@ if (window.location.pathname === "/bestellen") {
       const text = document.getElementById("btnText");
       const amount = document.getElementById("btnAmount");
       const aanbetalingAmount = document.getElementById("aanbetalingTotal");
-      text.textContent = formData.buttonText;
       amount.textContent = `€ ${formData.payment_amount}`;
       const paymentAmount = parseFloat(formData.payment_amount);
       let formattedAmount = "";
@@ -2754,3 +2743,96 @@ if (window.location.pathname === "/test") {
 
   const reapply = new FormReapply();
 }
+
+/*async handleFinalStep() {
+  const dataResponse = await this.sendDataBack();
+
+  if (dataResponse) {
+    const {
+      course_type,
+      is_mijn_reservation,
+      payment_amount,
+      auth_tokens: { access, refresh },
+    } = dataResponse;
+
+    this.reapplyAllowed = true;
+
+    const isMijnOnline = course_type === "online" && is_mijn_reservation;
+    const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
+    const isMijnOnlineFlow = isMijnOnline;
+    let payment_link;
+
+    const objUrlPayloadPackage = {
+      url: this.urls.package_start,
+      payload: { package_starting_at: new Date() },
+      token: access,
+    };
+
+    const objUrlPayloadPayment = {
+      url: this.urls.payment_link,
+      payload: {
+        method: "ideal",
+        amount: payment_amount,
+        final_redirect_url: this.urls.final_redirect_url,
+        fail_redirect_url: this.urls.fail_redirect_url,
+      },
+      token: access,
+    };
+
+    if (isMijnOnlineFlow) {
+      await this.requestLinkPayment(objUrlPayloadPackage);
+      payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+    } else {
+      payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+    }
+
+    if (payment_link) {
+      const payloadStorage = {
+        ...dataResponse,
+        ...payment_link,
+        buttonText: buttonText,
+      };
+      const copyDeepPayloadStorage = JSON.parse(
+        JSON.stringify(payloadStorage)
+      );
+      localStorage.setItem(
+        "formData",
+        JSON.stringify(copyDeepPayloadStorage)
+      );
+
+      localStorage.setItem("userLoggedIn", true);
+      updateLoginButton();
+
+      this.redirectTo("/bestellen");
+    }
+  }
+}
+
+async requestLinkPayment({ url, payload, token }) {
+  try {
+    this.enableLoader();
+    const respuesta = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!respuesta.ok) {
+      throw new Error(
+        `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
+      );
+    }
+
+    const resultado = await respuesta.json();
+    return resultado;
+  } catch (error) {
+    console.error("Error:", error.message);
+    throw error;
+  } finally {
+    this.disableLoader();
+  }
+}
+*/
