@@ -547,12 +547,9 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     validateDate(dateString) {
-      console.log(dateString);
-
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         dateString = dateString.split('-').reverse().join('-');
       }
-      console.log(dateString);
 
       const regex = /^\d{2}-\d{2}-\d{4}$/;
       if (!regex.test(dateString)) {
@@ -593,7 +590,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     initFormInputsReapply() {
       if (this.isReapplyFlow) {
         const data = JSON.parse(localStorage.getItem("userData"));
-        console.log(data);
 
         const formInputs = [
           { key: 'first_name', id: 'first-name', disabled: true },
@@ -614,7 +610,6 @@ if (window.location.pathname.includes("/aanmelden")) {
             if (obj.key === 'birth_date') {
               const newFormat = this.convertDateToISO(data[obj.key]);
               element.value = newFormat;
-              console.log(newFormat);
             } else {
               element.value = data[obj.key] || '';
             }
@@ -624,7 +619,6 @@ if (window.location.pathname.includes("/aanmelden")) {
             this.formData[obj.key] = element.value;
           }
         });
-        console.log(this.formData);
       }
     }
 
@@ -2477,7 +2471,6 @@ if (window.location.pathname === "/bestellen") {
         const element = document.getElementById(config.elementId);
         if (!element) return;
 
-        console.log(formData[key]);
         const value = formData[key];
         element.textContent = config.textMap[value] ?? value;
 
@@ -2714,7 +2707,6 @@ if (window.location.pathname === "/test") {
         body: JSON.stringify({ refresh: this.token }),
       });
       const dataToken = await resServerToken.json();
-      console.log("data token", dataToken);
       this.token = dataToken.access;
       const newObject = JSON.stringify(dataToken);
       localStorage.setItem('user', newObject);
@@ -2733,7 +2725,6 @@ if (window.location.pathname === "/test") {
             },
           });
           const userData = await resServer.json();
-          console.log("user data", userData);
           this.userData = userData;
           localStorage.setItem('userData', JSON.stringify(userData));
         } catch (error) {
