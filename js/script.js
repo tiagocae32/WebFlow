@@ -2360,7 +2360,7 @@ if (window.location.pathname === "/bestellen") {
 
       const objUrlPayloadPackage = {
         url: this.urlPackageStart,
-        payload: { package_starting_at: new Date() }, // agregar la fecha de los inputs radio, formato como setDateInput
+        payload: { package_starting_at: this.package_starting_at }, // agregar la fecha de los inputs radio, formato como setDateInput
         token: access,
       };
 
