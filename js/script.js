@@ -19,12 +19,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.isEditButtonsInitialized = false;
       this.handleFinalStepBound = this.handleFinalStep.bind(this);
       this.urls = {
-        payment_link:
-          "https://api.develop.nutheorie.be/api/applications/payment_link/",
-        package_start:
-          "https://api.develop.nutheorie.be/api/applications/set_package_start/",
-        final_redirect_url: "https://develop.nutheorie.be/user-profile",
-        fail_redirect_url: "https://develop.nutheorie.be/betaling/failed",
         cities: "https://api.develop.nutheorie.be/api/cities/",
         cbrsLocations:
           "https://api.develop.nutheorie.be/api/applications/exam_locations/",
@@ -109,8 +103,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         address_2: { elementId: "address2Text" },
         address_3: { elementId: "address3Text" },
       };
-      this.loaderContainer = document.getElementById("loader");
-      this.loaderFetch = false;
 
       this.isReapplyFlow;
     }
@@ -409,14 +401,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
     disableButton() {
       this.nextButton.classList.add("disabled-button");
-    }
-
-    enableLoader() {
-      this.loaderContainer.style.display = "block";
-    }
-
-    disableLoader() {
-      this.loaderContainer.style.display = "none";
     }
 
     //END
@@ -956,7 +940,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         delete this.formData.cities;
         this.prevLicenseType = this.formData.license_type;
         try {
-          this.enableLoader();
           const data = await this.fetchCities();
           this.citiesList = data.filter(
             (city) =>
@@ -965,8 +948,6 @@ if (window.location.pathname.includes("/aanmelden")) {
           );
         } catch (error) {
           console.log(error);
-        } finally {
-          this.disableLoader();
         }
       }
       this.createOptions(this.citiesList, "step4", true);
@@ -1085,7 +1066,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     async getCbrLocations(createElements = true) {
       if (this.cbrs_list.length === 0) {
         try {
-          this.enableLoader();
           const resServer = await fetch(this.urls.cbrsLocations);
           const data = await resServer.json();
           this.cbrs_list = data;
@@ -1096,8 +1076,6 @@ if (window.location.pathname.includes("/aanmelden")) {
           }
         } catch (error) {
           console.log(error);
-        } finally {
-          this.disableLoader();
         }
       } else if (createElements) {
         this.createCbrElements(this.cbrs_list);
@@ -1487,7 +1465,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       const url = this.urls.plans;
 
       try {
-        this.enableLoader();
         const resServer = await fetch(url);
         const data = await resServer.json();
 
@@ -1524,8 +1501,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.createPackages(this.allAvailablePlans);
       } catch (error) {
         console.log(error);
-      } finally {
-        this.disableLoader();
       }
     }
 
@@ -2237,7 +2212,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       };
 
       try {
-        this.enableLoader();
         const response = await fetch(url, options);
         if (!response.ok) {
           throw new Error("Error en la respuesta de la red");
@@ -2249,8 +2223,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       } catch (error) {
         console.error("Error when sending data:", error);
         return false;
-      } finally {
-        this.disableLoader();
       }
     }
     // END SEND DATA
@@ -2317,6 +2289,10 @@ if (window.location.pathname === "/bestellen") {
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
+      this.urlPaymentLink = "https://api.develop.nutheorie.be/api/applications/payment_link/";
+      this.urlPackageStart = "https://api.develop.nutheorie.be/api/applications/set_package_start/";
+      this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
+      this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
       this.initialize();
     }
 
@@ -2329,6 +2305,69 @@ if (window.location.pathname === "/bestellen") {
         this.isMijnOnline = formData.course_type === 'online' && formData.is_mijn_reservation
         this.buttonText.textContent = this.isMijnOnline ? "Betalen" : "Aanbetaling";
         this.handleContainer();
+        this.buttonLink.addEventListener("click", () => this.requestLink(formData));
+      }
+    }
+
+    async requestLink(formData) {
+      const {
+        course_type,
+        is_mijn_reservation,
+        payment_amount,
+        auth_tokens: { access, refresh },
+      } = formData;
+
+      let payment_link;
+
+      const objUrlPayloadPackage = {
+        url: this.urlPackageStart,
+        payload: { package_starting_at: new Date() }, // agregar la fecha de los inputs radio, formato como setDateInput
+        token: access,
+      };
+
+      const objUrlPayloadPayment = {
+        url: this.urlPaymentLink,
+        payload: {
+          method: "ideal",
+          amount: payment_amount,
+          final_redirect_url: this.urlFinalRedirect,
+          fail_redirect_url: this.urlFailRedirect,
+        },
+        token: access,
+      };
+      if (this.isMijnOnline) {
+        await this.requestLinkPayment(objUrlPayloadPackage);
+        payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+      } else {
+        payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+      }
+      if (payment_link) {
+        window.location.href = payment_link.payment_link;
+      }
+    }
+
+    async requestLinkPayment({ url, payload, token }) {
+      try {
+        const respuesta = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!respuesta.ok) {
+          throw new Error(
+            `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
+          );
+        }
+
+        const resultado = await respuesta.json();
+        return resultado;
+      } catch (error) {
+        console.error("Error:", error.message);
+        throw error;
       }
     }
 
@@ -2339,7 +2378,7 @@ if (window.location.pathname === "/bestellen") {
         this.generateContainerMijn();
       } else {
         this.containerMijn.style.display = 'none';
-        this.containerDefault.style.display = 'flex';
+        this.containerDefault.style.display = 'block';
       }
     }
 
@@ -2630,8 +2669,6 @@ if (window.location.pathname === "/bestellen") {
     }
 
     handleStoredData(formData) {
-      const link = document.getElementById("btnLink");
-      const text = document.getElementById("btnText");
       const amount = document.getElementById("btnAmount");
       const aanbetalingAmount = document.getElementById("aanbetalingTotal");
       amount.textContent = `€ ${formData.payment_amount}`;
@@ -2649,9 +2686,6 @@ if (window.location.pathname === "/bestellen") {
       }
 
       aanbetalingAmount.textContent = ` ${formattedAmount}`;
-      link.addEventListener("click", function () {
-        window.location.href = formData.payment_link;
-      });
     }
   }
   const orderManager = new OrderManager();
@@ -2743,96 +2777,3 @@ if (window.location.pathname === "/test") {
 
   const reapply = new FormReapply();
 }
-
-/*async handleFinalStep() {
-  const dataResponse = await this.sendDataBack();
-
-  if (dataResponse) {
-    const {
-      course_type,
-      is_mijn_reservation,
-      payment_amount,
-      auth_tokens: { access, refresh },
-    } = dataResponse;
-
-    this.reapplyAllowed = true;
-
-    const isMijnOnline = course_type === "online" && is_mijn_reservation;
-    const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
-    const isMijnOnlineFlow = isMijnOnline;
-    let payment_link;
-
-    const objUrlPayloadPackage = {
-      url: this.urls.package_start,
-      payload: { package_starting_at: new Date() },
-      token: access,
-    };
-
-    const objUrlPayloadPayment = {
-      url: this.urls.payment_link,
-      payload: {
-        method: "ideal",
-        amount: payment_amount,
-        final_redirect_url: this.urls.final_redirect_url,
-        fail_redirect_url: this.urls.fail_redirect_url,
-      },
-      token: access,
-    };
-
-    if (isMijnOnlineFlow) {
-      await this.requestLinkPayment(objUrlPayloadPackage);
-      payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
-    } else {
-      payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
-    }
-
-    if (payment_link) {
-      const payloadStorage = {
-        ...dataResponse,
-        ...payment_link,
-        buttonText: buttonText,
-      };
-      const copyDeepPayloadStorage = JSON.parse(
-        JSON.stringify(payloadStorage)
-      );
-      localStorage.setItem(
-        "formData",
-        JSON.stringify(copyDeepPayloadStorage)
-      );
-
-      localStorage.setItem("userLoggedIn", true);
-      updateLoginButton();
-
-      this.redirectTo("/bestellen");
-    }
-  }
-}
-
-async requestLinkPayment({ url, payload, token }) {
-  try {
-    this.enableLoader();
-    const respuesta = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!respuesta.ok) {
-      throw new Error(
-        `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
-      );
-    }
-
-    const resultado = await respuesta.json();
-    return resultado;
-  } catch (error) {
-    console.error("Error:", error.message);
-    throw error;
-  } finally {
-    this.disableLoader();
-  }
-}
-*/
