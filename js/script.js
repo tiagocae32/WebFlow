@@ -2218,7 +2218,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
         localStorage.removeItem("fechaGlobalSeleccionada");
         const responseData = await response.json();
-        console.log(responseData);
         return responseData;
       } catch (error) {
         console.error("Error when sending data:", error);
