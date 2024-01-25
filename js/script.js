@@ -172,7 +172,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.submissionRules = {
         course_type: {
           offline: ["cbr_locations"],
-          online: ["cities"],
         },
         course_category: {
           per_dates: ["course_dates"],
@@ -433,6 +432,14 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.handleProductMijnReservation();
       this.applySubmissionRules();
       this.completeResume();
+      if (this.formData['course_type'] === 'online') this.checkCities();
+    }
+
+    async checkCities() {
+      const data = await this.fetchCities();
+      const citiesOnline = data.filter(city => city.is_online).map(city => city.id);
+      console.log(citiesOnline);
+      this.formData['cities'] = citiesOnline;
     }
 
     changeBtn(text) {
@@ -931,6 +938,16 @@ if (window.location.pathname.includes("/aanmelden")) {
     //END
 
     // CITIES
+    async fetchCities() {
+      try {
+        const resServer = await fetch(this.urls.cities);
+        const data = await resServer.json();
+        return data;
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
     async getCities() {
       if (
         this.citiesList.length === 0 ||
@@ -940,12 +957,11 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.prevLicenseType = this.formData.license_type;
         try {
           this.enableLoader();
-          const resServer = await fetch(this.urls.cities);
-          const data = await resServer.json();
+          const data = await this.fetchCities();
           this.citiesList = data.filter(
             (city) =>
               city.license_types.includes(this.formData.license_type) &&
-              city.id !== 53
+              !city.is_online
           );
         } catch (error) {
           console.log(error);
@@ -2037,17 +2053,19 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     completeCities() {
       const container = document.getElementById("citiesColumn");
-      const text = document.getElementById(
-        this.resumeConfig["cities"].elementId
-      );
-      if (this.formData["cities"].length > 0) {
-        const selectedCityNames = this.formData["cities"].map(cityId => {
-          const city = this.citiesList.find(c => c.id === cityId);
-          return city ? city.name : '';
-        });
+      if (this.formData['course_type'] === "offline") {
+        const text = document.getElementById(
+          this.resumeConfig["cities"].elementId
+        );
+        if (this.formData["cities"].length > 0) {
+          const selectedCityNames = this.formData["cities"].map(cityId => {
+            const city = this.citiesList.find(c => c.id === cityId);
+            return city ? city.name : '';
+          });
 
-        text.textContent = selectedCityNames.join(", ");
-        container.classList.remove("hide");
+          text.textContent = selectedCityNames.join(", ");
+          container.classList.remove("hide");
+        }
       } else {
         container.classList.add("hide");
       }
