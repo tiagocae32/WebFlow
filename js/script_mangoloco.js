@@ -1,4 +1,4 @@
-if (window.location.pathname === "/aanmelden") {
+if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
       this.steps = steps;
@@ -16,14 +16,9 @@ if (window.location.pathname === "/aanmelden") {
       this.cbrs_list = [];
       this.stepHistory = [];
       this.initBirthDateInput();
-      this.initFormInputEvents();
+      this.isEditButtonsInitialized = false;
+      this.handleFinalStepBound = this.handleFinalStep.bind(this);
       this.urls = {
-        payment_link:
-          "https://api.develop.nutheorie.be/api/applications/payment_link/",
-        package_start:
-          "https://api.develop.nutheorie.be/api/applications/set_package_start/",
-        final_redirect_url: "https://develop.nutheorie.be/user-profile",
-        fail_redirect_url: "https://develop.nutheorie.be/betaling/failed",
         cities: "https://api.develop.nutheorie.be/api/cities/",
         cbrsLocations:
           "https://api.develop.nutheorie.be/api/applications/exam_locations/",
@@ -31,9 +26,6 @@ if (window.location.pathname === "/aanmelden") {
           "https://api.develop.nutheorie.be/api/applications/online_plans/",
         urlPostMultiStepForm:
           "https://api.develop.nutheorie.be/api/applications/",
-        refreshToken:
-          "https://api.develop.nutheorie.be/authorization/token/refresh/",
-        userData: "https://api.develop.nutheorie.be/api/applications/",
       };
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
@@ -111,8 +103,6 @@ if (window.location.pathname === "/aanmelden") {
         address_2: { elementId: "address2Text" },
         address_3: { elementId: "address3Text" },
       };
-      this.loaderContainer = document.getElementById("loader");
-      this.loaderFetch = false;
 
       this.isReapplyFlow;
     }
@@ -174,7 +164,6 @@ if (window.location.pathname === "/aanmelden") {
       this.submissionRules = {
         course_type: {
           offline: ["cbr_locations"],
-          online: ["cities"],
         },
         course_category: {
           per_dates: ["course_dates"],
@@ -206,6 +195,7 @@ if (window.location.pathname === "/aanmelden") {
       this.nextButton = document.getElementById("btn-next");
       this.nextButtonText = document.getElementById("btnText");
       this.prevButton = document.getElementById("btn-prev");
+      this.btnEditSave = document.getElementById("btnEditSave");
       this.nextButton.addEventListener("click", () => this.nextStep());
       this.prevButton.addEventListener("click", () => this.prevStep());
       document.addEventListener("click", (event) =>
@@ -230,8 +220,11 @@ if (window.location.pathname === "/aanmelden") {
     // HELPERS
 
     convertDate() {
-      const change = this.convertDateToISO(this.formData["birth_date"]);
-      this.formData["birth_date"] = change;
+      if (this.prevBirthDate !== this.formData["birth_date"]) {
+        const change = this.convertDateToISO(this.formData["birth_date"]);
+        this.formData["birth_date"] = change;
+        this.prevBirthDate = change;
+      }
     }
 
     convertDateToISO(dateString) {
@@ -409,14 +402,6 @@ if (window.location.pathname === "/aanmelden") {
       this.nextButton.classList.add("disabled-button");
     }
 
-    enableLoader() {
-      this.loaderContainer.style.display = "block";
-    }
-
-    disableLoader() {
-      this.loaderContainer.style.display = "none";
-    }
-
     //END
 
     isLastStep() {
@@ -430,6 +415,16 @@ if (window.location.pathname === "/aanmelden") {
       this.handleProductMijnReservation();
       this.applySubmissionRules();
       this.completeResume();
+      if (this.formData["course_type"] === "online") this.checkCities();
+    }
+
+    async checkCities() {
+      const data = await this.fetchCities();
+      const citiesOnline = data
+        .filter((city) => city.is_online)
+        .map((city) => city.id);
+      console.log(citiesOnline);
+      this.formData["cities"] = citiesOnline;
     }
 
     changeBtn(text) {
@@ -467,15 +462,17 @@ if (window.location.pathname === "/aanmelden") {
       }
       this.handleSideEffects();
       this.updateProgressBar();
-      console.log(this.formData);
     }
 
     setupOverzichtStepButtons() {
       const btnPrevLast = document.getElementById("btnPrevLast");
       const btnSend = document.getElementById("btnSend");
 
-      btnSend.addEventListener("click", () => this.handleFinalStep());
-      btnPrevLast.addEventListener("click", this.prevStep.bind(this));
+      btnSend.removeEventListener("click", this.handleFinalStepBound);
+      btnSend.addEventListener("click", this.handleFinalStepBound);
+      btnPrevLast.addEventListener("click", () => {
+        this.goToStep("stepInputs");
+      });
     }
 
     toggleButtonsVisibility(show) {
@@ -508,59 +505,120 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     formatBirthDate(value) {
-      let formattedValue = value.replace(/[^0-9\-]/g, "");
-      formattedValue = formattedValue.slice(0, 10);
+      value = value.replace(/[^0-9\-]/g, "");
 
-      if (formattedValue.length === 2 || formattedValue.length === 5) {
-        if (
-          this.lastFormattedValue &&
-          formattedValue.length > this.lastFormattedValue.length
-        ) {
+      let parts = value.split("-");
+      parts[0] = parts[0] ? parts[0].slice(0, 2) : "";
+      parts[1] = parts[1] ? parts[1].slice(0, 2) : "";
+      parts[2] = parts[2] ? parts[2].slice(0, 4) : "";
+
+      let formattedValue = "";
+      if (parts[0]) {
+        formattedValue = parts[0];
+        if (parts[0].length === 2 || parts[1]) {
           formattedValue += "-";
         }
       }
+      if (parts[1]) {
+        formattedValue += parts[1];
+        if (parts[1].length === 2 || parts[2]) {
+          formattedValue += "-";
+        }
+      }
+      if (parts[2]) {
+        formattedValue += parts[2];
+      }
 
       this.lastFormattedValue = formattedValue;
-
       return formattedValue;
     }
 
     validateDate(dateString) {
-      if (this.isReturning && this.isDateComplete) return true;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        dateString = dateString.split("-").reverse().join("-");
+      }
 
-      const dateParts = dateString.split("-").map((part) => parseInt(part, 10));
-      if (dateParts.length !== 3 || dateParts.some(isNaN)) return false;
+      const regex = /^\d{2}-\d{2}-\d{4}$/;
+      if (!regex.test(dateString)) {
+        return false;
+      }
 
-      const [day, month, year] = dateParts;
-      const date = new Date(year, month - 1, day);
+      const [day, month, year] = dateString.split("-").map(Number);
 
       if (
-        date.getFullYear() !== year ||
-        date.getMonth() !== month - 1 ||
-        date.getDate() !== day
+        year < 1900 ||
+        year > new Date().getFullYear() ||
+        month < 1 ||
+        month > 12
       ) {
         return false;
       }
 
-      if (year < 1900 || year > new Date().getFullYear()) return false;
-
-      this.isDateComplete = true;
       return true;
     }
 
     initBirthDateInput() {
       const birthDateInput = document.getElementById("birthDateInput");
+
+      birthDateInput.addEventListener("keydown", (event) => {
+        if (event.key === "Backspace") {
+          const cursorPos = birthDateInput.selectionStart;
+
+          if (birthDateInput.value[cursorPos - 1] === "-") {
+            event.preventDefault();
+            birthDateInput.setSelectionRange(cursorPos - 1, cursorPos - 1);
+          }
+        }
+      });
+
       birthDateInput.addEventListener("input", (event) => {
-        const value = event.target.value;
-        const formattedValue = this.formatBirthDate(value);
+        const formattedValue = this.formatBirthDate(event.target.value);
         event.target.value = formattedValue;
+        this.formData["birth_date"] = formattedValue;
+        this.updateButtonState();
       });
     }
 
+    initFormInputsReapply() {
+      if (this.isReapplyFlow) {
+        const data = JSON.parse(localStorage.getItem("userData"));
+
+        const formInputs = [
+          { key: "first_name", id: "first-name", disabled: true },
+          { key: "last_name", id: "last-name", disabled: true },
+          { key: "nickname", id: "nickname", disabled: true },
+          { key: "birth_date", id: "birthDateInput", disabled: true },
+          { key: "email", id: "emailInput", disabled: false },
+          { key: "phone", id: "tel", disabled: false },
+          { key: "address_1", id: "address", disabled: false },
+          { key: "address_2", id: "postal-code", disabled: false },
+          { key: "address_3", id: "woonplaats", disabled: false },
+        ];
+
+        formInputs.forEach((obj) => {
+          const element = document.getElementById(obj.id);
+          if (element) {
+            if (obj.key === "birth_date") {
+              const newFormat = this.convertDateToISO(data[obj.key]);
+              element.value = newFormat;
+            } else {
+              element.value = data[obj.key] || "";
+            }
+            if (obj.disabled) {
+              element.disabled = true;
+            }
+            this.formData[obj.key] = element.value;
+          }
+        });
+      }
+    }
+
     initFormInputEvents() {
+      const contenedorId = "stepInputs";
       const inputs = document.querySelectorAll(
-        '.form-step input[type="text"], .form-step input[type="email"], .form-step input[type="number"]'
+        `#${contenedorId} input[type="text"], #${contenedorId} input[type="number"], #${contenedorId} input[type="email"]`
       );
+
       inputs.forEach((input) => {
         input.addEventListener("blur", this.handleInputBlur.bind(this));
       });
@@ -649,7 +707,7 @@ if (window.location.pathname === "/aanmelden") {
         .every((input) => input.value.trim() !== "");
     }
 
-    isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 
     isStepInvalid() {
       const currentStep = this.steps[this.currentStepIndex];
@@ -721,7 +779,6 @@ if (window.location.pathname === "/aanmelden") {
         this.applyLastStepChanges();
       } else {
         this.changeBtn("Volgende");
-
         if (this.getCurrentStepId() !== "stepInputs") {
           const isInvalid = this.isStepInvalid();
           isInvalid ? this.disableButton() : this.enableButton();
@@ -729,59 +786,31 @@ if (window.location.pathname === "/aanmelden") {
       }
     }
 
-    async refreshToken(token) {
-      const resServerToken = await fetch(this.urls.refreshToken, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refresh: token }),
-      });
-      const dataToken = await resServerToken.json();
-      console.log(dataToken);
-    }
-
-    async getUserInfoBack() {
-      const data = JSON.parse(localStorage.getItem("formData"));
-      if (data) {
-        this.token = data.auth_tokens.access;
-        try {
-          const resServer = await fetch(this.urls.userData, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${this.token}`,
-              "Content-Type": "application/json",
-            },
-          });
-          const data = await resServer.json();
-          console.log(data);
-
-          //this.refreshToken(this.token);
-
-          this.isReapplyFlow = data.is_reapply_allowed;
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        this.isReapplyFlow = false;
-      }
-
-      //console.log(this.isReapplyFlow);
-    }
-
     // Show dates for both flows
     showDates() {
       if (this.isReapplyFlow) {
         document.getElementById("datesReapply").style.display = "flex";
+        document.getElementById("datesNoReapply").style.display = "none";
       } else {
         document.getElementById("datesNoReapply").style.display = "flex";
+        document.getElementById("datesReapply").style.display = "none";
       }
+    }
+
+    // Check if is reapply flow
+    checkIsReapplyFlow() {
+      const url = window.location.href;
+      const isReapply = url.toLowerCase().includes("&reapply=true");
+      if (isReapply) this.isReapplyFlow = true;
+      else this.isReapplyFlow = false;
     }
 
     handleSideEffects() {
       const currentStepId = this.getCurrentStepId();
-      //this.getUserInfoBack();
       switch (currentStepId) {
+        case "step1":
+          this.checkIsReapplyFlow();
+          break;
         case "step4Cities":
           this.getCities();
           this.sideEffects = true;
@@ -793,22 +822,30 @@ if (window.location.pathname === "/aanmelden") {
         case "stepOnlinePackage":
           this.getPackages();
           this.sideEffects = true;
+          break;
         case "step4Mijn":
           this.getCbrLocations(false);
           this.setDateInput();
           this.setTimeInput();
+          break;
         case "step6":
           this.showDates();
+          break;
         case "stepMonths":
           this.handleStepMonths();
           break;
         case "stepCalendar":
           this.initializeCalendar();
+          this.checkDates();
+          break;
         case "stepInputs":
           this.updateButtonState();
+          this.initFormInputEvents();
+          this.initFormInputsReapply();
+          break;
         case "overzicht":
-          this.isReturning = true;
           this.createEditStepButtons();
+          break;
         default:
           this.sideEffects = false;
           break;
@@ -864,7 +901,6 @@ if (window.location.pathname === "/aanmelden") {
     getProduct() {
       const licenseType = this.formData.license_type;
       const examType = Number(this.formData.exam_type);
-
       const PRODUCTS_LIST = this.PRODUCTS_LIST;
 
       let product;
@@ -884,12 +920,15 @@ if (window.location.pathname === "/aanmelden") {
               : PRODUCTS_LIST.AMTH_VE;
           break;
 
-        default:
-          // AUTO
+        case this.LicenseTypesEnum.AUTO:
           product =
             examType === 1 || examType === 3
               ? PRODUCTS_LIST.BTH
               : PRODUCTS_LIST.BTH_VE;
+          break;
+
+        default:
+          break;
       }
 
       return product;
@@ -897,6 +936,16 @@ if (window.location.pathname === "/aanmelden") {
     //END
 
     // CITIES
+    async fetchCities() {
+      try {
+        const resServer = await fetch(this.urls.cities);
+        const data = await resServer.json();
+        return data;
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
     async getCities() {
       if (
         this.citiesList.length === 0 ||
@@ -905,18 +954,14 @@ if (window.location.pathname === "/aanmelden") {
         delete this.formData.cities;
         this.prevLicenseType = this.formData.license_type;
         try {
-          this.enableLoader();
-          const resServer = await fetch(this.urls.cities);
-          const data = await resServer.json();
+          const data = await this.fetchCities();
           this.citiesList = data.filter(
             (city) =>
               city.license_types.includes(this.formData.license_type) &&
-              city.id !== 53
+              !city.is_online
           );
         } catch (error) {
           console.log(error);
-        } finally {
-          this.disableLoader();
         }
       }
       this.createOptions(this.citiesList, "step4", true);
@@ -925,18 +970,18 @@ if (window.location.pathname === "/aanmelden") {
 
     // MONTHS
 
-    generateDutchMonths() {
+    generateDutchMonths(months) {
       const currentMonth = new Date().getMonth();
       const monthsToShow = this.dutchMonths.slice(
         currentMonth,
-        currentMonth + 6
+        currentMonth + months
       );
 
       return monthsToShow.map((month) => month);
     }
 
     handleStepMonths() {
-      const months = this.generateDutchMonths();
+      const months = this.generateDutchMonths(6);
       this.createOptions(months, "stepMonthsList", false);
     }
 
@@ -960,6 +1005,13 @@ if (window.location.pathname === "/aanmelden") {
       const chanceElement = document.getElementById("chanceMonths");
       if (chanceElement) {
         chanceElement.textContent = text;
+      }
+    }
+
+    handleCourseCategoryChange(newCategory) {
+      this.formData["course_category"] = newCategory;
+      if (!this.isEditing) {
+        this.formData["course_names"] = [];
       }
     }
 
@@ -1024,11 +1076,10 @@ if (window.location.pathname === "/aanmelden") {
       }
     }
 
-    // CBR LOCATIONS
+    // CBR LOCATIONS GET
     async getCbrLocations(createElements = true) {
       if (this.cbrs_list.length === 0) {
         try {
-          this.enableLoader();
           const resServer = await fetch(this.urls.cbrsLocations);
           const data = await resServer.json();
           this.cbrs_list = data;
@@ -1039,13 +1090,13 @@ if (window.location.pathname === "/aanmelden") {
           }
         } catch (error) {
           console.log(error);
-        } finally {
-          this.disableLoader();
         }
       } else if (createElements) {
         this.createCbrElements(this.cbrs_list);
       }
     }
+
+    // MIJN STEP
 
     createCbrsSelect(data) {
       const selectElement = document.getElementById("selectCbrs");
@@ -1069,11 +1120,22 @@ if (window.location.pathname === "/aanmelden") {
       const formattedDate = currentDate.toISOString().split("T")[0];
       fechaInput.min = formattedDate;
 
-      fechaInput.addEventListener("change", (event) => {
-        console.log("Fecha");
-        this.datePicked = fechaGlobalSeleccionada;
-        this.formatDateMijnFlow();
-      });
+      let lastDatePicked = localStorage.getItem("fechaGlobalSeleccionada");
+      this.datePicked = lastDatePicked;
+
+      if (!this.formData.examType) {
+        localStorage.removeItem("fechaGlobalSeleccionada");
+        this.datePicked = null;
+      }
+
+      setInterval(() => {
+        let getDatePicked = localStorage.getItem("fechaGlobalSeleccionada");
+        if (getDatePicked !== lastDatePicked) {
+          lastDatePicked = getDatePicked;
+          this.datePicked = getDatePicked;
+          this.formatDateMijnFlow();
+        }
+      }, 1000);
     }
 
     setTimeInput() {
@@ -1083,25 +1145,27 @@ if (window.location.pathname === "/aanmelden") {
       timeInput.addEventListener("input", (e) => {
         let value = e.target.value.replace(/[^0-9]/g, "");
 
-        if (value.length > 2) {
-          value = value.substring(0, 2) + ":" + value.substring(2, 4);
+        if (value.length >= 2) {
+          value =
+            value.substring(0, 2) +
+            (value.length > 2 ? ":" + value.substring(2, 4) : "");
         }
-
         e.target.value = value;
 
-        const [hours, minutes] = value.split(":").map(Number);
-        const isValid = value.length === 5 && hours <= 23 && minutes <= 59;
+        const isValid =
+          value.length === 5 &&
+          parseInt(value.substring(0, 2), 10) <= 23 &&
+          parseInt(value.substring(3, 5), 10) <= 59;
 
-        if (!isValid) {
+        if (isValid) {
+          timeError.style.display = "none";
+          this.timePicked = value;
+        } else {
           timeError.style.display = "block";
           this.timePicked = null;
-        } else {
-          timeError.style.display = "none";
-          this.timePicked = `${hours}:${minutes}`;
         }
 
         this.formatDateMijnFlow();
-        console.log(this.timePicked);
       });
     }
 
@@ -1111,10 +1175,11 @@ if (window.location.pathname === "/aanmelden") {
           "mijn_exam_datetime",
           `${this.datePicked}T${this.timePicked}:00+01:00`
         );
-      } else {
-        this.setFormData("mijn_exam_datetime", "");
       }
+      this.updateNextButtonState();
     }
+
+    // CBR step
 
     createCbrElements(elements) {
       const container = document.getElementById("step4check");
@@ -1212,11 +1277,14 @@ if (window.location.pathname === "/aanmelden") {
       this.yearLabel = document.getElementById("yearLabel");
       this.chanceElement = document.getElementById("chance");
 
-      this.initializeCalendarButtons();
-      this.renderCalendarForMonthYear(
-        this.currentMonthCalendar,
-        this.currentYearCalendar
-      );
+      if (!this.isAlreadyRender) {
+        this.initializeCalendarButtons();
+        this.renderCalendarForMonthYear(
+          this.currentMonthCalendar,
+          this.currentYearCalendar
+        );
+      }
+      this.isAlreadyRender = true;
     }
 
     initializeCalendarButtons() {
@@ -1257,7 +1325,7 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     renderCalendarForMonthYear(month, year) {
-      this.monthLabel.textContent = this.generateDutchMonths()[month];
+      this.monthLabel.textContent = this.generateDutchMonths(12)[month];
       this.yearLabel.textContent = year.toString();
 
       const dayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
@@ -1323,12 +1391,35 @@ if (window.location.pathname === "/aanmelden") {
       );
     }
 
+    checkDates() {
+      const storedDates = this.formData["course_dates"];
+      if (storedDates) {
+        const datesFormData = new Set(this.formData["course_dates"]);
+        this.selectedDates = datesFormData;
+        const days = this.calendarElement.querySelectorAll(
+          "td:not(.disabled):not(.not-current-month)"
+        );
+        days.forEach((day) => {
+          const date = day.getAttribute("data-date");
+          if (this.selectedDates.has(date)) {
+            day.classList.add("selected-date");
+          } else {
+            day.classList.remove("selected-date");
+          }
+        });
+      }
+    }
+
     addEventListenersToDays() {
       const days = this.calendarElement.querySelectorAll(
         "td:not(.disabled):not(.not-current-month)"
       );
       days.forEach((day) => {
         day.addEventListener("click", () => {
+          const storedDates = this.formData["course_dates"];
+          if (storedDates) {
+            this.selectedDates = new Set(storedDates);
+          }
           const date = day.getAttribute("data-date");
           if (this.selectedDates.has(date)) {
             this.selectedDates.delete(date);
@@ -1337,6 +1428,7 @@ if (window.location.pathname === "/aanmelden") {
             this.selectedDates.add(date);
             day.classList.add("selected-date");
           }
+          this.setFormData("course_dates", this.selectedDates);
           this.updateChanceText();
         });
       });
@@ -1395,10 +1487,13 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     async getPackages() {
+      if (this.formData["package_name"]) {
+        return;
+      }
+
       const url = this.urls.plans;
 
       try {
-        this.enableLoader();
         const resServer = await fetch(url);
         const data = await resServer.json();
 
@@ -1435,8 +1530,6 @@ if (window.location.pathname === "/aanmelden") {
         this.createPackages(this.allAvailablePlans);
       } catch (error) {
         console.log(error);
-      } finally {
-        this.disableLoader();
       }
     }
 
@@ -1647,7 +1740,7 @@ if (window.location.pathname === "/aanmelden") {
       }
       if (isFinalStep && pkg.old_price) {
         const discountAmount = pkg.old_price - pkg.price;
-        const formattedDiscountAmount = `${discountAmount.toFixed(2)}`;
+        const formattedDiscountAmount = `- ${discountAmount.toFixed(2)}`;
 
         const additionalSeparatorMargin = this.createElementWithClass(
           "div",
@@ -1781,32 +1874,44 @@ if (window.location.pathname === "/aanmelden") {
     // Edit information, go to step
 
     createEditStepButtons() {
-      const buttonsData = [
-        { id: "editLocations", callback: () => this.determineLocationStep() },
-        { id: "editDates", callback: () => this.determineDateStep() },
-        { id: "editInputs", callback: () => this.goToStep("stepInputs") },
-        {
-          id: "editOnlinePackages",
-          callback: () => this.goToStep("stepOnlinePackage"),
-        },
-      ];
+      this.backupFormData();
+      if (!this.isEditButtonsInitialized) {
+        const buttonsData = [
+          { id: "editLocations", callback: () => this.determineLocationStep() },
+          { id: "editDates", callback: () => this.determineDateStep() },
+          { id: "editInputs", callback: () => this.goToStep("stepInputs") },
+          {
+            id: "editOnlinePackages",
+            callback: () => this.goToStep("stepOnlinePackage"),
+          },
+        ];
+        buttonsData.forEach((buttonData) => {
+          const button = document.getElementById(buttonData.id);
+          if (button) {
+            button.addEventListener("click", () => {
+              this.isEditing = true;
+              buttonData.callback();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              this.initializeEditButtons();
+              this.showEditButtons();
+            });
 
-      buttonsData.forEach((buttonData) => {
-        const button = document.getElementById(buttonData.id);
-        if (button) {
-          button.addEventListener("click", buttonData.callback);
-
-          if (buttonData.id === "editOnlinePackages") {
-            if (this.formData.course_type === "online") {
-              button.classList.remove("hide");
-            } else {
-              button.classList.add("hide");
+            if (buttonData.id === "editOnlinePackages") {
+              if (this.formData.course_type === "online") {
+                button.classList.remove("hide");
+              } else {
+                button.classList.add("hide");
+              }
             }
           }
-        }
-      });
+        });
+      }
+      this.isEditButtonsInitialized = true;
     }
 
+    backupFormData() {
+      this.originalFormData = JSON.parse(JSON.stringify(this.formData));
+    }
     determineLocationStep() {
       if (this.formData.cities && this.formData.cities.length > 0) {
         this.goToStep("step4Cities");
@@ -1859,6 +1964,37 @@ if (window.location.pathname === "/aanmelden") {
 
     // End edit information
 
+    // Cancel edit of the data and save new data
+
+    showEditButtons() {
+      const btnEditWrapper = document.getElementById("btnEditWrapper");
+      const btnWrapper = document.getElementById("btnWrapper");
+
+      btnEditWrapper.classList.remove("hide");
+      btnWrapper.classList.add("hide");
+    }
+
+    initializeEditButtons() {
+      const btnEditWrapper = document.getElementById("btnEditWrapper");
+      const btnSendWrapper = document.getElementById("btnSendWrapper");
+
+      this.btnEditSave.classList.remove("disabled-button");
+      const btnEditCancel = document.getElementById("btnEditCancel");
+
+      btnEditCancel.addEventListener("click", () => {
+        this.formData = JSON.parse(JSON.stringify(this.originalFormData));
+        this.goToStep("overzicht");
+        btnEditWrapper.classList.add("hide");
+        btnSendWrapper.classList.remove("hide");
+      });
+
+      this.btnEditSave.addEventListener("click", () => {
+        this.goToStep("overzicht");
+        btnEditWrapper.classList.add("hide");
+        btnSendWrapper.classList.remove("hide");
+      });
+    }
+
     // RESUME
 
     completeResume() {
@@ -1907,7 +2043,12 @@ if (window.location.pathname === "/aanmelden") {
         if (config && config.elementId) {
           const element = document.getElementById(config.elementId);
           if (element) {
-            element.textContent = this.formData[key] ?? "-";
+            if (key === "birth_date" && this.formData[key]) {
+              const dateParts = this.formData[key].split("-");
+              element.textContent = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+            } else {
+              element.textContent = this.formData[key] ?? "-";
+            }
           }
         }
       });
@@ -1915,12 +2056,19 @@ if (window.location.pathname === "/aanmelden") {
 
     completeCities() {
       const container = document.getElementById("citiesColumn");
-      const text = document.getElementById(
-        this.resumeConfig["cities"].elementId
-      );
-      if (this.formData["cities"].length > 0) {
-        text.textContent = this.citiesNameSelected.join(", ");
-        container.classList.remove("hide");
+      if (this.formData["course_type"] === "offline") {
+        const text = document.getElementById(
+          this.resumeConfig["cities"].elementId
+        );
+        if (this.formData["cities"].length > 0) {
+          const selectedCityNames = this.formData["cities"].map((cityId) => {
+            const city = this.citiesList.find((c) => c.id === cityId);
+            return city ? city.name : "";
+          });
+
+          text.textContent = selectedCityNames.join(", ");
+          container.classList.remove("hide");
+        }
       } else {
         container.classList.add("hide");
       }
@@ -1952,8 +2100,15 @@ if (window.location.pathname === "/aanmelden") {
         calendar: "specifieke",
       };
 
-      const element = document.getElementById(courseCategoryTypeTextMap[key]);
-      if (element) element.classList.add("active");
+      const allCategoryElements = document.querySelectorAll(
+        ".overzicht_info-dates"
+      );
+      allCategoryElements.forEach((el) => el.classList.remove("active"));
+
+      const selectedElement = document.getElementById(
+        courseCategoryTypeTextMap[key]
+      );
+      if (selectedElement) selectedElement.classList.add("active");
     }
 
     completeCourseNames() {
@@ -2028,6 +2183,13 @@ if (window.location.pathname === "/aanmelden") {
       const container = document.getElementById(
         this.resumeConfig["package_name"].elementId
       );
+
+      const existingPackages = container.getElementsByClassName(
+        "overzicht_package-item"
+      );
+      while (existingPackages.length > 0) {
+        existingPackages[0].parentNode.removeChild(existingPackages[0]);
+      }
       if (this.formData["course_type"] === "offline") {
         const offlineContent = document.getElementById("overzichtOffline");
         offlineContent.classList.add("active");
@@ -2036,13 +2198,15 @@ if (window.location.pathname === "/aanmelden") {
         const selectedPackage = this.packageSelected;
         if (selectedPackage) {
           let packageElement = document.createElement("div");
+          packageElement.classList.add("overzicht_package-item");
           this.addPackageItemElements(packageElement, selectedPackage, true);
           container.appendChild(packageElement);
         } else {
-          container.textContent = "No se ha seleccionado ningÃºn paquete.";
+          container.textContent = "No se ha seleccionado ningún paquete.";
         }
       }
     }
+
     //END RESUME
 
     applySubmissionRules() {
@@ -2062,93 +2226,11 @@ if (window.location.pathname === "/aanmelden") {
     //SEND DATA
 
     async handleFinalStep() {
-      const dataResponse = await this.sendDataBack();
-
-      if (dataResponse) {
-        const {
-          course_type,
-          is_mijn_reservation,
-          payment_amount,
-          auth_tokens: { access },
-        } = dataResponse;
-
-        const isMijnOnline = course_type === "online" && is_mijn_reservation;
-        const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
-        const isMijnOnlineFlow = isMijnOnline;
-        let payment_link;
-
-        const objUrlPayloadPackage = {
-          url: this.urls.package_start,
-          payload: { package_starting_at: new Date() },
-          token: access,
-        };
-
-        const objUrlPayloadPayment = {
-          url: this.urls.payment_link,
-          payload: {
-            method: "ideal",
-            amount: payment_amount,
-            final_redirect_url: this.urls.final_redirect_url,
-            fail_redirect_url: this.urls.fail_redirect_url,
-          },
-          token: access,
-        };
-
-        if (isMijnOnlineFlow) {
-          await this.requestLinkPayment(objUrlPayloadPackage);
-          payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
-        } else {
-          payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
-        }
-
-        if (payment_link) {
-          const payloadStorage = {
-            ...dataResponse,
-            ...payment_link,
-            buttonText: buttonText,
-          };
-          const copyDeepPayloadStorage = JSON.parse(
-            JSON.stringify(payloadStorage)
-          );
-          localStorage.setItem(
-            "formData",
-            JSON.stringify(copyDeepPayloadStorage)
-          );
-
-          localStorage.setItem("userLoggedIn", true);
-          updateLoginButton();
-
-          this.redirectTo("/bestellen");
-          //const orderManager = new OrderManager();
-        }
-      }
-    }
-
-    async requestLinkPayment({ url, payload, token }) {
-      try {
-        this.enableLoader();
-        const respuesta = await fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!respuesta.ok) {
-          throw new Error(
-            `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
-          );
-        }
-
-        const resultado = await respuesta.json();
-        return resultado;
-      } catch (error) {
-        console.error("Error:", error.message);
-        throw error;
-      } finally {
-        this.disableLoader();
+      const data = await this.sendDataBack();
+      if (data) {
+        localStorage.setItem("formData", JSON.stringify(data));
+        localStorage.setItem("userLoggedIn", true);
+        return this.redirectTo("/bestellen");
       }
     }
 
@@ -2165,18 +2247,16 @@ if (window.location.pathname === "/aanmelden") {
       };
 
       try {
-        this.enableLoader();
         const response = await fetch(url, options);
         if (!response.ok) {
           throw new Error("Error en la respuesta de la red");
         }
+        localStorage.removeItem("fechaGlobalSeleccionada");
         const responseData = await response.json();
         return responseData;
       } catch (error) {
         console.error("Error when sending data:", error);
         return false;
-      } finally {
-        this.disableLoader();
       }
     }
     // END SEND DATA
@@ -2237,6 +2317,18 @@ if (window.location.pathname === "/bestellen") {
 
   class OrderManager {
     constructor() {
+      this.package_starting_at = null;
+      this.isMijnOnline = null;
+      this.containerMijn = document.getElementById("bestellenMijn");
+      this.containerDefault = document.getElementById("bestellenDefault");
+      this.buttonLink = document.getElementById("btnLink");
+      this.buttonText = document.getElementById("btnText");
+      this.urlPaymentLink =
+        "https://api.develop.nutheorie.be/api/applications/payment_link/";
+      this.urlPackageStart =
+        "https://api.develop.nutheorie.be/api/applications/set_package_start/";
+      this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
+      this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
       this.initialize();
     }
 
@@ -2246,7 +2338,133 @@ if (window.location.pathname === "/bestellen") {
         const formData = JSON.parse(storedData);
         this.displayOrderSummary(formData);
         this.handleStoredData(formData);
+        this.isMijnOnline =
+          formData.course_type === "online" && formData.is_mijn_reservation;
+        this.buttonText.textContent = this.isMijnOnline
+          ? "Betalen"
+          : "Aanbetaling";
+        this.handleContainer();
+        this.buttonLink.addEventListener("click", () =>
+          this.requestLink(formData)
+        );
       }
+    }
+
+    async requestLink(formData) {
+      const {
+        payment_amount,
+        auth_tokens: { access },
+      } = formData;
+
+      let payment_link;
+
+      const objUrlPayloadPackage = {
+        url: this.urlPackageStart,
+        payload: { package_starting_at: new Date() }, // agregar la fecha de los inputs radio, formato como setDateInput
+        token: access,
+      };
+
+      const objUrlPayloadPayment = {
+        url: this.urlPaymentLink,
+        payload: {
+          method: "ideal",
+          amount: payment_amount,
+          final_redirect_url: this.urlFinalRedirect,
+          fail_redirect_url: this.urlFailRedirect,
+        },
+        token: access,
+      };
+      if (this.isMijnOnline) {
+        await this.requestLinkPayment(objUrlPayloadPackage);
+        payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+      } else {
+        payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
+      }
+      if (payment_link) {
+        window.location.href = payment_link.payment_link;
+      }
+    }
+
+    async requestLinkPayment({ url, payload, token }) {
+      try {
+        const respuesta = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!respuesta.ok) {
+          throw new Error(
+            `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
+          );
+        }
+        const resultado = await respuesta.json();
+        return resultado;
+      } catch (error) {
+        console.error("Error:", error.message);
+        throw error;
+      }
+    }
+
+    handleContainer() {
+      if (this.isMijnOnline) {
+        this.containerMijn.style.display = "flex";
+        this.containerDefault.style.display = "none";
+        this.generateContainerMijn();
+      } else {
+        this.containerMijn.style.display = "none";
+        this.containerDefault.style.display = "block";
+      }
+    }
+
+    generateContainerMijn() {
+      const radio1 = document.createElement("input");
+      radio1.type = "radio";
+      radio1.id = "radio1";
+      radio1.name = "mijnOption";
+      radio1.value = "direct";
+      radio1.addEventListener("change", () => this.getCurrentDateTime());
+
+      const radio2 = document.createElement("input");
+      radio2.type = "radio";
+      radio2.id = "radio2";
+      radio2.name = "mijnOption";
+      radio2.value = "option2";
+      radio2.addEventListener("change", () => this.handleRadioChange());
+
+      this.containerMijn.appendChild(radio1);
+      this.containerMijn.appendChild(radio2);
+
+      const calendarInput = document.createElement("input");
+      calendarInput.type = "date";
+      calendarInput.id = "calendarInput";
+      calendarInput.style.display = "none";
+
+      const today = new Date().toISOString().split("T")[0];
+      calendarInput.min = today;
+
+      this.containerMijn.appendChild(calendarInput);
+    }
+
+    handleRadioChange() {
+      const radio2 = document.getElementById("radio2");
+      const calendarInput = document.getElementById("calendarInput");
+      calendarInput.style.display = radio2.checked ? "block" : "none";
+    }
+
+    getCurrentDateTime() {
+      const currentDateTime = new Date();
+      const year = currentDateTime.getFullYear();
+      const month = currentDateTime.getMonth() + 1;
+      const day = currentDateTime.getDate();
+      const hour = currentDateTime.getHours();
+      const minutes = currentDateTime.getMinutes();
+      const seconds = currentDateTime.getSeconds();
+      const finalDate = `${year}-${month}-${day}T${hour}:${minutes}:${seconds}+01:00`;
+      this.package_starting_at = finalDate;
     }
 
     updateSvgVisibility(formData) {
@@ -2293,7 +2511,7 @@ if (window.location.pathname === "/bestellen") {
       }
     }
 
-    getExamTypeText(product) {
+    getExamTypeText(product, is_mijn_reservation) {
       const examTypeTextMap = {
         bth: "Standaard CBR examen (30 min): 48,-",
         bth_ve: "Verlengd CBR examen (45 min): 61,-",
@@ -2301,9 +2519,9 @@ if (window.location.pathname === "/bestellen") {
         ath_ve: "Verlengd CBR examen (45 min): 61,-",
         amth: "Standaard CBR examen (30 min): 48,-",
         amth_ve: "Verlengd CBR examen (45 min): 61,-",
-        mijn: "Ik heb zelf al een examen gereserveerd",
       };
-      return examTypeTextMap[product];
+      if (is_mijn_reservation) return "Ik heb zelf al een examen gereserveerd";
+      else return examTypeTextMap[product];
     }
 
     displayOrderSummary(formData) {
@@ -2330,7 +2548,7 @@ if (window.location.pathname === "/bestellen") {
         const element = document.getElementById(config.elementId);
         if (!element) return;
 
-        const value = this.formData[key];
+        const value = formData[key];
         element.textContent = config.textMap[value] ?? value;
 
         if (key === "course_type" && value === "online") {
@@ -2365,7 +2583,10 @@ if (window.location.pathname === "/bestellen") {
         courseCategoryElement.classList.add("active");
       }
 
-      const examTypeText = this.getExamTypeText(formData.product);
+      const examTypeText = this.getExamTypeText(
+        formData.product,
+        formData.is_mijn_reservation
+      );
       if (examTypeText) {
         const examTypeElement = document.getElementById("examTypeText");
         examTypeElement.textContent = examTypeText;
@@ -2483,11 +2704,8 @@ if (window.location.pathname === "/bestellen") {
     }
 
     handleStoredData(formData) {
-      const link = document.getElementById("btnLink");
-      const text = document.getElementById("btnText");
       const amount = document.getElementById("btnAmount");
       const aanbetalingAmount = document.getElementById("aanbetalingTotal");
-      text.textContent = formData.buttonText;
       amount.textContent = `€ ${formData.payment_amount}`;
       const paymentAmount = parseFloat(formData.payment_amount);
       let formattedAmount = "";
@@ -2503,9 +2721,6 @@ if (window.location.pathname === "/bestellen") {
       }
 
       aanbetalingAmount.textContent = ` ${formattedAmount}`;
-      link.addEventListener("click", function () {
-        window.location.href = formData.payment_link;
-      });
     }
   }
   const orderManager = new OrderManager();
@@ -2531,3 +2746,72 @@ document.getElementById("btn-login").addEventListener("click", (event) => {
     window.location.href = "/inloggen";
   }
 });
+
+if (window.location.pathname === "/test") {
+  class FormReapply {
+    constructor() {
+      this.userData = {};
+      this.token = null;
+      this.getUserInfoBack();
+      this.bindEventRedirect();
+    }
+
+    bindEventRedirect() {
+      const button = document.getElementById("reapplyBtn");
+      button.addEventListener("click", () => this.redirectToForm());
+    }
+
+    redirectToForm() {
+      this.userData.is_reapply_allowed = true;
+      if (this.userData.is_reapply_allowed) {
+        const url = `/aanmelden?course_type=${this.userData.course_type}&reapply=${this.userData.is_reapply_allowed}&planID&t=${this.token}`;
+        return (window.location.href = url);
+      }
+    }
+
+    async refreshToken() {
+      const resServerToken = await fetch(
+        "https://api.develop.nutheorie.be/authorization/token/refresh/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh: this.token }),
+        }
+      );
+      const dataToken = await resServerToken.json();
+      this.token = dataToken.access;
+      const newObject = JSON.stringify(dataToken);
+      localStorage.setItem("user", newObject);
+    }
+
+    async getUserInfoBack() {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user) {
+        this.token = user.access;
+        try {
+          const resServer = await fetch(
+            "https://api.develop.nutheorie.be/api/applications/",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${this.token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const userData = await resServer.json();
+          this.userData = userData;
+          localStorage.setItem("userData", JSON.stringify(userData));
+        } catch (error) {
+          console.log(error);
+        }
+      } else {
+        this.userData = {};
+      }
+    }
+  }
+
+  const reapply = new FormReapply();
+}

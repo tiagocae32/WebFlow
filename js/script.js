@@ -227,7 +227,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-
     convertDateToISO(dateString) {
       const parts = dateString.split("-");
       if (parts.length === 3) {
@@ -416,14 +415,16 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.handleProductMijnReservation();
       this.applySubmissionRules();
       this.completeResume();
-      if (this.formData['course_type'] === 'online') this.checkCities();
+      if (this.formData["course_type"] === "online") this.checkCities();
     }
 
     async checkCities() {
       const data = await this.fetchCities();
-      const citiesOnline = data.filter(city => city.is_online).map(city => city.id);
+      const citiesOnline = data
+        .filter((city) => city.is_online)
+        .map((city) => city.id);
       console.log(citiesOnline);
-      this.formData['cities'] = citiesOnline;
+      this.formData["cities"] = citiesOnline;
     }
 
     changeBtn(text) {
@@ -464,16 +465,14 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     setupOverzichtStepButtons() {
-
       const btnPrevLast = document.getElementById("btnPrevLast");
       const btnSend = document.getElementById("btnSend");
 
       btnSend.removeEventListener("click", this.handleFinalStepBound);
       btnSend.addEventListener("click", this.handleFinalStepBound);
       btnPrevLast.addEventListener("click", () => {
-        this.goToStep('stepInputs');
+        this.goToStep("stepInputs");
       });
-
     }
 
     toggleButtonsVisibility(show) {
@@ -508,22 +507,22 @@ if (window.location.pathname.includes("/aanmelden")) {
     formatBirthDate(value) {
       value = value.replace(/[^0-9\-]/g, "");
 
-      let parts = value.split('-');
-      parts[0] = parts[0] ? parts[0].slice(0, 2) : '';
-      parts[1] = parts[1] ? parts[1].slice(0, 2) : '';
-      parts[2] = parts[2] ? parts[2].slice(0, 4) : '';
+      let parts = value.split("-");
+      parts[0] = parts[0] ? parts[0].slice(0, 2) : "";
+      parts[1] = parts[1] ? parts[1].slice(0, 2) : "";
+      parts[2] = parts[2] ? parts[2].slice(0, 4) : "";
 
-      let formattedValue = '';
+      let formattedValue = "";
       if (parts[0]) {
         formattedValue = parts[0];
         if (parts[0].length === 2 || parts[1]) {
-          formattedValue += '-';
+          formattedValue += "-";
         }
       }
       if (parts[1]) {
         formattedValue += parts[1];
         if (parts[1].length === 2 || parts[2]) {
-          formattedValue += '-';
+          formattedValue += "-";
         }
       }
       if (parts[2]) {
@@ -536,7 +535,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     validateDate(dateString) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-        dateString = dateString.split('-').reverse().join('-');
+        dateString = dateString.split("-").reverse().join("-");
       }
 
       const regex = /^\d{2}-\d{2}-\d{4}$/;
@@ -546,7 +545,12 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       const [day, month, year] = dateString.split("-").map(Number);
 
-      if (year < 1900 || year > new Date().getFullYear() || month < 1 || month > 12) {
+      if (
+        year < 1900 ||
+        year > new Date().getFullYear() ||
+        month < 1 ||
+        month > 12
+      ) {
         return false;
       }
 
@@ -560,7 +564,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         if (event.key === "Backspace") {
           const cursorPos = birthDateInput.selectionStart;
 
-          if (birthDateInput.value[cursorPos - 1] === '-') {
+          if (birthDateInput.value[cursorPos - 1] === "-") {
             event.preventDefault();
             birthDateInput.setSelectionRange(cursorPos - 1, cursorPos - 1);
           }
@@ -580,26 +584,25 @@ if (window.location.pathname.includes("/aanmelden")) {
         const data = JSON.parse(localStorage.getItem("userData"));
 
         const formInputs = [
-          { key: 'first_name', id: 'first-name', disabled: true },
-          { key: 'last_name', id: 'last-name', disabled: true },
-          { key: 'nickname', id: 'nickname', disabled: true },
-          { key: 'birth_date', id: 'birthDateInput', disabled: true },
-          { key: 'email', id: 'emailInput', disabled: false },
-          { key: 'phone', id: 'tel', disabled: false },
-          { key: 'address_1', id: 'address', disabled: false },
-          { key: 'address_2', id: 'postal-code', disabled: false },
-          { key: 'address_3', id: 'woonplaats', disabled: false }
+          { key: "first_name", id: "first-name", disabled: true },
+          { key: "last_name", id: "last-name", disabled: true },
+          { key: "nickname", id: "nickname", disabled: true },
+          { key: "birth_date", id: "birthDateInput", disabled: true },
+          { key: "email", id: "emailInput", disabled: false },
+          { key: "phone", id: "tel", disabled: false },
+          { key: "address_1", id: "address", disabled: false },
+          { key: "address_2", id: "postal-code", disabled: false },
+          { key: "address_3", id: "woonplaats", disabled: false },
         ];
 
-        formInputs.forEach(obj => {
+        formInputs.forEach((obj) => {
           const element = document.getElementById(obj.id);
           if (element) {
-
-            if (obj.key === 'birth_date') {
+            if (obj.key === "birth_date") {
               const newFormat = this.convertDateToISO(data[obj.key]);
               element.value = newFormat;
             } else {
-              element.value = data[obj.key] || '';
+              element.value = data[obj.key] || "";
             }
             if (obj.disabled) {
               element.disabled = true;
@@ -611,8 +614,10 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     initFormInputEvents() {
-      const contenedorId = 'stepInputs'
-      const inputs = document.querySelectorAll(`#${contenedorId} input[type="text"], #${contenedorId} input[type="number"], #${contenedorId} input[type="email"]`);
+      const contenedorId = "stepInputs";
+      const inputs = document.querySelectorAll(
+        `#${contenedorId} input[type="text"], #${contenedorId} input[type="number"], #${contenedorId} input[type="email"]`
+      );
 
       inputs.forEach((input) => {
         input.addEventListener("blur", this.handleInputBlur.bind(this));
@@ -761,8 +766,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -794,8 +799,8 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     // Check if is reapply flow
     checkIsReapplyFlow() {
-      const url = window.location.href
-      const isReapply = url.toLowerCase().includes('&reapply=true');
+      const url = window.location.href;
+      const isReapply = url.toLowerCase().includes("&reapply=true");
       if (isReapply) this.isReapplyFlow = true;
       else this.isReapplyFlow = false;
     }
@@ -902,15 +907,24 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       switch (licenseType) {
         case this.LicenseTypesEnum.MOTOR:
-          product = (examType === 1 || examType === 3) ? PRODUCTS_LIST.ATH : PRODUCTS_LIST.ATH_VE;
+          product =
+            examType === 1 || examType === 3
+              ? PRODUCTS_LIST.ATH
+              : PRODUCTS_LIST.ATH_VE;
           break;
 
         case this.LicenseTypesEnum.SCOOTER:
-          product = (examType === 1 || examType === 3) ? PRODUCTS_LIST.AMTH : PRODUCTS_LIST.AMTH_VE;
+          product =
+            examType === 1 || examType === 3
+              ? PRODUCTS_LIST.AMTH
+              : PRODUCTS_LIST.AMTH_VE;
           break;
 
         case this.LicenseTypesEnum.AUTO:
-          product = (examType === 1 || examType === 3) ? PRODUCTS_LIST.BTH : PRODUCTS_LIST.BTH_VE;
+          product =
+            examType === 1 || examType === 3
+              ? PRODUCTS_LIST.BTH
+              : PRODUCTS_LIST.BTH_VE;
           break;
 
         default:
@@ -995,9 +1009,9 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     handleCourseCategoryChange(newCategory) {
-      this.formData['course_category'] = newCategory;
+      this.formData["course_category"] = newCategory;
       if (!this.isEditing) {
-        this.formData['course_names'] = [];
+        this.formData["course_names"] = [];
       }
     }
 
@@ -1106,16 +1120,16 @@ if (window.location.pathname.includes("/aanmelden")) {
       const formattedDate = currentDate.toISOString().split("T")[0];
       fechaInput.min = formattedDate;
 
-      let lastDatePicked = localStorage.getItem('fechaGlobalSeleccionada');
+      let lastDatePicked = localStorage.getItem("fechaGlobalSeleccionada");
       this.datePicked = lastDatePicked;
 
       if (!this.formData.examType) {
-        localStorage.removeItem('fechaGlobalSeleccionada');
+        localStorage.removeItem("fechaGlobalSeleccionada");
         this.datePicked = null;
       }
 
       setInterval(() => {
-        let getDatePicked = localStorage.getItem('fechaGlobalSeleccionada');
+        let getDatePicked = localStorage.getItem("fechaGlobalSeleccionada");
         if (getDatePicked !== lastDatePicked) {
           lastDatePicked = getDatePicked;
           this.datePicked = getDatePicked;
@@ -1132,11 +1146,16 @@ if (window.location.pathname.includes("/aanmelden")) {
         let value = e.target.value.replace(/[^0-9]/g, "");
 
         if (value.length >= 2) {
-          value = value.substring(0, 2) + (value.length > 2 ? ":" + value.substring(2, 4) : "");
+          value =
+            value.substring(0, 2) +
+            (value.length > 2 ? ":" + value.substring(2, 4) : "");
         }
         e.target.value = value;
 
-        const isValid = value.length === 5 && parseInt(value.substring(0, 2), 10) <= 23 && parseInt(value.substring(3, 5), 10) <= 59;
+        const isValid =
+          value.length === 5 &&
+          parseInt(value.substring(0, 2), 10) <= 23 &&
+          parseInt(value.substring(3, 5), 10) <= 59;
 
         if (isValid) {
           timeError.style.display = "none";
@@ -1152,11 +1171,13 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     formatDateMijnFlow() {
       if (this.datePicked && this.timePicked) {
-        this.setFormData("mijn_exam_datetime", `${this.datePicked}T${this.timePicked}:00+01:00`);
+        this.setFormData(
+          "mijn_exam_datetime",
+          `${this.datePicked}T${this.timePicked}:00+01:00`
+        );
       }
       this.updateNextButtonState();
     }
-
 
     // CBR step
 
@@ -1279,7 +1300,10 @@ if (window.location.pathname.includes("/aanmelden")) {
           } else {
             this.currentMonthCalendar--;
           }
-          this.renderCalendarForMonthYear(this.currentMonthCalendar, this.currentYearCalendar);
+          this.renderCalendarForMonthYear(
+            this.currentMonthCalendar,
+            this.currentYearCalendar
+          );
         });
       }
 
@@ -1292,7 +1316,10 @@ if (window.location.pathname.includes("/aanmelden")) {
           } else {
             this.currentMonthCalendar++;
           }
-          this.renderCalendarForMonthYear(this.currentMonthCalendar, this.currentYearCalendar);
+          this.renderCalendarForMonthYear(
+            this.currentMonthCalendar,
+            this.currentYearCalendar
+          );
         });
       }
     }
@@ -1316,8 +1343,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1364,11 +1392,13 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     checkDates() {
-      const storedDates = this.formData['course_dates'];
+      const storedDates = this.formData["course_dates"];
       if (storedDates) {
-        const datesFormData = new Set(this.formData['course_dates']);
+        const datesFormData = new Set(this.formData["course_dates"]);
         this.selectedDates = datesFormData;
-        const days = this.calendarElement.querySelectorAll("td:not(.disabled):not(.not-current-month)");
+        const days = this.calendarElement.querySelectorAll(
+          "td:not(.disabled):not(.not-current-month)"
+        );
         days.forEach((day) => {
           const date = day.getAttribute("data-date");
           if (this.selectedDates.has(date)) {
@@ -1386,8 +1416,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       );
       days.forEach((day) => {
         day.addEventListener("click", () => {
-
-          const storedDates = this.formData['course_dates'];
+          const storedDates = this.formData["course_dates"];
           if (storedDates) {
             this.selectedDates = new Set(storedDates);
           }
@@ -1399,7 +1428,7 @@ if (window.location.pathname.includes("/aanmelden")) {
             this.selectedDates.add(date);
             day.classList.add("selected-date");
           }
-          this.setFormData('course_dates', this.selectedDates);
+          this.setFormData("course_dates", this.selectedDates);
           this.updateChanceText();
         });
       });
@@ -1458,7 +1487,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getPackages() {
-      if (this.formData['package_name']) {
+      if (this.formData["package_name"]) {
         return;
       }
 
@@ -1964,7 +1993,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         btnEditWrapper.classList.add("hide");
         btnSendWrapper.classList.remove("hide");
       });
-
     }
 
     // RESUME
@@ -2015,8 +2043,8 @@ if (window.location.pathname.includes("/aanmelden")) {
         if (config && config.elementId) {
           const element = document.getElementById(config.elementId);
           if (element) {
-            if (key === 'birth_date' && this.formData[key]) {
-              const dateParts = this.formData[key].split('-');
+            if (key === "birth_date" && this.formData[key]) {
+              const dateParts = this.formData[key].split("-");
               element.textContent = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
             } else {
               element.textContent = this.formData[key] ?? "-";
@@ -2028,14 +2056,14 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     completeCities() {
       const container = document.getElementById("citiesColumn");
-      if (this.formData['course_type'] === "offline") {
+      if (this.formData["course_type"] === "offline") {
         const text = document.getElementById(
           this.resumeConfig["cities"].elementId
         );
         if (this.formData["cities"].length > 0) {
-          const selectedCityNames = this.formData["cities"].map(cityId => {
-            const city = this.citiesList.find(c => c.id === cityId);
-            return city ? city.name : '';
+          const selectedCityNames = this.formData["cities"].map((cityId) => {
+            const city = this.citiesList.find((c) => c.id === cityId);
+            return city ? city.name : "";
           });
 
           text.textContent = selectedCityNames.join(", ");
@@ -2072,13 +2100,16 @@ if (window.location.pathname.includes("/aanmelden")) {
         calendar: "specifieke",
       };
 
-      const allCategoryElements = document.querySelectorAll('.overzicht_info-dates');
-      allCategoryElements.forEach(el => el.classList.remove("active"));
+      const allCategoryElements = document.querySelectorAll(
+        ".overzicht_info-dates"
+      );
+      allCategoryElements.forEach((el) => el.classList.remove("active"));
 
-      const selectedElement = document.getElementById(courseCategoryTypeTextMap[key]);
+      const selectedElement = document.getElementById(
+        courseCategoryTypeTextMap[key]
+      );
       if (selectedElement) selectedElement.classList.add("active");
     }
-
 
     completeCourseNames() {
       const category = this.formData["course_category"];
@@ -2149,9 +2180,13 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     completePackage() {
-      const container = document.getElementById(this.resumeConfig["package_name"].elementId);
+      const container = document.getElementById(
+        this.resumeConfig["package_name"].elementId
+      );
 
-      const existingPackages = container.getElementsByClassName("overzicht_package-item");
+      const existingPackages = container.getElementsByClassName(
+        "overzicht_package-item"
+      );
       while (existingPackages.length > 0) {
         existingPackages[0].parentNode.removeChild(existingPackages[0]);
       }
@@ -2193,9 +2228,9 @@ if (window.location.pathname.includes("/aanmelden")) {
     async handleFinalStep() {
       const data = await this.sendDataBack();
       if (data) {
-        localStorage.setItem('formData', JSON.stringify(data));
-        localStorage.setItem('userLoggedIn', true);
-        return this.redirectTo('/bestellen');
+        localStorage.setItem("formData", JSON.stringify(data));
+        localStorage.setItem("userLoggedIn", true);
+        return this.redirectTo("/bestellen");
       }
     }
 
@@ -2275,7 +2310,6 @@ if (window.location.pathname.includes("/aanmelden")) {
   formManager.initialize();
 }
 
-
 if (window.location.pathname === "/bestellen") {
   if (!localStorage.getItem("userLoggedIn")) {
     window.location.href = "/inloggen";
@@ -2283,13 +2317,16 @@ if (window.location.pathname === "/bestellen") {
 
   class OrderManager {
     constructor() {
+      this.package_starting_at = null;
       this.isMijnOnline = null;
       this.containerMijn = document.getElementById("bestellenMijn");
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
-      this.urlPaymentLink = "https://api.develop.nutheorie.be/api/applications/payment_link/";
-      this.urlPackageStart = "https://api.develop.nutheorie.be/api/applications/set_package_start/";
+      this.urlPaymentLink =
+        "https://api.develop.nutheorie.be/api/applications/payment_link/";
+      this.urlPackageStart =
+        "https://api.develop.nutheorie.be/api/applications/set_package_start/";
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
       this.initialize();
@@ -2301,19 +2338,22 @@ if (window.location.pathname === "/bestellen") {
         const formData = JSON.parse(storedData);
         this.displayOrderSummary(formData);
         this.handleStoredData(formData);
-        this.isMijnOnline = formData.course_type === 'online' && formData.is_mijn_reservation
-        this.buttonText.textContent = this.isMijnOnline ? "Betalen" : "Aanbetaling";
+        this.isMijnOnline =
+          formData.course_type === "online" && formData.is_mijn_reservation;
+        this.buttonText.textContent = this.isMijnOnline
+          ? "Betalen"
+          : "Aanbetaling";
         this.handleContainer();
-        this.buttonLink.addEventListener("click", () => this.requestLink(formData));
+        this.buttonLink.addEventListener("click", () =>
+          this.requestLink(formData)
+        );
       }
     }
 
     async requestLink(formData) {
       const {
-        course_type,
-        is_mijn_reservation,
         payment_amount,
-        auth_tokens: { access, refresh },
+        auth_tokens: { access },
       } = formData;
 
       let payment_link;
@@ -2361,7 +2401,6 @@ if (window.location.pathname === "/bestellen") {
             `Error al enviar la solicitud: ${respuesta.status} ${respuesta.statusText}`
           );
         }
-
         const resultado = await respuesta.json();
         return resultado;
       } catch (error) {
@@ -2372,50 +2411,48 @@ if (window.location.pathname === "/bestellen") {
 
     handleContainer() {
       if (this.isMijnOnline) {
-        this.containerMijn.style.display = 'flex';
-        this.containerDefault.style.display = 'none';
+        this.containerMijn.style.display = "flex";
+        this.containerDefault.style.display = "none";
         this.generateContainerMijn();
       } else {
-        this.containerMijn.style.display = 'none';
-        this.containerDefault.style.display = 'block';
+        this.containerMijn.style.display = "none";
+        this.containerDefault.style.display = "block";
       }
     }
 
     generateContainerMijn() {
+      const radio1 = document.createElement("input");
+      radio1.type = "radio";
+      radio1.id = "radio1";
+      radio1.name = "mijnOption";
+      radio1.value = "direct";
+      radio1.addEventListener("change", () => this.getCurrentDateTime());
 
-      const radio1 = document.createElement('input');
-      radio1.type = 'radio';
-      radio1.id = 'radio1';
-      radio1.name = 'mijnOption';
-      radio1.value = 'direct';
-      radio1.addEventListener('change', () => this.getCurrentDateTime());
-
-      const radio2 = document.createElement('input');
-      radio2.type = 'radio';
-      radio2.id = 'radio2';
-      radio2.name = 'mijnOption';
-      radio2.value = 'option2';
-      radio2.addEventListener('change', () => this.handleRadioChange());
+      const radio2 = document.createElement("input");
+      radio2.type = "radio";
+      radio2.id = "radio2";
+      radio2.name = "mijnOption";
+      radio2.value = "option2";
+      radio2.addEventListener("change", () => this.handleRadioChange());
 
       this.containerMijn.appendChild(radio1);
       this.containerMijn.appendChild(radio2);
 
-      const calendarInput = document.createElement('input');
-      calendarInput.type = 'date';
-      calendarInput.id = 'calendarInput';
-      calendarInput.style.display = 'none';
+      const calendarInput = document.createElement("input");
+      calendarInput.type = "date";
+      calendarInput.id = "calendarInput";
+      calendarInput.style.display = "none";
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       calendarInput.min = today;
 
       this.containerMijn.appendChild(calendarInput);
     }
 
     handleRadioChange() {
-      const radio2 = document.getElementById('radio2');
-      const calendarInput = document.getElementById('calendarInput');
-
-      calendarInput.style.display = radio2.checked ? 'block' : 'none';
+      const radio2 = document.getElementById("radio2");
+      const calendarInput = document.getElementById("calendarInput");
+      calendarInput.style.display = radio2.checked ? "block" : "none";
     }
 
     getCurrentDateTime() {
@@ -2426,13 +2463,9 @@ if (window.location.pathname === "/bestellen") {
       const hour = currentDateTime.getHours();
       const minutes = currentDateTime.getMinutes();
       const seconds = currentDateTime.getSeconds();
-      const finalDate = `${year}-${month}-${day} ${hour}:${minutes}:${seconds}`;
-      "2024-01-25T19:41:53+01:00"
+      const finalDate = `${year}-${month}-${day}T${hour}:${minutes}:${seconds}+01:00`;
+      this.package_starting_at = finalDate;
     }
-
-    //const currentDateTime = getCurrentDateTime();
-    //console.log(currentDateTime);
-
 
     updateSvgVisibility(formData) {
       const licenseType = formData.license_type;
@@ -2487,8 +2520,8 @@ if (window.location.pathname === "/bestellen") {
         amth: "Standaard CBR examen (30 min): 48,-",
         amth_ve: "Verlengd CBR examen (45 min): 61,-",
       };
-      if (is_mijn_reservation) return "Ik heb zelf al een examen gereserveerd"
-      else return examTypeTextMap[product]
+      if (is_mijn_reservation) return "Ik heb zelf al een examen gereserveerd";
+      else return examTypeTextMap[product];
     }
 
     displayOrderSummary(formData) {
@@ -2550,7 +2583,10 @@ if (window.location.pathname === "/bestellen") {
         courseCategoryElement.classList.add("active");
       }
 
-      const examTypeText = this.getExamTypeText(formData.product, formData.is_mijn_reservation);
+      const examTypeText = this.getExamTypeText(
+        formData.product,
+        formData.is_mijn_reservation
+      );
       if (examTypeText) {
         const examTypeElement = document.getElementById("examTypeText");
         examTypeElement.textContent = examTypeText;
@@ -2711,14 +2747,12 @@ document.getElementById("btn-login").addEventListener("click", (event) => {
   }
 });
 
-
 if (window.location.pathname === "/test") {
   class FormReapply {
-
     constructor() {
       this.userData = {};
       this.token = null;
-      this.getUserInfoBack()
+      this.getUserInfoBack();
       this.bindEventRedirect();
     }
 
@@ -2731,23 +2765,25 @@ if (window.location.pathname === "/test") {
       this.userData.is_reapply_allowed = true;
       if (this.userData.is_reapply_allowed) {
         const url = `/aanmelden?course_type=${this.userData.course_type}&reapply=${this.userData.is_reapply_allowed}&planID&t=${this.token}`;
-        return window.location.href = url;
+        return (window.location.href = url);
       }
     }
 
-
     async refreshToken() {
-      const resServerToken = await fetch("https://api.develop.nutheorie.be/authorization/token/refresh/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refresh: this.token }),
-      });
+      const resServerToken = await fetch(
+        "https://api.develop.nutheorie.be/authorization/token/refresh/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh: this.token }),
+        }
+      );
       const dataToken = await resServerToken.json();
       this.token = dataToken.access;
       const newObject = JSON.stringify(dataToken);
-      localStorage.setItem('user', newObject);
+      localStorage.setItem("user", newObject);
     }
 
     async getUserInfoBack() {
@@ -2755,16 +2791,19 @@ if (window.location.pathname === "/test") {
       if (user) {
         this.token = user.access;
         try {
-          const resServer = await fetch("https://api.develop.nutheorie.be/api/applications/", {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${this.token}`,
-              "Content-Type": "application/json",
-            },
-          });
+          const resServer = await fetch(
+            "https://api.develop.nutheorie.be/api/applications/",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${this.token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
           const userData = await resServer.json();
           this.userData = userData;
-          localStorage.setItem('userData', JSON.stringify(userData));
+          localStorage.setItem("userData", JSON.stringify(userData));
         } catch (error) {
           console.log(error);
         }
