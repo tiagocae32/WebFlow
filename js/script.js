@@ -1,4 +1,4 @@
-if (window.location.pathname === "/aanmelden") {
+if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
       this.steps = steps;
@@ -235,7 +235,6 @@ if (window.location.pathname === "/aanmelden") {
       if (this.prevBirthDate !== this.formData["birth_date"]) {
         const change = this.convertDateToISO(this.formData["birth_date"]);
         this.formData["birth_date"] = change;
-
         this.prevBirthDate = change;
       }
     }
@@ -548,10 +547,12 @@ if (window.location.pathname === "/aanmelden") {
     }
 
     validateDate(dateString) {
+      console.log(dateString);
 
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         dateString = dateString.split('-').reverse().join('-');
       }
+      console.log(dateString);
 
       const regex = /^\d{2}-\d{2}-\d{4}$/;
       if (!regex.test(dateString)) {
@@ -587,6 +588,44 @@ if (window.location.pathname === "/aanmelden") {
         this.formData["birth_date"] = formattedValue;
         this.updateButtonState();
       });
+    }
+
+    initFormInputsReapply() {
+      if (this.isReapplyFlow) {
+        const data = JSON.parse(localStorage.getItem("userData"));
+        console.log(data);
+
+        const formInputs = [
+          { key: 'first_name', id: 'first-name', disabled: true },
+          { key: 'last_name', id: 'last-name', disabled: true },
+          { key: 'nickname', id: 'nickname', disabled: true },
+          { key: 'birth_date', id: 'birthDateInput', disabled: true },
+          { key: 'email', id: 'emailInput', disabled: false },
+          { key: 'phone', id: 'tel', disabled: false },
+          { key: 'address_1', id: 'address', disabled: false },
+          { key: 'address_2', id: 'postal-code', disabled: false },
+          { key: 'address_3', id: 'woonplaats', disabled: false }
+        ];
+
+        formInputs.forEach(obj => {
+          const element = document.getElementById(obj.id);
+          if (element) {
+
+            if (obj.key === 'birth_date') {
+              const newFormat = this.convertDateToISO(data[obj.key]);
+              element.value = newFormat;
+              console.log(newFormat);
+            } else {
+              element.value = data[obj.key] || '';
+            }
+            if (obj.disabled) {
+              element.disabled = true;
+            }
+            this.formData[obj.key] = element.value;
+          }
+        });
+        console.log(this.formData);
+      }
     }
 
     initFormInputEvents() {
@@ -753,7 +792,6 @@ if (window.location.pathname === "/aanmelden") {
         this.applyLastStepChanges();
       } else {
         this.changeBtn("Volgende");
-
         if (this.getCurrentStepId() !== "stepInputs") {
           const isInvalid = this.isStepInvalid();
           isInvalid ? this.disableButton() : this.enableButton();
@@ -761,59 +799,31 @@ if (window.location.pathname === "/aanmelden") {
       }
     }
 
-    async refreshToken(token) {
-      const resServerToken = await fetch(this.urls.refreshToken, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refresh: token }),
-      });
-      const dataToken = await resServerToken.json();
-      console.log(dataToken);
-    }
-
-    async getUserInfoBack() {
-      const data = JSON.parse(localStorage.getItem("formData"));
-      if (data) {
-        this.token = data.auth_tokens.access;
-        try {
-          const resServer = await fetch(this.urls.userData, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${this.token}`,
-              "Content-Type": "application/json",
-            },
-          });
-          const data = await resServer.json();
-          console.log(data);
-
-          //this.refreshToken(this.token);
-
-          this.isReapplyFlow = data.is_reapply_allowed;
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        this.isReapplyFlow = false;
-      }
-
-      //console.log(this.isReapplyFlow);
-    }
-
     // Show dates for both flows
     showDates() {
       if (this.isReapplyFlow) {
         document.getElementById("datesReapply").style.display = "flex";
+        document.getElementById("datesNoReapply").style.display = "none";
       } else {
         document.getElementById("datesNoReapply").style.display = "flex";
+        document.getElementById("datesReapply").style.display = "none";
       }
+    }
+
+    // Check if is reapply flow
+    checkIsReapplyFlow() {
+      const url = window.location.href
+      const isReapply = url.toLowerCase().includes('&reapply=true');
+      if (isReapply) this.isReapplyFlow = true;
+      else this.isReapplyFlow = false;
     }
 
     handleSideEffects() {
       const currentStepId = this.getCurrentStepId();
-      //this.getUserInfoBack();
       switch (currentStepId) {
+        case "step1":
+          this.checkIsReapplyFlow();
+          break;
         case "step4Cities":
           this.getCities();
           this.sideEffects = true;
@@ -844,6 +854,7 @@ if (window.location.pathname === "/aanmelden") {
         case "stepInputs":
           this.updateButtonState();
           this.initFormInputEvents();
+          this.initFormInputsReapply();
           break;
         case "overzicht":
           this.createEditStepButtons();
@@ -2205,6 +2216,8 @@ if (window.location.pathname === "/aanmelden") {
           auth_tokens: { access, refresh },
         } = dataResponse;
 
+        this.reapplyAllowed = true;
+
         const isMijnOnline = course_type === "online" && is_mijn_reservation;
         const buttonText = isMijnOnline ? "Betalen" : "Aanbetaling";
         const isMijnOnlineFlow = isMijnOnline;
@@ -2666,3 +2679,71 @@ document.getElementById("btn-login").addEventListener("click", (event) => {
     window.location.href = "/inloggen";
   }
 });
+
+
+if (window.location.pathname === "/test") {
+  class FormReapply {
+
+    constructor() {
+      this.userData = {};
+      this.token = null;
+      this.getUserInfoBack()
+      this.bindEventRedirect();
+    }
+
+    bindEventRedirect() {
+      const button = document.getElementById("reapplyBtn");
+      button.addEventListener("click", () => this.redirectToForm());
+    }
+
+    redirectToForm() {
+      this.userData.is_reapply_allowed = true;
+      if (this.userData.is_reapply_allowed) {
+        const url = `/aanmelden?course_type=${this.userData.course_type}&reapply=${this.userData.is_reapply_allowed}&planID&t=${this.token}`;
+        return window.location.href = url;
+      }
+    }
+
+
+    async refreshToken() {
+      const resServerToken = await fetch("https://api.develop.nutheorie.be/authorization/token/refresh/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh: this.token }),
+      });
+      const dataToken = await resServerToken.json();
+      console.log("data token", dataToken);
+      this.token = dataToken.access;
+      const newObject = JSON.stringify(dataToken);
+      localStorage.setItem('user', newObject);
+    }
+
+    async getUserInfoBack() {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user) {
+        this.token = user.access;
+        try {
+          const resServer = await fetch("https://api.develop.nutheorie.be/api/applications/", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${this.token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          const userData = await resServer.json();
+          console.log("user data", userData);
+          this.userData = userData;
+          localStorage.setItem('userData', JSON.stringify(userData));
+        } catch (error) {
+          console.log(error);
+        }
+      } else {
+        this.userData = {};
+      }
+    }
+  }
+
+  const reapply = new FormReapply();
+}
