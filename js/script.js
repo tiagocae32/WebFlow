@@ -1373,9 +1373,10 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     checkDates() {
-      const storedDates = JSON.parse(localStorage.getItem('selectedDates'));
+      const storedDates = this.formData['course_dates'];
       if (storedDates) {
-        this.selectedDates = new Set(storedDates);
+        const datesFormData = new Set(this.formData['course_dates']);
+        this.selectedDates = datesFormData;
         const days = this.calendarElement.querySelectorAll("td:not(.disabled):not(.not-current-month)");
         days.forEach((day) => {
           const date = day.getAttribute("data-date");
@@ -1395,7 +1396,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       days.forEach((day) => {
         day.addEventListener("click", () => {
 
-          const storedDates = JSON.parse(localStorage.getItem('selectedDates'));
+          const storedDates = this.formData['course_dates'];
           if (storedDates) {
             this.selectedDates = new Set(storedDates);
           }
@@ -1407,7 +1408,7 @@ if (window.location.pathname.includes("/aanmelden")) {
             this.selectedDates.add(date);
             day.classList.add("selected-date");
           }
-          localStorage.setItem('selectedDates', JSON.stringify(Array.from(this.selectedDates)));
+          this.setFormData('course_dates', this.selectedDates);
           this.updateChanceText();
         });
       });
@@ -1856,6 +1857,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     // Edit information, go to step
 
     createEditStepButtons() {
+      this.backupFormData();
       if (!this.isEditButtonsInitialized) {
         const buttonsData = [
           { id: "editLocations", callback: () => this.determineLocationStep() },
@@ -1866,7 +1868,6 @@ if (window.location.pathname.includes("/aanmelden")) {
             callback: () => this.goToStep("stepOnlinePackage"),
           },
         ];
-        this.backupFormData();
         buttonsData.forEach((buttonData) => {
           const button = document.getElementById(buttonData.id);
           if (button) {
@@ -2294,7 +2295,6 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     async sendDataBack() {
       const data = this.getFormData();
-      localStorage.removeItem("selectedDates");
       const url = this.urls.urlPostMultiStepForm;
 
       const options = {
