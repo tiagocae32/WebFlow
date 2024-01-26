@@ -2422,7 +2422,6 @@ if (window.location.pathname === "/bestellen") {
       const packageElement = document.querySelector(".overzicht_package-item");
       const pkg = formData.package_info;
       const paymentAmount = formData.payment_amount;
-      console.log(pkg);
 
       const priceParts = paymentAmount.split('.');
       const priceBeforeDecimal = priceParts[0];
