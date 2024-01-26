@@ -11,7 +11,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initEnums();
       this.initStepRules();
       this.initElements();
-      this.sideEffects = false;
       this.isDateComplete = false;
       this.checkedCities = false;
       this.cities = [];
@@ -506,10 +505,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.formData[keyBack] = keyArray ? [value] : value;
         }
       }
-
-      if (!this.isLastStep() && !this.noSideEffects) {
-        this.updateNextButtonState();
-      }
+      this.updateNextButtonState();
     }
 
     formatBirthDate(value) {
@@ -850,15 +846,12 @@ if (window.location.pathname.includes("/aanmelden")) {
           break;
         case "step4Cities":
           this.getCities();
-          this.sideEffects = true;
           break;
         case "step4Cbr":
           this.getCbrLocations();
-          this.sideEffects = true;
           break;
         case "stepOnlinePackage":
           this.getPackages();
-          this.sideEffects = true;
           break;
         case "step4Mijn":
           this.getCbrLocations(false);
@@ -884,7 +877,6 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.createEditStepButtons();
           break;
         default:
-          this.sideEffects = false;
           break;
       }
     }
