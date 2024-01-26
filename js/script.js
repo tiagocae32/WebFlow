@@ -414,7 +414,6 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     applyLastStepChanges() {
       this.enableButton();
-      this.changeBtn("Verzenden");
       this.convertDate();
       this.handleProductMijnReservation();
       this.applySubmissionRules();
@@ -432,10 +431,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         .filter((city) => city.is_online)
         .map((city) => city.id);
       this.formData["cities"] = citiesOnline;
-    }
-
-    changeBtn(text) {
-      this.nextButtonText.innerText = text;
     }
 
     hideAllForms() {
@@ -465,7 +460,11 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       if (form) {
         form.classList.add("active");
-        this.updateNextButtonState();
+        this.checkEnableNextButton();
+      }
+
+      if (this.isLastStep()) {
+        this.applyLastStepChanges();
       }
       this.handleSideEffects();
       this.updateProgressBar();
@@ -505,7 +504,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.formData[keyBack] = keyArray ? [value] : value;
         }
       }
-      this.updateNextButtonState();
+      this.checkEnableNextButton();
     }
 
     formatBirthDate(value) {
@@ -778,18 +777,12 @@ if (window.location.pathname.includes("/aanmelden")) {
       return this.formData.exam_type === "3";
     }
 
-    updateNextButtonState() {
-      if (this.isLastStep()) {
-        this.applyLastStepChanges();
-      } else {
-        this.changeBtn("Volgende");
-        if (this.getCurrentStepId() !== "stepInputs") {
-          const isInvalid = this.isStepInvalid();
-          isInvalid ? this.disableButton() : this.enableButton();
-        }
+    checkEnableNextButton() {
+      if (this.getCurrentStepId() !== "stepInputs") {
+        const isInvalid = this.isStepInvalid();
+        isInvalid ? this.disableButton() : this.enableButton();
       }
     }
-
     // Show dates for both flows
     showDates() {
       const datesReapply = document.getElementById("datesReapply");
@@ -1061,7 +1054,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         divElement.className = "aanmelden_step4-checkbox-item";
         divElement.addEventListener("click", () => {
           this.toggleOptionSelection(option, divElement, isCity);
-          this.updateNextButtonState();
+          this.checkEnableNextButton();
           if (!isCity) this.handleTextChanceMonths(options);
         });
 
@@ -1206,7 +1199,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           `${this.datePicked}T${this.timePicked}:00+01:00`
         );
       }
-      this.updateNextButtonState();
+      this.checkEnableNextButton();
     }
 
     // CBR step
@@ -1253,7 +1246,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
           checkbox.addEventListener("click", () => {
             this.toggleCbrSelection(element);
-            this.updateNextButtonState();
+            this.checkEnableNextButton();
           });
         });
       } else {
