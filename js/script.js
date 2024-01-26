@@ -2391,6 +2391,7 @@ if (window.location.pathname === "/bestellen") {
           this.requestLink(formData)
         );
         this.generatePackage(formData);
+        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
       }
     }
 
@@ -2574,8 +2575,6 @@ if (window.location.pathname === "/bestellen") {
       radio2.classList.add("mijnRadio");
       radio1.addEventListener("change", () => {
         dateInput.style.display = "none";
-        timePicker.style.display = "none";
-        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
         this.cleanCalendar();
         this.getCurrentDateTime();
       });
@@ -2599,13 +2598,6 @@ if (window.location.pathname === "/bestellen") {
       const today = new Date().toISOString().split("T")[0];
       dateInput.min = today;
       dateInput.addEventListener("input", (event) => this.setCalendarDate(event));
-      dateInput.addEventListener('change', function () {
-        if (dateInput.value) {
-          timePicker.classList.add('visible');
-        } else {
-          timePicker.classList.remove('visible');
-        }
-      });
 
       const timePicker = document.createElement('div');
       timePicker.id = 'timePicker';
@@ -2649,6 +2641,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     handleRadioChange() {
+      this.buttonLink.classList.add("disabled-button");
       const radio2 = document.getElementById("radio2");
       const dateInput = document.getElementById('dateInput');
       const timePicker = document.getElementById('timePicker');
@@ -2681,27 +2674,46 @@ if (window.location.pathname === "/bestellen") {
     }
 
     setCalendarDate(event) {
+      const timePicker = document.getElementById('timePicker');
       this.dateCalendar = event.target.value;
+      if (this.dateCalendar) {
+        timePicker.classList.add('visible');
+      } else {
+        timePicker.classList.remove('visible');
+      }
+      this.enableButton();
     }
 
     setHourCalendar(hour) {
       hour = Number(hour);
       this.hourCalendar = hour < 10 ? "0" + hour : "" + hour;
-      this.checkAndHideTimePicker();
+      this.enableButton();
+      if (this.minuteCalendar !== null) {
+        this.checkAndHideTimePicker();
+      }
     }
 
     setMinuteCalendar(minute) {
       minute = Number(minute);
       this.minuteCalendar = minute < 10 ? "0" + minute : "" + minute;
-      this.checkAndHideTimePicker();
+      this.enableButton();
+      if (this.hourCalendar !== null) {
+        this.checkAndHideTimePicker();
+      }
     }
 
     checkAndHideTimePicker() {
-      if (this.hourCalendar !== null && this.minuteCalendar !== null) {
-        const timePicker = document.getElementById('timePicker');
-        if (timePicker) {
-          timePicker.classList.remove('visible');
-        }
+      const timePicker = document.getElementById('timePicker');
+      if (timePicker) {
+        timePicker.classList.remove('visible');
+      }
+    }
+
+    enableButton() {
+      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
+        this.buttonLink.classList.remove("disabled-button");
+      } else {
+        this.buttonLink.classList.add("disabled-button");
       }
     }
 
@@ -2721,6 +2733,7 @@ if (window.location.pathname === "/bestellen") {
       const minutes = currentDateTime.getMinutes();
       const seconds = currentDateTime.getSeconds();
       const finalDate = `${year}-${month}-${day}T${hour}:${minutes}:${seconds}+01:00`;
+      this.buttonLink.classList.remove("disabled-button");
       return finalDate;
     }
 
