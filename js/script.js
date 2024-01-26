@@ -1,6 +1,9 @@
 if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
+      this.userData = {};
+      this.token = null;
+      this.getUserInfoBack();
       this.steps = steps;
       this.currentStepIndex = 0;
       this.formData = {};
@@ -586,7 +589,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     initFormInputsReapply() {
       if (this.isReapplyFlow) {
-        const data = JSON.parse(localStorage.getItem("userData"));
+        const data = this.userData;
 
         const formInputs = [
           { key: "first_name", id: "first-name", disabled: true },
@@ -810,11 +813,37 @@ if (window.location.pathname.includes("/aanmelden")) {
       else this.isReapplyFlow = false;
     }
 
+    async getUserInfoBack() {
+      const accessToken = getCookiesToken();
+      if (accessToken) {
+        this.token = accessToken;
+        try {
+          const resServer = await fetch(
+            "https://api.develop.nutheorie.be/api/applications/",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${this.token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const userData = await resServer.json();
+          this.userData = userData;
+        } catch (error) {
+          console.log(error);
+        }
+      } else {
+        this.userData = {};
+      }
+    }
+
     handleSideEffects() {
       const currentStepId = this.getCurrentStepId();
       switch (currentStepId) {
         case "step1":
           this.checkIsReapplyFlow();
+          this.getUserInfoBack();
           break;
         case "step4Cities":
           this.getCities();
@@ -2233,6 +2262,10 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (data) {
         localStorage.setItem("formData", JSON.stringify(data));
         localStorage.setItem("userLoggedIn", true);
+        const authTokens = data.auth_tokens;
+        const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
+        document.cookie = `tokens=${encodedTokens}`;
+
         initializeLoginButton();
         return this.redirectTo("/bestellen");
       }
@@ -2249,6 +2282,11 @@ if (window.location.pathname.includes("/aanmelden")) {
         },
         body: JSON.stringify(data),
       };
+
+      if (this.isReapplyFlow) {
+        const accessToken = this.token;
+        options.headers["Authorization"] = `Bearer ${accessToken}`;
+      }
 
       try {
         const response = await fetch(url, options);
@@ -2357,8 +2395,9 @@ if (window.location.pathname === "/bestellen") {
     async requestLink(formData) {
       const {
         payment_amount,
-        auth_tokens: { access },
       } = formData;
+
+      const access = getCookiesToken();
 
       let payment_link;
 
@@ -2748,71 +2787,22 @@ function initializeLoginButton() {
 
 document.addEventListener("DOMContentLoaded", initializeLoginButton);
 
-if (window.location.pathname === "/test") {
-  class FormReapply {
-    constructor() {
-      this.userData = {};
-      this.token = null;
-      this.getUserInfoBack();
-      this.bindEventRedirect();
-    }
-
-    bindEventRedirect() {
-      const button = document.getElementById("reapplyBtn");
-      button.addEventListener("click", () => this.redirectToForm());
-    }
-
-    redirectToForm() {
-      this.userData.is_reapply_allowed = true;
-      if (this.userData.is_reapply_allowed) {
-        const url = `/aanmelden?course_type=${this.userData.course_type}&reapply=${this.userData.is_reapply_allowed}&planID&t=${this.token}`;
-        return (window.location.href = url);
-      }
-    }
-
-    async refreshToken() {
-      const resServerToken = await fetch(
-        "https://api.develop.nutheorie.be/authorization/token/refresh/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh: this.token }),
-        }
-      );
-      const dataToken = await resServerToken.json();
-      this.token = dataToken.access;
-      const newObject = JSON.stringify(dataToken);
-      localStorage.setItem("user", newObject);
-    }
-
-    async getUserInfoBack() {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user) {
-        this.token = user.access;
-        try {
-          const resServer = await fetch(
-            "https://api.develop.nutheorie.be/api/applications/",
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${this.token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          const userData = await resServer.json();
-          this.userData = userData;
-          localStorage.setItem("userData", JSON.stringify(userData));
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        this.userData = {};
+function getCookiesToken() {
+  const cookies = document.cookie.split(';');
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const partes = cookie.split('=');
+    if (partes[0].trim() === 'tokens') {
+      const encodedTokens = partes[1];
+      try {
+        const decodedTokens = decodeURIComponent(encodedTokens);
+        const tokens = JSON.parse(decodedTokens);
+        return tokens.access;
+      } catch (error) {
+        console.error('Error al decodificar la cookie tokens:', error);
+        return null;
       }
     }
   }
-
-  const reapply = new FormReapply();
+  return null;
 }
