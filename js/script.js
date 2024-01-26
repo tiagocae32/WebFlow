@@ -10,6 +10,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initElements();
       this.sideEffects = false;
       this.isDateComplete = false;
+      this.checkedCities = false;
       this.cities = [];
       this.citiesNameSelected = [];
       this.cbr_locations = [];
@@ -159,6 +160,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           offline: "stepInputs",
           online: "stepOnlinePackage",
         },
+        stepOnlinePackage: "stepInputs",
         stepInputs: "overzicht",
       };
       this.submissionRules = {
@@ -415,15 +417,18 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.handleProductMijnReservation();
       this.applySubmissionRules();
       this.completeResume();
-      if (this.formData["course_type"] === "online") this.checkCities();
+      if (this.formData["course_type"] === "online" && !this.checkedCities) {
+        this.checkCities();
+        this.checkedCities = true;
+      }
     }
 
     async checkCities() {
+      if (this.checkedCities) return;
       const data = await this.fetchCities();
       const citiesOnline = data
         .filter((city) => city.is_online)
         .map((city) => city.id);
-      console.log(citiesOnline);
       this.formData["cities"] = citiesOnline;
     }
 
@@ -766,8 +771,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1343,9 +1348,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1913,15 +1917,13 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.originalFormData = JSON.parse(JSON.stringify(this.formData));
     }
     determineLocationStep() {
-      if (this.formData.cities && this.formData.cities.length > 0) {
-        this.goToStep("step4Cities");
-      } else if (
-        this.formData.cbr_locations &&
-        this.formData.cbr_locations.length > 0
-      ) {
+      if (this.formData.course_type === "online") {
         this.goToStep("step4Cbr");
+      } else {
+        this.goToStep("step4Cities");
       }
     }
+
 
     determineDateStep() {
       const category = this.formData.course_category;
@@ -1935,27 +1937,27 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     goToStep(targetStepId) {
-      const stepIndex = this.steps.findIndex(
-        (step) => step.id === targetStepId
-      );
+      const stepIndex = this.steps.findIndex((step) => step.id === targetStepId);
       if (stepIndex === -1) return;
 
       let currentStepId = this.steps[0].id;
       const newStepHistory = [currentStepId];
+      let safetyCounter = 0;
 
       while (currentStepId !== targetStepId) {
         currentStepId = this.getNextStepId(currentStepId);
-        if (
-          !currentStepId ||
-          !this.steps.find((step) => step.id === currentStepId)
-        ) {
-          console.error(
-            "No se puede alcanzar el paso objetivo desde el paso actual."
-          );
+        if (!currentStepId || !this.steps.find((step) => step.id === currentStepId)) {
+          console.error("No se puede alcanzar el paso objetivo desde el paso actual.");
           return;
         }
         newStepHistory.push(currentStepId);
+
+        if (++safetyCounter > 100) {
+          console.error("Se ha excedido el límite de seguridad en el bucle");
+          return;
+        }
       }
+
       this.currentStepIndex = stepIndex;
       this.stepHistory = newStepHistory;
       this.showFormForStep(this.currentStepIndex);
@@ -2230,6 +2232,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (data) {
         localStorage.setItem("formData", JSON.stringify(data));
         localStorage.setItem("userLoggedIn", true);
+        initializeLoginButton();
         return this.redirectTo("/bestellen");
       }
     }
@@ -2726,26 +2729,23 @@ if (window.location.pathname === "/bestellen") {
   const orderManager = new OrderManager();
 }
 
-function updateLoginButton() {
+function initializeLoginButton() {
   const loginButton = document.getElementById("btn-login");
-  if (localStorage.getItem("userLoggedIn")) {
-    loginButton.textContent = "Uitloggen";
-    loginButton.href = "/inloggen";
-  } else {
-    loginButton.textContent = "Inloggen";
-    loginButton.href = "/inloggen";
+  if (loginButton) {
+    if (localStorage.getItem("userLoggedIn")) {
+      loginButton.textContent = "Uitloggen";
+    } else {
+      loginButton.textContent = "Inloggen";
+    }
+
+    loginButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "/inloggen";
+    });
   }
 }
 
-document.addEventListener("DOMContentLoaded", updateLoginButton);
-
-document.getElementById("btn-login").addEventListener("click", (event) => {
-  if (localStorage.getItem("userLoggedIn")) {
-    localStorage.removeItem("userLoggedIn");
-    //event.target.textContent = "Inloggen";
-    window.location.href = "/inloggen";
-  }
-});
+document.addEventListener("DOMContentLoaded", initializeLoginButton);
 
 if (window.location.pathname === "/test") {
   class FormReapply {
