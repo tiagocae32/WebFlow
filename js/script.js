@@ -1551,6 +1551,7 @@ if (window.location.pathname.includes("/aanmelden")) {
                 ? old_price + reapplyValue
                 : old_price + nonReapplyValue;
 
+
               return {
                 name,
                 description_items:
@@ -2389,7 +2390,80 @@ if (window.location.pathname === "/bestellen") {
         this.buttonLink.addEventListener("click", () =>
           this.requestLink(formData)
         );
+        this.generatePackage(formData);
       }
+    }
+
+    getLastDayOfMonth() {
+      const now = new Date();
+      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const dutchMonths = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+      const currentMonthInDutch = dutchMonths[now.getMonth()];
+
+      return `${lastDayOfMonth} ${currentMonthInDutch}`;
+    }
+
+    processDescriptionItems(descriptionItems) {
+      return descriptionItems.map((item) => {
+        if (typeof item.description === "string") {
+          return {
+            ...item, description: item.description.replace(
+              "{{ getLastDayOfMonth }}",
+              this.getLastDayOfMonth()
+            ),
+          };
+        }
+        return item;
+      });
+    }
+
+    generatePackage(formData) {
+      const packageElement = document.querySelector(".overzicht_package-item");
+      const pkg = formData.package_info;
+      const paymentAmount = formData.payment_amount;
+      console.log(pkg);
+
+      const priceParts = paymentAmount.split('.');
+      const priceBeforeDecimal = priceParts[0];
+      const priceAfterDecimal = priceParts[1];
+
+      let priceDiv = packageElement.querySelector("#price");
+      priceDiv.textContent = priceBeforeDecimal;
+
+      let priceSmallDiv = packageElement.querySelector("#priceSmall");
+      priceSmallDiv.textContent = priceAfterDecimal;
+
+      let packageNameDiv = packageElement.querySelector("#packageName");
+      packageNameDiv.textContent = formData.package_name;
+
+      const processedDescriptions = this.processDescriptionItems(pkg.description_items);
+
+      let packageListDiv = packageElement.querySelector(".aanmelden_package-list");
+      processedDescriptions.forEach(description => {
+        let descriptionDiv = document.createElement("div");
+        descriptionDiv.classList.add("aanmelden_package-description");
+
+        let svgElement = document.createElement("div");
+        svgElement.innerHTML = `<svg data-v-035cdeba="" width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4 5.6V4C14.4 3.78783 14.3157 3.58434 14.1657 3.43431C14.0157 3.28429 13.8122 3.2 13.6 3.2H12.8V4C12.8 4.21217 12.7157 4.41566 12.5657 4.56568C12.4157 4.71571 12.2122 4.8 12 4.8C11.7878 4.8 11.5843 4.71571 11.4343 4.56568C11.2843 4.41566 11.2 4.21217 11.2 4V3.2H4.8V4C4.8 4.21217 4.71571 4.41566 4.56569 4.56568C4.41566 4.71571 4.21217 4.8 4 4.8C3.78783 4.8 3.58434 4.71571 3.43431 4.56568C3.28429 4.41566 3.2 4.21217 3.2 4V3.2H2.4C2.18783 3.2 1.98434 3.28429 1.83431 3.43431C1.68429 3.58434 1.6 3.78783 1.6 4V5.6H14.4ZM14.4 7.2H1.6V12C1.6 12.2122 1.68429 12.4157 1.83431 12.5657C1.98434 12.7157 2.18783 12.8 2.4 12.8H13.6C13.8122 12.8 14.0157 12.7157 14.1657 12.5657C14.3157 12.4157 14.4 12.2122 14.4 12V7.2ZM12.8 1.6H13.6C14.2365 1.6 14.847 1.85286 15.2971 2.30294C15.7471 2.75303 16 3.36348 16 4V12C16 12.6365 15.7471 13.247 15.2971 13.6971C14.847 14.1471 14.2365 14.4 13.6 14.4H2.4C1.76348 14.4 1.15303 14.1471 0.702944 13.6971C0.252856 13.247 0 12.6365 0 12L0 4C0 3.36348 0.252856 2.75303 0.702944 2.30294C1.15303 1.85286 1.76348 1.6 2.4 1.6H3.2V0.8C3.2 0.587827 3.28429 0.384344 3.43431 0.234315C3.58434 0.0842855 3.78783 0 4 0C4.21217 0 4.41566 0.0842855 4.56569 0.234315C4.71571 0.384344 4.8 0.587827 4.8 0.8V1.6H11.2V0.8C11.2 0.587827 11.2843 0.384344 11.4343 0.234315C11.5843 0.0842855 11.7878 0 12 0C12.2122 0 12.4157 0.0842855 12.5657 0.234315C12.7157 0.384344 12.8 0.587827 12.8 0.8V1.6Z" fill="#161616"></path></svg>`;
+        descriptionDiv.appendChild(svgElement);
+
+        let descriptionTextDiv = document.createElement("div");
+        descriptionTextDiv.classList.add("text-size-tiny");
+        descriptionTextDiv.textContent = description.description;
+        descriptionDiv.appendChild(descriptionTextDiv);
+
+        packageListDiv.appendChild(descriptionDiv);
+      });
+
+      let priceSubtotalDiv = packageElement.querySelector("#priceSubtotal");
+      priceSubtotalDiv.textContent = pkg.old_price;
+
+      let priceKortingDiv = packageElement.querySelector("#priceKorting");
+      let discount = parseFloat(pkg.old_price) - parseFloat(priceBeforeDecimal + '.' + priceAfterDecimal);
+      priceKortingDiv.textContent = `- ${discount.toFixed(2)}`;
+
+      let priceTotalDiv = packageElement.querySelector("#priceTotal");
+      priceTotalDiv.textContent = ` ${paymentAmount}`;
     }
 
     async requestLink(formData) {
@@ -2454,17 +2528,26 @@ if (window.location.pathname === "/bestellen") {
     }
 
     handleContainer() {
+      const bestellenImage = document.getElementById("bestellenImage");
+      const bestellenMijnPackage = document.getElementById("bestellenMijnPackage");
       if (this.isMijnOnline) {
         this.containerMijn.style.display = "flex";
         this.containerDefault.style.display = "none";
+        bestellenMijnPackage.style.display = "block";
+        bestellenImage.style.display = "none";
         this.generateContainerMijn();
       } else {
         this.containerMijn.style.display = "none";
         this.containerDefault.style.display = "block";
+        bestellenMijnPackage.style.display = "none";
+        bestellenImage.style.display = "block";
       }
     }
 
     generateContainerMijn() {
+      const radioDiv1 = document.createElement("div");
+      radioDiv1.classList.add("bestellen_mijn-radio");
+
       const radio1 = document.createElement("input");
       radio1.type = "radio";
       radio1.id = "radio1";
@@ -2476,6 +2559,12 @@ if (window.location.pathname === "/bestellen") {
       label1.htmlFor = "radio1";
       label1.textContent = "Direct activeren";
       label1.classList.add("text-weight-semibold");
+
+      radioDiv1.appendChild(radio1);
+      radioDiv1.appendChild(label1);
+
+      const radioDiv2 = document.createElement("div");
+      radioDiv2.classList.add("bestellen_mijn-radio");
 
       const radio2 = document.createElement("input");
       radio2.type = "radio";
@@ -2497,46 +2586,63 @@ if (window.location.pathname === "/bestellen") {
       label2.textContent = "Vul de datum in wanneer je pakket in moet gaan";
       label2.classList.add("text-weight-semibold");
 
-      this.containerMijn.appendChild(radio1);
-      this.containerMijn.appendChild(label1);
-      this.containerMijn.appendChild(radio2);
-      this.containerMijn.appendChild(label2);
+      radioDiv2.appendChild(radio2);
+      radioDiv2.appendChild(label2);
+
+      this.containerMijn.appendChild(radioDiv1);
+      this.containerMijn.appendChild(radioDiv2);
 
       const dateInput = document.createElement('input');
       dateInput.type = 'date';
       dateInput.id = 'dateInput';
+      dateInput.style.display = 'none';
       const today = new Date().toISOString().split("T")[0];
       dateInput.min = today;
       dateInput.addEventListener("input", (event) => this.setCalendarDate(event));
+      dateInput.addEventListener('change', function () {
+        if (dateInput.value) {
+          timePicker.classList.add('visible');
+        } else {
+          timePicker.classList.remove('visible');
+        }
+      });
 
       const timePicker = document.createElement('div');
       timePicker.id = 'timePicker';
       timePicker.classList.add('time-picker');
 
-      const hourInput = document.createElement('select');
-      hourInput.id = 'hourInput';
-      hourInput.addEventListener("input", (event) => this.setHourCalendar(event));
-
-      const minuteInput = document.createElement('select');
-      minuteInput.id = 'minuteInput';
-      minuteInput.addEventListener("input", (event) => this.setMinuteCalendar(event));
+      const hourList = document.createElement('ul');
+      hourList.id = 'hourList';
+      hourList.classList.add('time-list');
 
       for (let i = 0; i < 24; i++) {
-        let option = document.createElement('option');
-        option.value = i;
-        option.textContent = (i < 10 ? '0' : '') + i;
-        hourInput.appendChild(option);
+        const hourItem = document.createElement('li');
+        hourItem.textContent = (i < 10 ? '0' : '') + i;
+        hourItem.classList.add('time-item');
+        hourItem.onclick = () => {
+          this.setHourCalendar(i);
+          this.updateSelected(hourList, hourItem);
+        };
+        hourList.appendChild(hourItem);
       }
+
+      const minuteList = document.createElement('ul');
+      minuteList.id = 'minuteList';
+      minuteList.classList.add('time-list');
 
       for (let i = 0; i < 60; i++) {
-        let option = document.createElement('option');
-        option.value = i;
-        option.textContent = (i < 10 ? '0' : '') + i;
-        minuteInput.appendChild(option);
+        const minuteItem = document.createElement('li');
+        minuteItem.textContent = (i < 10 ? '0' : '') + i;
+        minuteItem.classList.add('time-item');
+        minuteItem.onclick = () => {
+          this.setMinuteCalendar(i);
+          this.updateSelected(minuteList, minuteItem);
+        };
+        minuteList.appendChild(minuteItem);
       }
 
-      timePicker.appendChild(hourInput);
-      timePicker.appendChild(minuteInput);
+      timePicker.appendChild(hourList);
+      timePicker.appendChild(minuteList);
 
       this.containerMijn.appendChild(dateInput);
       this.containerMijn.appendChild(timePicker);
@@ -2547,38 +2653,56 @@ if (window.location.pathname === "/bestellen") {
       const dateInput = document.getElementById('dateInput');
       const timePicker = document.getElementById('timePicker');
       dateInput.style.display = radio2.checked ? "block" : "none";
-      timePicker.style.display = radio2.checked ? "block" : "none";
     }
 
     cleanCalendar() {
-      const inputIds = ['dateInput', 'hourInput', 'minuteInput'];
-
-      for (const id of inputIds) {
-        const inputElement = document.getElementById(id);
-        if (inputElement) {
-          inputElement.value = '';
-        }
+      const dateInput = document.getElementById('dateInput');
+      if (dateInput) {
+        dateInput.value = '';
       }
+
+      const hourListItems = document.querySelectorAll('#hourList .time-item');
+      const minuteListItems = document.querySelectorAll('#minuteList .time-item');
+
+      for (const item of hourListItems) {
+        item.classList.remove('selected');
+      }
+
+      for (const item of minuteListItems) {
+        item.classList.remove('selected');
+      }
+    }
+
+    updateSelected(list, selectedItem) {
+      list.querySelectorAll('.selected').forEach(item => {
+        item.classList.remove('selected');
+      });
+      selectedItem.classList.add('selected');
     }
 
     setCalendarDate(event) {
       this.dateCalendar = event.target.value;
     }
 
-    setHourCalendar(event) {
-      let value = Number(event.target.value);
-      if (value < 10) {
-        value = "0" + value;
-      }
-      this.hourCalendar = value;
+    setHourCalendar(hour) {
+      hour = Number(hour);
+      this.hourCalendar = hour < 10 ? "0" + hour : "" + hour;
+      this.checkAndHideTimePicker();
     }
 
-    setMinuteCalendar(event) {
-      let value = Number(event.target.value);
-      if (value < 10) {
-        value = "0" + value;
+    setMinuteCalendar(minute) {
+      minute = Number(minute);
+      this.minuteCalendar = minute < 10 ? "0" + minute : "" + minute;
+      this.checkAndHideTimePicker();
+    }
+
+    checkAndHideTimePicker() {
+      if (this.hourCalendar !== null && this.minuteCalendar !== null) {
+        const timePicker = document.getElementById('timePicker');
+        if (timePicker) {
+          timePicker.classList.remove('visible');
+        }
       }
-      this.minuteCalendar = value;
     }
 
     formatCalendarDate() {
