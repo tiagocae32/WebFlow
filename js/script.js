@@ -2386,11 +2386,10 @@ if (window.location.pathname === "/bestellen") {
         this.buttonText.textContent = this.isMijnOnline
           ? "Betalen"
           : "Aanbetaling";
-        this.handleContainer();
+        this.handleContainer(formData);
         this.buttonLink.addEventListener("click", () =>
           this.requestLink(formData)
         );
-        this.generatePackage(formData);
         this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
       }
     }
@@ -2527,7 +2526,7 @@ if (window.location.pathname === "/bestellen") {
       }
     }
 
-    handleContainer() {
+    handleContainer(formData) {
       const bestellenImage = document.getElementById("bestellenImage");
       const bestellenMijnPackage = document.getElementById("bestellenMijnPackage");
       if (this.isMijnOnline) {
@@ -2536,6 +2535,7 @@ if (window.location.pathname === "/bestellen") {
         bestellenMijnPackage.style.display = "block";
         bestellenImage.style.display = "none";
         this.generateContainerMijn();
+        this.generatePackage(formData);
       } else {
         this.containerMijn.style.display = "none";
         this.containerDefault.style.display = "block";
@@ -2545,6 +2545,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     generateContainerMijn() {
+      this.buttonLink.classList.add("disabled-button");
       const radioDiv1 = document.createElement("div");
       radioDiv1.classList.add("bestellen_mijn-radio");
 
@@ -2576,6 +2577,7 @@ if (window.location.pathname === "/bestellen") {
         dateInput.style.display = "none";
         this.cleanCalendar();
         this.getCurrentDateTime();
+        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
       });
       radio2.addEventListener("change", () => this.handleRadioChange());
 
