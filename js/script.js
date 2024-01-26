@@ -1354,6 +1354,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       for (let day = 1; day <= daysInMonth; day++) {
         let currentDate = new Date(year, month, day);
+        currentDate.setHours(12, 0, 0, 0);
         let dateStr = currentDate.toISOString().split("T")[0];
         let isEnabled = this.isDateEnabled(currentDate);
         let tdClass = !isEnabled ? "disabled" : "";
@@ -1378,14 +1379,14 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     isDateEnabled(date) {
       const currentDate = new Date();
-      currentDate.setHours(0, 0, 0, 0);
+      currentDate.setHours(12, 0, 0, 0);
       const maxDate = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth() + 5,
         currentDate.getDate()
       );
       maxDate.setHours(23, 59, 59, 999);
-      date.setHours(0, 0, 0, 0);
+      date.setHours(12, 0, 0, 0);
 
       return (
         date <= maxDate &&
