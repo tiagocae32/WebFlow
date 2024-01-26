@@ -1,6 +1,9 @@
 if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
+      this.userData = {};
+      this.token = null;
+      this.getUserInfoBack();
       this.steps = steps;
       this.currentStepIndex = 0;
       this.formData = {};
@@ -10,6 +13,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initElements();
       this.sideEffects = false;
       this.isDateComplete = false;
+      this.checkedCities = false;
       this.cities = [];
       this.citiesNameSelected = [];
       this.cbr_locations = [];
@@ -159,6 +163,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           offline: "stepInputs",
           online: "stepOnlinePackage",
         },
+        stepOnlinePackage: "stepInputs",
         stepInputs: "overzicht",
       };
       this.submissionRules = {
@@ -415,15 +420,18 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.handleProductMijnReservation();
       this.applySubmissionRules();
       this.completeResume();
-      if (this.formData["course_type"] === "online") this.checkCities();
+      if (this.formData["course_type"] === "online" && !this.checkedCities) {
+        this.checkCities();
+        this.checkedCities = true;
+      }
     }
 
     async checkCities() {
+      if (this.checkedCities) return;
       const data = await this.fetchCities();
       const citiesOnline = data
         .filter((city) => city.is_online)
         .map((city) => city.id);
-      console.log(citiesOnline);
       this.formData["cities"] = citiesOnline;
     }
 
@@ -581,7 +589,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     initFormInputsReapply() {
       if (this.isReapplyFlow) {
-        const data = JSON.parse(localStorage.getItem("userData"));
+        const data = this.userData;
 
         const formInputs = [
           { key: "first_name", id: "first-name", disabled: true },
@@ -805,11 +813,37 @@ if (window.location.pathname.includes("/aanmelden")) {
       else this.isReapplyFlow = false;
     }
 
+    async getUserInfoBack() {
+      const accessToken = getCookiesToken();
+      if (accessToken) {
+        this.token = accessToken;
+        try {
+          const resServer = await fetch(
+            "https://api.develop.nutheorie.be/api/applications/",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${this.token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const userData = await resServer.json();
+          this.userData = userData;
+        } catch (error) {
+          console.log(error);
+        }
+      } else {
+        this.userData = {};
+      }
+    }
+
     handleSideEffects() {
       const currentStepId = this.getCurrentStepId();
       switch (currentStepId) {
         case "step1":
           this.checkIsReapplyFlow();
+          this.getUserInfoBack();
           break;
         case "step4Cities":
           this.getCities();
@@ -1350,6 +1384,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       for (let day = 1; day <= daysInMonth; day++) {
         let currentDate = new Date(year, month, day);
+        currentDate.setHours(12, 0, 0, 0);
         let dateStr = currentDate.toISOString().split("T")[0];
         let isEnabled = this.isDateEnabled(currentDate);
         let tdClass = !isEnabled ? "disabled" : "";
@@ -1374,14 +1409,14 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     isDateEnabled(date) {
       const currentDate = new Date();
-      currentDate.setHours(0, 0, 0, 0);
+      currentDate.setHours(12, 0, 0, 0);
       const maxDate = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth() + 5,
         currentDate.getDate()
       );
       maxDate.setHours(23, 59, 59, 999);
-      date.setHours(0, 0, 0, 0);
+      date.setHours(12, 0, 0, 0);
 
       return (
         date <= maxDate &&
@@ -1913,13 +1948,10 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.originalFormData = JSON.parse(JSON.stringify(this.formData));
     }
     determineLocationStep() {
-      if (this.formData.cities && this.formData.cities.length > 0) {
-        this.goToStep("step4Cities");
-      } else if (
-        this.formData.cbr_locations &&
-        this.formData.cbr_locations.length > 0
-      ) {
+      if (this.formData.course_type === "online") {
         this.goToStep("step4Cbr");
+      } else {
+        this.goToStep("step4Cities");
       }
     }
 
@@ -1942,6 +1974,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       let currentStepId = this.steps[0].id;
       const newStepHistory = [currentStepId];
+      let safetyCounter = 0;
 
       while (currentStepId !== targetStepId) {
         currentStepId = this.getNextStepId(currentStepId);
@@ -1955,7 +1988,13 @@ if (window.location.pathname.includes("/aanmelden")) {
           return;
         }
         newStepHistory.push(currentStepId);
+
+        if (++safetyCounter > 100) {
+          console.error("Se ha excedido el límite de seguridad en el bucle");
+          return;
+        }
       }
+
       this.currentStepIndex = stepIndex;
       this.stepHistory = newStepHistory;
       this.showFormForStep(this.currentStepIndex);
@@ -2230,6 +2269,11 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (data) {
         localStorage.setItem("formData", JSON.stringify(data));
         localStorage.setItem("userLoggedIn", true);
+        const authTokens = data.auth_tokens;
+        const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
+        document.cookie = `tokens=${encodedTokens}`;
+
+        initializeLoginButton();
         return this.redirectTo("/bestellen");
       }
     }
@@ -2245,6 +2289,11 @@ if (window.location.pathname.includes("/aanmelden")) {
         },
         body: JSON.stringify(data),
       };
+
+      if (this.isReapplyFlow) {
+        const accessToken = this.token;
+        options.headers["Authorization"] = `Bearer ${accessToken}`;
+      }
 
       try {
         const response = await fetch(url, options);
@@ -2343,24 +2392,120 @@ if (window.location.pathname === "/bestellen") {
         this.buttonText.textContent = this.isMijnOnline
           ? "Betalen"
           : "Aanbetaling";
-        this.handleContainer();
+        this.handleContainer(formData);
         this.buttonLink.addEventListener("click", () =>
           this.requestLink(formData)
         );
+        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
       }
     }
 
+    getLastDayOfMonth() {
+      const now = new Date();
+      const lastDayOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0
+      ).getDate();
+      const dutchMonths = [
+        "januari",
+        "februari",
+        "maart",
+        "april",
+        "mei",
+        "juni",
+        "juli",
+        "augustus",
+        "september",
+        "oktober",
+        "november",
+        "december",
+      ];
+      const currentMonthInDutch = dutchMonths[now.getMonth()];
+
+      return `${lastDayOfMonth} ${currentMonthInDutch}`;
+    }
+
+    processDescriptionItems(descriptionItems) {
+      return descriptionItems.map((item) => {
+        if (typeof item.description === "string") {
+          return {
+            ...item,
+            description: item.description.replace(
+              "{{ getLastDayOfMonth }}",
+              this.getLastDayOfMonth()
+            ),
+          };
+        }
+        return item;
+      });
+    }
+
+    generatePackage(formData) {
+      const packageElement = document.querySelector(".overzicht_package-item");
+      const pkg = formData.package_info;
+      const paymentAmount = formData.payment_amount;
+
+      const priceParts = paymentAmount.split(".");
+      const priceBeforeDecimal = priceParts[0];
+      const priceAfterDecimal = priceParts[1];
+
+      let priceDiv = packageElement.querySelector("#price");
+      priceDiv.textContent = priceBeforeDecimal;
+
+      let priceSmallDiv = packageElement.querySelector("#priceSmall");
+      priceSmallDiv.textContent = priceAfterDecimal;
+
+      let packageNameDiv = packageElement.querySelector("#packageName");
+      packageNameDiv.textContent = formData.package_name;
+
+      const processedDescriptions = this.processDescriptionItems(
+        pkg.description_items
+      );
+
+      let packageListDiv = packageElement.querySelector(
+        ".aanmelden_package-list"
+      );
+      processedDescriptions.forEach((description) => {
+        let descriptionDiv = document.createElement("div");
+        descriptionDiv.classList.add("aanmelden_package-description");
+
+        let svgElement = document.createElement("div");
+        svgElement.innerHTML = `<svg data-v-035cdeba="" width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4 5.6V4C14.4 3.78783 14.3157 3.58434 14.1657 3.43431C14.0157 3.28429 13.8122 3.2 13.6 3.2H12.8V4C12.8 4.21217 12.7157 4.41566 12.5657 4.56568C12.4157 4.71571 12.2122 4.8 12 4.8C11.7878 4.8 11.5843 4.71571 11.4343 4.56568C11.2843 4.41566 11.2 4.21217 11.2 4V3.2H4.8V4C4.8 4.21217 4.71571 4.41566 4.56569 4.56568C4.41566 4.71571 4.21217 4.8 4 4.8C3.78783 4.8 3.58434 4.71571 3.43431 4.56568C3.28429 4.41566 3.2 4.21217 3.2 4V3.2H2.4C2.18783 3.2 1.98434 3.28429 1.83431 3.43431C1.68429 3.58434 1.6 3.78783 1.6 4V5.6H14.4ZM14.4 7.2H1.6V12C1.6 12.2122 1.68429 12.4157 1.83431 12.5657C1.98434 12.7157 2.18783 12.8 2.4 12.8H13.6C13.8122 12.8 14.0157 12.7157 14.1657 12.5657C14.3157 12.4157 14.4 12.2122 14.4 12V7.2ZM12.8 1.6H13.6C14.2365 1.6 14.847 1.85286 15.2971 2.30294C15.7471 2.75303 16 3.36348 16 4V12C16 12.6365 15.7471 13.247 15.2971 13.6971C14.847 14.1471 14.2365 14.4 13.6 14.4H2.4C1.76348 14.4 1.15303 14.1471 0.702944 13.6971C0.252856 13.247 0 12.6365 0 12L0 4C0 3.36348 0.252856 2.75303 0.702944 2.30294C1.15303 1.85286 1.76348 1.6 2.4 1.6H3.2V0.8C3.2 0.587827 3.28429 0.384344 3.43431 0.234315C3.58434 0.0842855 3.78783 0 4 0C4.21217 0 4.41566 0.0842855 4.56569 0.234315C4.71571 0.384344 4.8 0.587827 4.8 0.8V1.6H11.2V0.8C11.2 0.587827 11.2843 0.384344 11.4343 0.234315C11.5843 0.0842855 11.7878 0 12 0C12.2122 0 12.4157 0.0842855 12.5657 0.234315C12.7157 0.384344 12.8 0.587827 12.8 0.8V1.6Z" fill="#161616"></path></svg>`;
+        descriptionDiv.appendChild(svgElement);
+
+        let descriptionTextDiv = document.createElement("div");
+        descriptionTextDiv.classList.add("text-size-tiny");
+        descriptionTextDiv.textContent = description.description;
+        descriptionDiv.appendChild(descriptionTextDiv);
+
+        packageListDiv.appendChild(descriptionDiv);
+      });
+
+      let priceSubtotalDiv = packageElement.querySelector("#priceSubtotal");
+      priceSubtotalDiv.textContent = pkg.old_price;
+
+      let priceKortingDiv = packageElement.querySelector("#priceKorting");
+      let discount =
+        parseFloat(pkg.old_price) -
+        parseFloat(priceBeforeDecimal + "." + priceAfterDecimal);
+      priceKortingDiv.textContent = `- ${discount.toFixed(2)}`;
+
+      let priceTotalDiv = packageElement.querySelector("#priceTotal");
+      priceTotalDiv.textContent = ` ${paymentAmount}`;
+    }
+
     async requestLink(formData) {
-      const {
-        payment_amount,
-        auth_tokens: { access },
-      } = formData;
+      const { payment_amount } = formData;
+
+      const access = getCookiesToken();
 
       let payment_link;
+      let package_starting_at = this.formatCalendarDate();
 
       const objUrlPayloadPackage = {
         url: this.urlPackageStart,
-        payload: { package_starting_at: new Date() }, // agregar la fecha de los inputs radio, formato como setDateInput
+        payload: { package_starting_at },
         token: access,
       };
 
@@ -2409,50 +2554,209 @@ if (window.location.pathname === "/bestellen") {
       }
     }
 
-    handleContainer() {
+    handleContainer(formData) {
+      const bestellenImage = document.getElementById("bestellenImage");
+      const bestellenMijnPackage = document.getElementById(
+        "bestellenMijnPackage"
+      );
       if (this.isMijnOnline) {
         this.containerMijn.style.display = "flex";
         this.containerDefault.style.display = "none";
+        bestellenMijnPackage.style.display = "block";
+        bestellenImage.style.display = "none";
         this.generateContainerMijn();
+        this.generatePackage(formData);
       } else {
         this.containerMijn.style.display = "none";
         this.containerDefault.style.display = "block";
+        bestellenMijnPackage.style.display = "none";
+        bestellenImage.style.display = "block";
       }
     }
 
     generateContainerMijn() {
+      this.buttonLink.classList.add("disabled-button");
+      const radioDiv1 = document.createElement("div");
+      radioDiv1.classList.add("bestellen_mijn-radio");
+
       const radio1 = document.createElement("input");
       radio1.type = "radio";
       radio1.id = "radio1";
       radio1.name = "mijnOption";
       radio1.value = "direct";
-      radio1.addEventListener("change", () => this.getCurrentDateTime());
+      radio1.classList.add("mijnRadio");
+
+      const label1 = document.createElement("label");
+      label1.htmlFor = "radio1";
+      label1.textContent = "Direct activeren";
+      label1.classList.add("text-weight-semibold");
+
+      radioDiv1.appendChild(radio1);
+      radioDiv1.appendChild(label1);
+
+      const radioDiv2 = document.createElement("div");
+      radioDiv2.classList.add("bestellen_mijn-radio");
 
       const radio2 = document.createElement("input");
       radio2.type = "radio";
       radio2.id = "radio2";
       radio2.name = "mijnOption";
       radio2.value = "option2";
+      radio2.classList.add("mijnRadio");
+      radio1.addEventListener("change", () => {
+        dateInput.style.display = "none";
+        this.cleanCalendar();
+        this.getCurrentDateTime();
+        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
+      });
       radio2.addEventListener("change", () => this.handleRadioChange());
 
-      this.containerMijn.appendChild(radio1);
-      this.containerMijn.appendChild(radio2);
+      const label2 = document.createElement("label");
+      label2.htmlFor = "radio2";
+      label2.textContent = "Vul de datum in wanneer je pakket in moet gaan";
+      label2.classList.add("text-weight-semibold");
 
-      const calendarInput = document.createElement("input");
-      calendarInput.type = "date";
-      calendarInput.id = "calendarInput";
-      calendarInput.style.display = "none";
+      radioDiv2.appendChild(radio2);
+      radioDiv2.appendChild(label2);
 
+      this.containerMijn.appendChild(radioDiv1);
+      this.containerMijn.appendChild(radioDiv2);
+
+      const dateInput = document.createElement("input");
+      dateInput.type = "date";
+      dateInput.id = "dateInput";
+      dateInput.style.display = "none";
       const today = new Date().toISOString().split("T")[0];
-      calendarInput.min = today;
+      dateInput.min = today;
+      dateInput.addEventListener("input", (event) =>
+        this.setCalendarDate(event)
+      );
 
-      this.containerMijn.appendChild(calendarInput);
+      const timePicker = document.createElement("div");
+      timePicker.id = "timePicker";
+      timePicker.classList.add("time-picker");
+
+      const hourList = document.createElement("ul");
+      hourList.id = "hourList";
+      hourList.classList.add("time-list");
+
+      for (let i = 0; i < 24; i++) {
+        const hourItem = document.createElement("li");
+        hourItem.textContent = (i < 10 ? "0" : "") + i;
+        hourItem.classList.add("time-item");
+        hourItem.onclick = () => {
+          this.setHourCalendar(i);
+          this.updateSelected(hourList, hourItem);
+        };
+        hourList.appendChild(hourItem);
+      }
+
+      const minuteList = document.createElement("ul");
+      minuteList.id = "minuteList";
+      minuteList.classList.add("time-list");
+
+      for (let i = 0; i < 60; i++) {
+        const minuteItem = document.createElement("li");
+        minuteItem.textContent = (i < 10 ? "0" : "") + i;
+        minuteItem.classList.add("time-item");
+        minuteItem.onclick = () => {
+          this.setMinuteCalendar(i);
+          this.updateSelected(minuteList, minuteItem);
+        };
+        minuteList.appendChild(minuteItem);
+      }
+
+      timePicker.appendChild(hourList);
+      timePicker.appendChild(minuteList);
+
+      this.containerMijn.appendChild(dateInput);
+      this.containerMijn.appendChild(timePicker);
     }
 
     handleRadioChange() {
+      this.buttonLink.classList.add("disabled-button");
       const radio2 = document.getElementById("radio2");
-      const calendarInput = document.getElementById("calendarInput");
-      calendarInput.style.display = radio2.checked ? "block" : "none";
+      const dateInput = document.getElementById("dateInput");
+      const timePicker = document.getElementById("timePicker");
+      dateInput.style.display = radio2.checked ? "block" : "none";
+    }
+
+    cleanCalendar() {
+      const dateInput = document.getElementById("dateInput");
+      if (dateInput) {
+        dateInput.value = "";
+      }
+
+      const hourListItems = document.querySelectorAll("#hourList .time-item");
+      const minuteListItems = document.querySelectorAll(
+        "#minuteList .time-item"
+      );
+
+      for (const item of hourListItems) {
+        item.classList.remove("selected");
+      }
+
+      for (const item of minuteListItems) {
+        item.classList.remove("selected");
+      }
+    }
+
+    updateSelected(list, selectedItem) {
+      list.querySelectorAll(".selected").forEach((item) => {
+        item.classList.remove("selected");
+      });
+      selectedItem.classList.add("selected");
+    }
+
+    setCalendarDate(event) {
+      const timePicker = document.getElementById("timePicker");
+      this.dateCalendar = event.target.value;
+      if (this.dateCalendar) {
+        timePicker.classList.add("visible");
+      } else {
+        timePicker.classList.remove("visible");
+      }
+      this.enableButton();
+    }
+
+    setHourCalendar(hour) {
+      hour = Number(hour);
+      this.hourCalendar = hour < 10 ? "0" + hour : "" + hour;
+      this.enableButton();
+      if (this.minuteCalendar !== null) {
+        this.checkAndHideTimePicker();
+      }
+    }
+
+    setMinuteCalendar(minute) {
+      minute = Number(minute);
+      this.minuteCalendar = minute < 10 ? "0" + minute : "" + minute;
+      this.enableButton();
+      if (this.hourCalendar !== null) {
+        this.checkAndHideTimePicker();
+      }
+    }
+
+    checkAndHideTimePicker() {
+      const timePicker = document.getElementById("timePicker");
+      if (timePicker) {
+        timePicker.classList.remove("visible");
+      }
+    }
+
+    enableButton() {
+      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
+        this.buttonLink.classList.remove("disabled-button");
+      } else {
+        this.buttonLink.classList.add("disabled-button");
+      }
+    }
+
+    formatCalendarDate() {
+      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
+        return `${this.dateCalendar}T${this.hourCalendar}:${this.minuteCalendar}:00+01:00`;
+      }
+      return this.getCurrentDateTime();
     }
 
     getCurrentDateTime() {
@@ -2464,7 +2768,8 @@ if (window.location.pathname === "/bestellen") {
       const minutes = currentDateTime.getMinutes();
       const seconds = currentDateTime.getSeconds();
       const finalDate = `${year}-${month}-${day}T${hour}:${minutes}:${seconds}+01:00`;
-      this.package_starting_at = finalDate;
+      this.buttonLink.classList.remove("disabled-button");
+      return finalDate;
     }
 
     updateSvgVisibility(formData) {
@@ -2726,92 +3031,40 @@ if (window.location.pathname === "/bestellen") {
   const orderManager = new OrderManager();
 }
 
-function updateLoginButton() {
+function initializeLoginButton() {
   const loginButton = document.getElementById("btn-login");
-  if (localStorage.getItem("userLoggedIn")) {
-    loginButton.textContent = "Uitloggen";
-    loginButton.href = "/inloggen";
-  } else {
-    loginButton.textContent = "Inloggen";
-    loginButton.href = "/inloggen";
+  if (loginButton) {
+    if (localStorage.getItem("userLoggedIn")) {
+      loginButton.textContent = "Uitloggen";
+    } else {
+      loginButton.textContent = "Inloggen";
+    }
+
+    loginButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "/inloggen";
+    });
   }
 }
 
-document.addEventListener("DOMContentLoaded", updateLoginButton);
+document.addEventListener("DOMContentLoaded", initializeLoginButton);
 
-document.getElementById("btn-login").addEventListener("click", (event) => {
-  if (localStorage.getItem("userLoggedIn")) {
-    localStorage.removeItem("userLoggedIn");
-    //event.target.textContent = "Inloggen";
-    window.location.href = "/inloggen";
-  }
-});
-
-if (window.location.pathname === "/test") {
-  class FormReapply {
-    constructor() {
-      this.userData = {};
-      this.token = null;
-      this.getUserInfoBack();
-      this.bindEventRedirect();
-    }
-
-    bindEventRedirect() {
-      const button = document.getElementById("reapplyBtn");
-      button.addEventListener("click", () => this.redirectToForm());
-    }
-
-    redirectToForm() {
-      this.userData.is_reapply_allowed = true;
-      if (this.userData.is_reapply_allowed) {
-        const url = `/aanmelden?course_type=${this.userData.course_type}&reapply=${this.userData.is_reapply_allowed}&planID&t=${this.token}`;
-        return (window.location.href = url);
-      }
-    }
-
-    async refreshToken() {
-      const resServerToken = await fetch(
-        "https://api.develop.nutheorie.be/authorization/token/refresh/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh: this.token }),
-        }
-      );
-      const dataToken = await resServerToken.json();
-      this.token = dataToken.access;
-      const newObject = JSON.stringify(dataToken);
-      localStorage.setItem("user", newObject);
-    }
-
-    async getUserInfoBack() {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user) {
-        this.token = user.access;
-        try {
-          const resServer = await fetch(
-            "https://api.develop.nutheorie.be/api/applications/",
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${this.token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          const userData = await resServer.json();
-          this.userData = userData;
-          localStorage.setItem("userData", JSON.stringify(userData));
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        this.userData = {};
+function getCookiesToken() {
+  const cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const partes = cookie.split("=");
+    if (partes[0].trim() === "tokens") {
+      const encodedTokens = partes[1];
+      try {
+        const decodedTokens = decodeURIComponent(encodedTokens);
+        const tokens = JSON.parse(decodedTokens);
+        return tokens.access;
+      } catch (error) {
+        console.error("Error al decodificar la cookie tokens:", error);
+        return null;
       }
     }
   }
-
-  const reapply = new FormReapply();
+  return null;
 }

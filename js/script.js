@@ -774,8 +774,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -1377,8 +1377,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1550,7 +1551,6 @@ if (window.location.pathname.includes("/aanmelden")) {
               const modifiedOldPrice = isReapply
                 ? old_price + reapplyValue
                 : old_price + nonReapplyValue;
-
 
               return {
                 name,
@@ -1955,7 +1955,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-
     determineDateStep() {
       const category = this.formData.course_category;
       if (category === "per_dates") {
@@ -1968,7 +1967,9 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     goToStep(targetStepId) {
-      const stepIndex = this.steps.findIndex((step) => step.id === targetStepId);
+      const stepIndex = this.steps.findIndex(
+        (step) => step.id === targetStepId
+      );
       if (stepIndex === -1) return;
 
       let currentStepId = this.steps[0].id;
@@ -1977,8 +1978,13 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       while (currentStepId !== targetStepId) {
         currentStepId = this.getNextStepId(currentStepId);
-        if (!currentStepId || !this.steps.find((step) => step.id === currentStepId)) {
-          console.error("No se puede alcanzar el paso objetivo desde el paso actual.");
+        if (
+          !currentStepId ||
+          !this.steps.find((step) => step.id === currentStepId)
+        ) {
+          console.error(
+            "No se puede alcanzar el paso objetivo desde el paso actual."
+          );
           return;
         }
         newStepHistory.push(currentStepId);
@@ -2396,8 +2402,25 @@ if (window.location.pathname === "/bestellen") {
 
     getLastDayOfMonth() {
       const now = new Date();
-      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      const dutchMonths = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+      const lastDayOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0
+      ).getDate();
+      const dutchMonths = [
+        "januari",
+        "februari",
+        "maart",
+        "april",
+        "mei",
+        "juni",
+        "juli",
+        "augustus",
+        "september",
+        "oktober",
+        "november",
+        "december",
+      ];
       const currentMonthInDutch = dutchMonths[now.getMonth()];
 
       return `${lastDayOfMonth} ${currentMonthInDutch}`;
@@ -2407,7 +2430,8 @@ if (window.location.pathname === "/bestellen") {
       return descriptionItems.map((item) => {
         if (typeof item.description === "string") {
           return {
-            ...item, description: item.description.replace(
+            ...item,
+            description: item.description.replace(
               "{{ getLastDayOfMonth }}",
               this.getLastDayOfMonth()
             ),
@@ -2422,7 +2446,7 @@ if (window.location.pathname === "/bestellen") {
       const pkg = formData.package_info;
       const paymentAmount = formData.payment_amount;
 
-      const priceParts = paymentAmount.split('.');
+      const priceParts = paymentAmount.split(".");
       const priceBeforeDecimal = priceParts[0];
       const priceAfterDecimal = priceParts[1];
 
@@ -2435,10 +2459,14 @@ if (window.location.pathname === "/bestellen") {
       let packageNameDiv = packageElement.querySelector("#packageName");
       packageNameDiv.textContent = formData.package_name;
 
-      const processedDescriptions = this.processDescriptionItems(pkg.description_items);
+      const processedDescriptions = this.processDescriptionItems(
+        pkg.description_items
+      );
 
-      let packageListDiv = packageElement.querySelector(".aanmelden_package-list");
-      processedDescriptions.forEach(description => {
+      let packageListDiv = packageElement.querySelector(
+        ".aanmelden_package-list"
+      );
+      processedDescriptions.forEach((description) => {
         let descriptionDiv = document.createElement("div");
         descriptionDiv.classList.add("aanmelden_package-description");
 
@@ -2458,7 +2486,9 @@ if (window.location.pathname === "/bestellen") {
       priceSubtotalDiv.textContent = pkg.old_price;
 
       let priceKortingDiv = packageElement.querySelector("#priceKorting");
-      let discount = parseFloat(pkg.old_price) - parseFloat(priceBeforeDecimal + '.' + priceAfterDecimal);
+      let discount =
+        parseFloat(pkg.old_price) -
+        parseFloat(priceBeforeDecimal + "." + priceAfterDecimal);
       priceKortingDiv.textContent = `- ${discount.toFixed(2)}`;
 
       let priceTotalDiv = packageElement.querySelector("#priceTotal");
@@ -2466,9 +2496,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     async requestLink(formData) {
-      const {
-        payment_amount,
-      } = formData;
+      const { payment_amount } = formData;
 
       const access = getCookiesToken();
 
@@ -2528,7 +2556,9 @@ if (window.location.pathname === "/bestellen") {
 
     handleContainer(formData) {
       const bestellenImage = document.getElementById("bestellenImage");
-      const bestellenMijnPackage = document.getElementById("bestellenMijnPackage");
+      const bestellenMijnPackage = document.getElementById(
+        "bestellenMijnPackage"
+      );
       if (this.isMijnOnline) {
         this.containerMijn.style.display = "flex";
         this.containerDefault.style.display = "none";
@@ -2592,26 +2622,28 @@ if (window.location.pathname === "/bestellen") {
       this.containerMijn.appendChild(radioDiv1);
       this.containerMijn.appendChild(radioDiv2);
 
-      const dateInput = document.createElement('input');
-      dateInput.type = 'date';
-      dateInput.id = 'dateInput';
-      dateInput.style.display = 'none';
+      const dateInput = document.createElement("input");
+      dateInput.type = "date";
+      dateInput.id = "dateInput";
+      dateInput.style.display = "none";
       const today = new Date().toISOString().split("T")[0];
       dateInput.min = today;
-      dateInput.addEventListener("input", (event) => this.setCalendarDate(event));
+      dateInput.addEventListener("input", (event) =>
+        this.setCalendarDate(event)
+      );
 
-      const timePicker = document.createElement('div');
-      timePicker.id = 'timePicker';
-      timePicker.classList.add('time-picker');
+      const timePicker = document.createElement("div");
+      timePicker.id = "timePicker";
+      timePicker.classList.add("time-picker");
 
-      const hourList = document.createElement('ul');
-      hourList.id = 'hourList';
-      hourList.classList.add('time-list');
+      const hourList = document.createElement("ul");
+      hourList.id = "hourList";
+      hourList.classList.add("time-list");
 
       for (let i = 0; i < 24; i++) {
-        const hourItem = document.createElement('li');
-        hourItem.textContent = (i < 10 ? '0' : '') + i;
-        hourItem.classList.add('time-item');
+        const hourItem = document.createElement("li");
+        hourItem.textContent = (i < 10 ? "0" : "") + i;
+        hourItem.classList.add("time-item");
         hourItem.onclick = () => {
           this.setHourCalendar(i);
           this.updateSelected(hourList, hourItem);
@@ -2619,14 +2651,14 @@ if (window.location.pathname === "/bestellen") {
         hourList.appendChild(hourItem);
       }
 
-      const minuteList = document.createElement('ul');
-      minuteList.id = 'minuteList';
-      minuteList.classList.add('time-list');
+      const minuteList = document.createElement("ul");
+      minuteList.id = "minuteList";
+      minuteList.classList.add("time-list");
 
       for (let i = 0; i < 60; i++) {
-        const minuteItem = document.createElement('li');
-        minuteItem.textContent = (i < 10 ? '0' : '') + i;
-        minuteItem.classList.add('time-item');
+        const minuteItem = document.createElement("li");
+        minuteItem.textContent = (i < 10 ? "0" : "") + i;
+        minuteItem.classList.add("time-item");
         minuteItem.onclick = () => {
           this.setMinuteCalendar(i);
           this.updateSelected(minuteList, minuteItem);
@@ -2644,43 +2676,45 @@ if (window.location.pathname === "/bestellen") {
     handleRadioChange() {
       this.buttonLink.classList.add("disabled-button");
       const radio2 = document.getElementById("radio2");
-      const dateInput = document.getElementById('dateInput');
-      const timePicker = document.getElementById('timePicker');
+      const dateInput = document.getElementById("dateInput");
+      const timePicker = document.getElementById("timePicker");
       dateInput.style.display = radio2.checked ? "block" : "none";
     }
 
     cleanCalendar() {
-      const dateInput = document.getElementById('dateInput');
+      const dateInput = document.getElementById("dateInput");
       if (dateInput) {
-        dateInput.value = '';
+        dateInput.value = "";
       }
 
-      const hourListItems = document.querySelectorAll('#hourList .time-item');
-      const minuteListItems = document.querySelectorAll('#minuteList .time-item');
+      const hourListItems = document.querySelectorAll("#hourList .time-item");
+      const minuteListItems = document.querySelectorAll(
+        "#minuteList .time-item"
+      );
 
       for (const item of hourListItems) {
-        item.classList.remove('selected');
+        item.classList.remove("selected");
       }
 
       for (const item of minuteListItems) {
-        item.classList.remove('selected');
+        item.classList.remove("selected");
       }
     }
 
     updateSelected(list, selectedItem) {
-      list.querySelectorAll('.selected').forEach(item => {
-        item.classList.remove('selected');
+      list.querySelectorAll(".selected").forEach((item) => {
+        item.classList.remove("selected");
       });
-      selectedItem.classList.add('selected');
+      selectedItem.classList.add("selected");
     }
 
     setCalendarDate(event) {
-      const timePicker = document.getElementById('timePicker');
+      const timePicker = document.getElementById("timePicker");
       this.dateCalendar = event.target.value;
       if (this.dateCalendar) {
-        timePicker.classList.add('visible');
+        timePicker.classList.add("visible");
       } else {
-        timePicker.classList.remove('visible');
+        timePicker.classList.remove("visible");
       }
       this.enableButton();
     }
@@ -2704,9 +2738,9 @@ if (window.location.pathname === "/bestellen") {
     }
 
     checkAndHideTimePicker() {
-      const timePicker = document.getElementById('timePicker');
+      const timePicker = document.getElementById("timePicker");
       if (timePicker) {
-        timePicker.classList.remove('visible');
+        timePicker.classList.remove("visible");
       }
     }
 
@@ -3016,18 +3050,18 @@ function initializeLoginButton() {
 document.addEventListener("DOMContentLoaded", initializeLoginButton);
 
 function getCookiesToken() {
-  const cookies = document.cookie.split(';');
+  const cookies = document.cookie.split(";");
   for (let i = 0; i < cookies.length; i++) {
     const cookie = cookies[i];
-    const partes = cookie.split('=');
-    if (partes[0].trim() === 'tokens') {
+    const partes = cookie.split("=");
+    if (partes[0].trim() === "tokens") {
       const encodedTokens = partes[1];
       try {
         const decodedTokens = decodeURIComponent(encodedTokens);
         const tokens = JSON.parse(decodedTokens);
         return tokens.access;
       } catch (error) {
-        console.error('Error al decodificar la cookie tokens:', error);
+        console.error("Error al decodificar la cookie tokens:", error);
         return null;
       }
     }
