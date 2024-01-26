@@ -2400,10 +2400,11 @@ if (window.location.pathname === "/bestellen") {
       const access = getCookiesToken();
 
       let payment_link;
+      let package_starting_at = this.formatCalendarDate();
 
       const objUrlPayloadPackage = {
         url: this.urlPackageStart,
-        payload: { package_starting_at: this.package_starting_at }, // agregar la fecha de los inputs radio, formato como setDateInput
+        payload: { package_starting_at },
         token: access,
       };
 
@@ -2469,33 +2470,122 @@ if (window.location.pathname === "/bestellen") {
       radio1.id = "radio1";
       radio1.name = "mijnOption";
       radio1.value = "direct";
-      radio1.addEventListener("change", () => this.getCurrentDateTime());
+      radio1.classList.add("mijnRadio");
+
+      const label1 = document.createElement("label");
+      label1.htmlFor = "radio1";
+      label1.textContent = "Direct activeren";
+      label1.classList.add("text-weight-semibold");
 
       const radio2 = document.createElement("input");
       radio2.type = "radio";
       radio2.id = "radio2";
       radio2.name = "mijnOption";
       radio2.value = "option2";
+      radio2.classList.add("mijnRadio");
+      radio1.addEventListener("change", () => {
+        dateInput.style.display = "none";
+        timePicker.style.display = "none";
+        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
+        this.cleanCalendar();
+        this.getCurrentDateTime();
+      });
       radio2.addEventListener("change", () => this.handleRadioChange());
 
+      const label2 = document.createElement("label");
+      label2.htmlFor = "radio2";
+      label2.textContent = "Vul de datum in wanneer je pakket in moet gaan";
+      label2.classList.add("text-weight-semibold");
+
       this.containerMijn.appendChild(radio1);
+      this.containerMijn.appendChild(label1);
       this.containerMijn.appendChild(radio2);
+      this.containerMijn.appendChild(label2);
 
-      const calendarInput = document.createElement("input");
-      calendarInput.type = "date";
-      calendarInput.id = "calendarInput";
-      calendarInput.style.display = "none";
-
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.id = 'dateInput';
       const today = new Date().toISOString().split("T")[0];
-      calendarInput.min = today;
+      dateInput.min = today;
+      dateInput.addEventListener("input", (event) => this.setCalendarDate(event));
 
-      this.containerMijn.appendChild(calendarInput);
+      const timePicker = document.createElement('div');
+      timePicker.id = 'timePicker';
+      timePicker.classList.add('time-picker');
+
+      const hourInput = document.createElement('select');
+      hourInput.id = 'hourInput';
+      hourInput.addEventListener("input", (event) => this.setHourCalendar(event));
+
+      const minuteInput = document.createElement('select');
+      minuteInput.id = 'minuteInput';
+      minuteInput.addEventListener("input", (event) => this.setMinuteCalendar(event));
+
+      for (let i = 0; i < 24; i++) {
+        let option = document.createElement('option');
+        option.value = i;
+        option.textContent = (i < 10 ? '0' : '') + i;
+        hourInput.appendChild(option);
+      }
+
+      for (let i = 0; i < 60; i++) {
+        let option = document.createElement('option');
+        option.value = i;
+        option.textContent = (i < 10 ? '0' : '') + i;
+        minuteInput.appendChild(option);
+      }
+
+      timePicker.appendChild(hourInput);
+      timePicker.appendChild(minuteInput);
+
+      this.containerMijn.appendChild(dateInput);
+      this.containerMijn.appendChild(timePicker);
     }
 
     handleRadioChange() {
       const radio2 = document.getElementById("radio2");
-      const calendarInput = document.getElementById("calendarInput");
-      calendarInput.style.display = radio2.checked ? "block" : "none";
+      const dateInput = document.getElementById('dateInput');
+      const timePicker = document.getElementById('timePicker');
+      dateInput.style.display = radio2.checked ? "block" : "none";
+      timePicker.style.display = radio2.checked ? "block" : "none";
+    }
+
+    cleanCalendar() {
+      const inputIds = ['dateInput', 'hourInput', 'minuteInput'];
+
+      for (const id of inputIds) {
+        const inputElement = document.getElementById(id);
+        if (inputElement) {
+          inputElement.value = '';
+        }
+      }
+    }
+
+    setCalendarDate(event) {
+      this.dateCalendar = event.target.value;
+    }
+
+    setHourCalendar(event) {
+      let value = Number(event.target.value);
+      if (value < 10) {
+        value = "0" + value;
+      }
+      this.hourCalendar = value;
+    }
+
+    setMinuteCalendar(event) {
+      let value = Number(event.target.value);
+      if (value < 10) {
+        value = "0" + value;
+      }
+      this.minuteCalendar = value;
+    }
+
+    formatCalendarDate() {
+      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
+        return `${this.dateCalendar}T${this.hourCalendar}:${this.minuteCalendar}:00+01:00`;
+      }
+      return this.getCurrentDateTime();
     }
 
     getCurrentDateTime() {
@@ -2507,7 +2597,7 @@ if (window.location.pathname === "/bestellen") {
       const minutes = currentDateTime.getMinutes();
       const seconds = currentDateTime.getSeconds();
       const finalDate = `${year}-${month}-${day}T${hour}:${minutes}:${seconds}+01:00`;
-      this.package_starting_at = finalDate;
+      return finalDate;
     }
 
     updateSvgVisibility(formData) {
