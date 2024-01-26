@@ -818,7 +818,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     async getUserInfoBack() {
       const accessToken = getCookiesToken();
-      if (accessToken) {
+      if (accessToken && this.isReapplyFlow) {
         this.token = accessToken;
         try {
           const resServer = await fetch(
