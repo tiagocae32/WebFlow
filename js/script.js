@@ -2575,6 +2575,7 @@ if (window.location.pathname === "/bestellen") {
       radio1.id = "radio1";
       radio1.name = "mijnOption";
       radio1.value = "direct";
+      radio1.checked = true;
       radio1.classList.add("mijnRadio");
 
       const label1 = document.createElement("label");
