@@ -807,7 +807,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     async getUserInfoBack() {
       const accessToken = getCookiesToken();
-      if (accessToken.access && this.isReapplyFlow) {
+      if (accessToken && this.isReapplyFlow) {
         this.token = accessToken.access;
         try {
           const resServer = await fetch(
@@ -2370,7 +2370,7 @@ if (window.location.pathname === "/bestellen") {
         "https://api.develop.nutheorie.be/api/applications/set_package_start/";
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
-      this.interval = setInterval(this.refreshToken.bind(this), 290000);
+      this.interval = setInterval(this.refreshToken.bind(this), 30000);
       this.initialize();
     }
 
@@ -2389,7 +2389,7 @@ if (window.location.pathname === "/bestellen") {
         this.buttonLink.addEventListener("click", () =>
           this.requestLink(formData)
         );
-        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
+        this.dateCalendar = null;
       }
     }
 
@@ -2492,6 +2492,7 @@ if (window.location.pathname === "/bestellen") {
       const { payment_amount } = formData;
 
       const access = getCookiesToken();
+      console.log(access);
 
       let payment_link;
       let package_starting_at = this.formatCalendarDate();
@@ -2597,6 +2598,9 @@ if (window.location.pathname === "/bestellen") {
       radio1.name = "mijnOption";
       radio1.value = "direct";
       radio1.checked = true;
+      if (radio1.checked) {
+        this.enableButton();
+      }
       radio1.classList.add("mijnRadio");
 
       const label1 = document.createElement("label");
@@ -2618,11 +2622,11 @@ if (window.location.pathname === "/bestellen") {
       radio2.classList.add("mijnRadio");
       radio1.addEventListener("change", () => {
         dateInput.style.display = "none";
+        calendarIcon.style.display = "none";
         this.chooseDateText.style.display = "none";
         this.planAvailableUntilText.style.display = "none";
-        this.cleanCalendar();
         this.getCurrentDateTime();
-        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
+        this.dateCalendar = null;
       });
       radio2.addEventListener("change", () => this.handleRadioChange());
 
@@ -2637,52 +2641,50 @@ if (window.location.pathname === "/bestellen") {
       this.containerMijn.appendChild(radioDiv1);
       this.containerMijn.appendChild(radioDiv2);
 
+      const dateInputContainer = document.createElement("div");
+      dateInputContainer.classList.add("date-input-container");
+
       const dateInput = document.createElement("input");
-      dateInput.type = "date";
+      dateInput.type = "text";
       dateInput.id = "dateInput";
+      dateInput.classList.add("flatpickr", "form_input");
       dateInput.style.display = "none";
-      const today = new Date().toISOString().split("T")[0];
-      dateInput.min = today;
-      dateInput.addEventListener("input", (event) =>
-        this.setCalendarDate(event)
-      );
 
-      const timePicker = document.createElement("div");
-      timePicker.id = "timePicker";
-      timePicker.classList.add("time-picker");
+      dateInputContainer.appendChild(dateInput);
 
-      const hourList = document.createElement("ul");
-      hourList.id = "hourList";
-      hourList.classList.add("time-list");
+      const calendarIcon = document.createElement("img");
+      calendarIcon.src = "https://uploads-ssl.webflow.com/65575474f34982c6bd8b4b70/65b7f97b68336ec19817493a_calendar-date.svg";
+      calendarIcon.classList.add("calendar-icon");
+      calendarIcon.id = "calendarIcon";
+      calendarIcon.style.display = "none";
+      dateInputContainer.appendChild(calendarIcon);
 
-      for (let i = 0; i < 24; i++) {
-        const hourItem = document.createElement("li");
-        hourItem.textContent = (i < 10 ? "0" : "") + i;
-        hourItem.classList.add("time-item");
-        hourItem.onclick = () => {
-          this.setHourCalendar(i);
-          this.updateSelected(hourList, hourItem);
-        };
-        hourList.appendChild(hourItem);
-      }
+      const clearButton = document.createElement("button");
+      clearButton.innerHTML = "&times;";
+      clearButton.classList.add("clear-button");
+      clearButton.style.display = "none";
+      clearButton.onclick = () => {
+        dateInput.value = '';
+        clearButton.style.display = "none";
+        calendarIcon.style.display = "block";
+      };
+      dateInputContainer.appendChild(clearButton);
 
-      const minuteList = document.createElement("ul");
-      minuteList.id = "minuteList";
-      minuteList.classList.add("time-list");
+      calendarIcon.style.transition = "opacity 0.3s ease-in-out";
+      clearButton.style.transition = "opacity 0.3s ease-in-out";
 
-      for (let i = 0; i < 60; i++) {
-        const minuteItem = document.createElement("li");
-        minuteItem.textContent = (i < 10 ? "0" : "") + i;
-        minuteItem.classList.add("time-item");
-        minuteItem.onclick = () => {
-          this.setMinuteCalendar(i);
-          this.updateSelected(minuteList, minuteItem);
-        };
-        minuteList.appendChild(minuteItem);
-      }
-
-      timePicker.appendChild(hourList);
-      timePicker.appendChild(minuteList);
+      dateInputContainer.onmouseover = () => {
+        if (dateInput.value) {
+          clearButton.style.display = "block";
+          calendarIcon.style.display = "none";
+        }
+      };
+      dateInputContainer.onmouseout = () => {
+        clearButton.style.display = "none";
+        if (!radio1.checked) {
+          calendarIcon.style.display = "block";
+        }
+      };
 
       this.chooseDateText = document.createElement("div");
       this.chooseDateText.textContent = "Kies een datum";
@@ -2698,94 +2700,54 @@ if (window.location.pathname === "/bestellen") {
       this.containerMijn.appendChild(this.chooseDateText);
       this.containerMijn.appendChild(this.planAvailableUntilText);
 
-      this.containerMijn.appendChild(dateInput);
-      this.containerMijn.appendChild(timePicker);
+      this.containerMijn.appendChild(dateInputContainer);
+
+      flatpickr("#dateInput", {
+        enableTime: true,
+        dateFormat: "d-m-Y H:i",
+        minDate: "today",
+        time_24hr: true,
+        minuteIncrement: 1,
+        disableMobile: "true",
+        locale: {
+          "firstDayOfWeek": 1,
+          "weekdays": {
+            "shorthand": ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"],
+            "longhand": ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"],
+          },
+          "months": {
+            "shorthand": ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
+            "longhand": ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"],
+          },
+        },
+        onChange: (selectedDates, dateStr, instance) => {
+          this.dateCalendar = instance.formatDate(selectedDates[0], "Y-m-d\\TH:i:00+01:00");
+          console.log(this.dateCalendar);
+          this.enableButton();
+          this.updatePlanAvailableUntilText();
+        },
+      });
     }
 
     handleRadioChange() {
       this.buttonLink.classList.add("disabled-button");
       const radio2 = document.getElementById("radio2");
       const dateInput = document.getElementById("dateInput");
-      const timePicker = document.getElementById("timePicker");
+      const calendarIcon = document.getElementById("calendarIcon");
       dateInput.style.display = radio2.checked ? "block" : "none";
+      calendarIcon.style.display = "block";
       this.chooseDateText.style.display = radio2.checked ? "block" : "none";
       this.planAvailableUntilText.style.display = radio2.checked ? "block" : "none";
     }
 
-    cleanCalendar() {
-      const dateInput = document.getElementById("dateInput");
-      if (dateInput) {
-        dateInput.value = "";
-      }
-
-      const hourListItems = document.querySelectorAll("#hourList .time-item");
-      const minuteListItems = document.querySelectorAll(
-        "#minuteList .time-item"
-      );
-
-      for (const item of hourListItems) {
-        item.classList.remove("selected");
-      }
-
-      for (const item of minuteListItems) {
-        item.classList.remove("selected");
-      }
-    }
-
-    updateSelected(list, selectedItem) {
-      list.querySelectorAll(".selected").forEach((item) => {
-        item.classList.remove("selected");
-      });
-      selectedItem.classList.add("selected");
-    }
-
-    setCalendarDate(event) {
-      const timePicker = document.getElementById("timePicker");
-      this.dateCalendar = event.target.value;
-      if (this.dateCalendar) {
-        timePicker.classList.add("visible");
-      } else {
-        timePicker.classList.remove("visible");
-      }
-      this.enableButton();
-      this.updatePlanAvailableUntilText();
-    }
-
-    setHourCalendar(hour) {
-      hour = Number(hour);
-      this.hourCalendar = hour < 10 ? "0" + hour : "" + hour;
-      this.enableButton();
-      if (this.minuteCalendar !== null) {
-        this.checkAndHideTimePicker();
-      }
-      this.updatePlanAvailableUntilText();
-    }
-
-    setMinuteCalendar(minute) {
-      minute = Number(minute);
-      this.minuteCalendar = minute < 10 ? "0" + minute : "" + minute;
-      this.enableButton();
-      if (this.hourCalendar !== null) {
-        this.checkAndHideTimePicker();
-      }
-      this.updatePlanAvailableUntilText();
-    }
-
     updatePlanAvailableUntilText() {
-      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
+      if (this.dateCalendar) {
         this.planAvailableUntilText.textContent = "Plan is beschikbaar tot " + this.calculateValidUntilDate();
       }
     }
 
-    checkAndHideTimePicker() {
-      const timePicker = document.getElementById("timePicker");
-      if (timePicker) {
-        timePicker.classList.remove("visible");
-      }
-    }
-
     enableButton() {
-      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
+      if (this.dateCalendar || this.getCurrentDateTime()) {
         this.buttonLink.classList.remove("disabled-button");
       } else {
         this.buttonLink.classList.add("disabled-button");
@@ -2793,32 +2755,22 @@ if (window.location.pathname === "/bestellen") {
     }
 
     formatCalendarDate() {
-      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
-        const formattedDate = `${this.dateCalendar}T${this.hourCalendar}:${this.minuteCalendar}:00+01:00`;
-        return formattedDate;
+      if (this.dateCalendar) {
+        return this.dateCalendar;
       }
       return this.getCurrentDateTime();
     }
 
     calculateValidUntilDate() {
-      const formattedDate = this.formatCalendarDate();
-      if (formattedDate) {
-        const dateTimeParts = formattedDate.split('T');
-        const dateParts = dateTimeParts[0].split('-');
-        const timeParts = dateTimeParts[1].split(':');
-
-        const year = parseInt(dateParts[0], 10);
-        const month = parseInt(dateParts[1], 10) - 1;
-        const day = parseInt(dateParts[2], 10);
-        const hour = parseInt(timeParts[0], 10);
-        const minute = parseInt(timeParts[1], 10);
-        const validUntil = new Date(year, month, day, hour, minute);
-
-        validUntil.setDate(validUntil.getDate() + 45);
-
-        return `${validUntil.getDate().toString().padStart(2, '0')}-${(validUntil.getMonth() + 1).toString().padStart(2, '0')}-${validUntil.getFullYear()} ${validUntil.getHours().toString().padStart(2, '0')}:${validUntil.getMinutes().toString().padStart(2, '0')}`;
+      let validUntilDate;
+      if (this.dateCalendar) {
+        validUntilDate = new Date(this.dateCalendar);
+      } else {
+        validUntilDate = new Date();
       }
-      return "Invalid date";
+      validUntilDate.setDate(validUntilDate.getDate() + 45);
+
+      return `${validUntilDate.getDate().toString().padStart(2, '0')}-${(validUntilDate.getMonth() + 1).toString().padStart(2, '0')}-${validUntilDate.getFullYear()} ${validUntilDate.getHours().toString().padStart(2, '0')}:${validUntilDate.getMinutes().toString().padStart(2, '0')}`;
     }
 
     getCurrentDateTime() {
@@ -3147,23 +3099,16 @@ if (window.location.pathname === "/bestellen") {
   const orderManager = new OrderManager();
 }
 
-function login() {
-  updateLoginButtonText();
-}
-
 function logout() {
   localStorage.removeItem("userLoggedIn");
-  updateLoginButtonText();
+  document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  window.location.href = "/inloggen";
 }
 
 function updateLoginButtonText() {
   const loginButton = document.getElementById("btn-login");
   if (loginButton) {
-    if (localStorage.getItem("userLoggedIn")) {
-      loginButton.textContent = "Uitloggen";
-    } else {
-      loginButton.textContent = "Inloggen";
-    }
+    loginButton.textContent = localStorage.getItem("userLoggedIn") ? "Uitloggen" : "Inloggen";
   }
 }
 
@@ -3177,28 +3122,8 @@ function initializeLoginButton() {
       if (localStorage.getItem("userLoggedIn")) {
         logout();
       } else {
-        login();
         window.location.href = "/inloggen";
       }
-    });
-  }
-}
-
-document.addEventListener("DOMContentLoaded", initializeLoginButton);
-
-
-function initializeLoginButton() {
-  const loginButton = document.getElementById("btn-login");
-  if (loginButton) {
-    if (localStorage.getItem("userLoggedIn")) {
-      loginButton.textContent = "Uitloggen";
-    } else {
-      loginButton.textContent = "Inloggen";
-    }
-
-    loginButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      window.location.href = "/inloggen";
     });
   }
 }
