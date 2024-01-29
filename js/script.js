@@ -807,8 +807,8 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     async getUserInfoBack() {
       const accessToken = getCookiesToken();
-      if (accessToken && this.isReapplyFlow) {
-        this.token = accessToken;
+      if (accessToken.access && this.isReapplyFlow) {
+        this.token = accessToken.access;
         try {
           const resServer = await fetch(
             "https://api.develop.nutheorie.be/api/applications/",
@@ -2363,12 +2363,14 @@ if (window.location.pathname === "/bestellen") {
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
+      this.urlRefreshToken = "https://api.develop.nutheorie.be/authorization/token/refresh/";
       this.urlPaymentLink =
         "https://api.develop.nutheorie.be/api/applications/payment_link/";
       this.urlPackageStart =
         "https://api.develop.nutheorie.be/api/applications/set_package_start/";
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
+      this.interval = setInterval(this.refreshToken.bind(this), 290000);
       this.initialize();
     }
 
@@ -2497,7 +2499,7 @@ if (window.location.pathname === "/bestellen") {
       const objUrlPayloadPackage = {
         url: this.urlPackageStart,
         payload: { package_starting_at },
-        token: access,
+        token: access.access,
       };
 
       const objUrlPayloadPayment = {
@@ -2508,7 +2510,7 @@ if (window.location.pathname === "/bestellen") {
           final_redirect_url: this.urlFinalRedirect,
           fail_redirect_url: this.urlFailRedirect,
         },
-        token: access,
+        token: access.access,
       };
       if (this.isMijnOnline) {
         await this.requestLinkPayment(objUrlPayloadPackage);
@@ -2518,6 +2520,25 @@ if (window.location.pathname === "/bestellen") {
       }
       if (payment_link) {
         window.location.href = payment_link.payment_link;
+      }
+    }
+
+    async refreshToken() {
+      const oldToken = getCookiesToken();
+      try {
+        const respuesta = await fetch(this.urlRefreshToken, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ "refresh": oldToken.refresh }),
+        })
+        const data = await respuesta.json();
+        console.log(data);
+        const encodedTokens = encodeURIComponent(JSON.stringify(data));
+        document.cookie = `tokens=${encodedTokens}`;
+      } catch (error) {
+        console.log("Error refreshtoken");
       }
     }
 
@@ -3087,7 +3108,7 @@ if (window.location.pathname === "/bestellen") {
 
     getTotaalTextContent(formData) {
       if (formData.course_type === "offline") {
-        return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- ...`;
+        return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
       } else if (formData.course_type === "online") {
         return `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
       }
@@ -3126,6 +3147,46 @@ if (window.location.pathname === "/bestellen") {
   const orderManager = new OrderManager();
 }
 
+function login() {
+  updateLoginButtonText();
+}
+
+function logout() {
+  localStorage.removeItem("userLoggedIn");
+  updateLoginButtonText();
+}
+
+function updateLoginButtonText() {
+  const loginButton = document.getElementById("btn-login");
+  if (loginButton) {
+    if (localStorage.getItem("userLoggedIn")) {
+      loginButton.textContent = "Uitloggen";
+    } else {
+      loginButton.textContent = "Inloggen";
+    }
+  }
+}
+
+function initializeLoginButton() {
+  const loginButton = document.getElementById("btn-login");
+  if (loginButton) {
+    updateLoginButtonText();
+
+    loginButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (localStorage.getItem("userLoggedIn")) {
+        logout();
+      } else {
+        login();
+        window.location.href = "/inloggen";
+      }
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initializeLoginButton);
+
+
 function initializeLoginButton() {
   const loginButton = document.getElementById("btn-login");
   if (loginButton) {
@@ -3152,9 +3213,9 @@ function getCookiesToken() {
     if (partes[0].trim() === "tokens") {
       const encodedTokens = partes[1];
       try {
-        const decodedTokens = decodeURIComponent(enƒccodedTokens);
+        const decodedTokens = decodeURIComponent(encodedTokens);
         const tokens = JSON.parse(decodedTokens);
-        return tokens.access;
+        return tokens;
       } catch (error) {
         console.error("Error al decodificar la cookie tokens:", error);
         return null;
