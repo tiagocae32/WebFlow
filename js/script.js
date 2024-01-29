@@ -2957,17 +2957,17 @@ if (window.location.pathname === "/bestellen") {
         examTypeElement.textContent = examTypeText;
       }
     }
-
     displayCities(formData) {
       this.toggleElementVisibility(
         "citiesColumn",
-        formData.cities && formData.cities.length > 0
+        formData.cities && formData.cities.length > 0 && formData.course_type === "offline"
       );
-      if (formData.cities && formData.cities.length > 0) {
+      if (formData.cities && formData.cities.length > 0 && formData.course_type === "offline") {
         const citiesElement = document.getElementById("citiesText");
         citiesElement.textContent = formData.cities.join(", ");
       }
     }
+
 
     displayCBRLocations(formData) {
       this.toggleElementVisibility(
@@ -3103,7 +3103,7 @@ function getCookiesToken() {
     if (partes[0].trim() === "tokens") {
       const encodedTokens = partes[1];
       try {
-        const decodedTokens = decodeURIComponent(encodedTokens);
+        const decodedTokens = decodeURIComponent(enƒccodedTokens);
         const tokens = JSON.parse(decodedTokens);
         return tokens.access;
       } catch (error) {
