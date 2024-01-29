@@ -769,8 +769,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1366,9 +1366,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -2581,7 +2580,7 @@ if (window.location.pathname === "/bestellen") {
       const label1 = document.createElement("label");
       label1.htmlFor = "radio1";
       label1.textContent = "Direct activeren";
-      label1.classList.add("text-weight-semibold");
+      label1.classList.add("form_label", "text-weight-semibold");
 
       radioDiv1.appendChild(radio1);
       radioDiv1.appendChild(label1);
@@ -2597,6 +2596,8 @@ if (window.location.pathname === "/bestellen") {
       radio2.classList.add("mijnRadio");
       radio1.addEventListener("change", () => {
         dateInput.style.display = "none";
+        this.chooseDateText.style.display = "none";
+        this.planAvailableUntilText.style.display = "none";
         this.cleanCalendar();
         this.getCurrentDateTime();
         this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
@@ -2606,7 +2607,7 @@ if (window.location.pathname === "/bestellen") {
       const label2 = document.createElement("label");
       label2.htmlFor = "radio2";
       label2.textContent = "Vul de datum in wanneer je pakket in moet gaan";
-      label2.classList.add("text-weight-semibold");
+      label2.classList.add("form_label", "text-weight-semibold");
 
       radioDiv2.appendChild(radio2);
       radioDiv2.appendChild(label2);
@@ -2661,6 +2662,20 @@ if (window.location.pathname === "/bestellen") {
       timePicker.appendChild(hourList);
       timePicker.appendChild(minuteList);
 
+      this.chooseDateText = document.createElement("div");
+      this.chooseDateText.textContent = "Kies een datum";
+      this.chooseDateText.classList.add("text-size-small", "text-weight-semibold");
+      this.chooseDateText.style.display = "none";
+
+      this.planAvailableUntilText = document.createElement("div");
+      this.planAvailableUntilText.textContent = "Plan is beschikbaar tot " + this.calculateValidUntilDate();
+      this.planAvailableUntilText.classList.add("text-size-tiny", "text-weight-bold");
+      this.planAvailableUntilText.style.color = "#9c9c9c";
+      this.planAvailableUntilText.style.display = "none";
+
+      this.containerMijn.appendChild(this.chooseDateText);
+      this.containerMijn.appendChild(this.planAvailableUntilText);
+
       this.containerMijn.appendChild(dateInput);
       this.containerMijn.appendChild(timePicker);
     }
@@ -2671,6 +2686,8 @@ if (window.location.pathname === "/bestellen") {
       const dateInput = document.getElementById("dateInput");
       const timePicker = document.getElementById("timePicker");
       dateInput.style.display = radio2.checked ? "block" : "none";
+      this.chooseDateText.style.display = radio2.checked ? "block" : "none";
+      this.planAvailableUntilText.style.display = radio2.checked ? "block" : "none";
     }
 
     cleanCalendar() {
@@ -2709,6 +2726,7 @@ if (window.location.pathname === "/bestellen") {
         timePicker.classList.remove("visible");
       }
       this.enableButton();
+      this.updatePlanAvailableUntilText();
     }
 
     setHourCalendar(hour) {
@@ -2718,6 +2736,7 @@ if (window.location.pathname === "/bestellen") {
       if (this.minuteCalendar !== null) {
         this.checkAndHideTimePicker();
       }
+      this.updatePlanAvailableUntilText();
     }
 
     setMinuteCalendar(minute) {
@@ -2726,6 +2745,13 @@ if (window.location.pathname === "/bestellen") {
       this.enableButton();
       if (this.hourCalendar !== null) {
         this.checkAndHideTimePicker();
+      }
+      this.updatePlanAvailableUntilText();
+    }
+
+    updatePlanAvailableUntilText() {
+      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
+        this.planAvailableUntilText.textContent = "Plan is beschikbaar tot " + this.calculateValidUntilDate();
       }
     }
 
@@ -2746,9 +2772,31 @@ if (window.location.pathname === "/bestellen") {
 
     formatCalendarDate() {
       if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
-        return `${this.dateCalendar}T${this.hourCalendar}:${this.minuteCalendar}:00+01:00`;
+        const formattedDate = `${this.dateCalendar}T${this.hourCalendar}:${this.minuteCalendar}:00+01:00`;
+        return formattedDate;
       }
       return this.getCurrentDateTime();
+    }
+
+    calculateValidUntilDate() {
+      const formattedDate = this.formatCalendarDate();
+      if (formattedDate) {
+        const dateTimeParts = formattedDate.split('T');
+        const dateParts = dateTimeParts[0].split('-');
+        const timeParts = dateTimeParts[1].split(':');
+
+        const year = parseInt(dateParts[0], 10);
+        const month = parseInt(dateParts[1], 10) - 1;
+        const day = parseInt(dateParts[2], 10);
+        const hour = parseInt(timeParts[0], 10);
+        const minute = parseInt(timeParts[1], 10);
+        const validUntil = new Date(year, month, day, hour, minute);
+
+        validUntil.setDate(validUntil.getDate() + 45);
+
+        return `${validUntil.getDate().toString().padStart(2, '0')}-${(validUntil.getMonth() + 1).toString().padStart(2, '0')}-${validUntil.getFullYear()} ${validUntil.getHours().toString().padStart(2, '0')}:${validUntil.getMinutes().toString().padStart(2, '0')}`;
+      }
+      return "Invalid date";
     }
 
     getCurrentDateTime() {
