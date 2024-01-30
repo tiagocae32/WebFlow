@@ -808,7 +808,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     async getUserInfoBack() {
       const accessToken = getCookiesToken();
       if (accessToken && this.isReapplyFlow) {
-        this.token = accessToken;
+        this.token = accessToken.access;
         try {
           const resServer = await fetch(
             "https://api.develop.nutheorie.be/api/applications/",
@@ -2262,7 +2262,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       const data = await this.sendDataBack();
       if (data) {
         localStorage.setItem("formData", JSON.stringify(data));
-        localStorage.setItem("userLoggedIn", true);
         const authTokens = data.auth_tokens;
         const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
         document.cookie = `tokens=${encodedTokens}`;
@@ -2352,7 +2351,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 }
 
 if (window.location.pathname === "/bestellen") {
-  if (!localStorage.getItem("userLoggedIn")) {
+  if (!thereIsToken()) {
     window.location.href = "/inloggen";
   }
 
@@ -2364,12 +2363,15 @@ if (window.location.pathname === "/bestellen") {
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
+      this.urlRefreshToken =
+        "https://api.develop.nutheorie.be/authorization/token/refresh/";
       this.urlPaymentLink =
         "https://api.develop.nutheorie.be/api/applications/payment_link/";
       this.urlPackageStart =
         "https://api.develop.nutheorie.be/api/applications/set_package_start/";
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
+      this.interval = setInterval(this.refreshToken.bind(this), 30000);
       this.initialize();
     }
 
@@ -2388,7 +2390,7 @@ if (window.location.pathname === "/bestellen") {
         this.buttonLink.addEventListener("click", () =>
           this.requestLink(formData)
         );
-        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
+        this.dateCalendar = null;
       }
     }
 
@@ -2491,6 +2493,7 @@ if (window.location.pathname === "/bestellen") {
       const { payment_amount } = formData;
 
       const access = getCookiesToken();
+      console.log(access);
 
       let payment_link;
       let package_starting_at = this.formatCalendarDate();
@@ -2498,7 +2501,7 @@ if (window.location.pathname === "/bestellen") {
       const objUrlPayloadPackage = {
         url: this.urlPackageStart,
         payload: { package_starting_at },
-        token: access,
+        token: access.access,
       };
 
       const objUrlPayloadPayment = {
@@ -2509,7 +2512,7 @@ if (window.location.pathname === "/bestellen") {
           final_redirect_url: this.urlFinalRedirect,
           fail_redirect_url: this.urlFailRedirect,
         },
-        token: access,
+        token: access.access,
       };
       if (this.isMijnOnline) {
         await this.requestLinkPayment(objUrlPayloadPackage);
@@ -2519,6 +2522,25 @@ if (window.location.pathname === "/bestellen") {
       }
       if (payment_link) {
         window.location.href = payment_link.payment_link;
+      }
+    }
+
+    async refreshToken() {
+      const oldToken = getCookiesToken();
+      try {
+        const respuesta = await fetch(this.urlRefreshToken, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh: oldToken.refresh }),
+        });
+        const data = await respuesta.json();
+        console.log(data);
+        const encodedTokens = encodeURIComponent(JSON.stringify(data));
+        document.cookie = `tokens=${encodedTokens}`;
+      } catch (error) {
+        console.log("Error refreshtoken");
       }
     }
 
@@ -2576,12 +2598,16 @@ if (window.location.pathname === "/bestellen") {
       radio1.id = "radio1";
       radio1.name = "mijnOption";
       radio1.value = "direct";
+      radio1.checked = true;
+      if (radio1.checked) {
+        this.enableButton();
+      }
       radio1.classList.add("mijnRadio");
 
       const label1 = document.createElement("label");
       label1.htmlFor = "radio1";
       label1.textContent = "Direct activeren";
-      label1.classList.add("text-weight-semibold");
+      label1.classList.add("form_label", "text-weight-semibold");
 
       radioDiv1.appendChild(radio1);
       radioDiv1.appendChild(label1);
@@ -2597,16 +2623,18 @@ if (window.location.pathname === "/bestellen") {
       radio2.classList.add("mijnRadio");
       radio1.addEventListener("change", () => {
         dateInput.style.display = "none";
-        this.cleanCalendar();
+        calendarIcon.style.display = "none";
+        this.chooseDateText.style.display = "none";
+        this.planAvailableUntilText.style.display = "none";
         this.getCurrentDateTime();
-        this.minuteCalendar = this.hourCalendar = this.dateCalendar = null;
+        this.dateCalendar = null;
       });
       radio2.addEventListener("change", () => this.handleRadioChange());
 
       const label2 = document.createElement("label");
       label2.htmlFor = "radio2";
       label2.textContent = "Vul de datum in wanneer je pakket in moet gaan";
-      label2.classList.add("text-weight-semibold");
+      label2.classList.add("form_label", "text-weight-semibold");
 
       radioDiv2.appendChild(radio2);
       radioDiv2.appendChild(label2);
@@ -2614,130 +2642,161 @@ if (window.location.pathname === "/bestellen") {
       this.containerMijn.appendChild(radioDiv1);
       this.containerMijn.appendChild(radioDiv2);
 
+      const dateInputContainer = document.createElement("div");
+      dateInputContainer.classList.add("date-input-container");
+
       const dateInput = document.createElement("input");
-      dateInput.type = "date";
+      dateInput.type = "text";
       dateInput.id = "dateInput";
+      dateInput.classList.add("flatpickr", "form_input");
       dateInput.style.display = "none";
-      const today = new Date().toISOString().split("T")[0];
-      dateInput.min = today;
-      dateInput.addEventListener("input", (event) =>
-        this.setCalendarDate(event)
+
+      dateInputContainer.appendChild(dateInput);
+
+      const calendarIcon = document.createElement("img");
+      calendarIcon.src =
+        "https://uploads-ssl.webflow.com/65575474f34982c6bd8b4b70/65b7f97b68336ec19817493a_calendar-date.svg";
+      calendarIcon.classList.add("calendar-icon");
+      calendarIcon.id = "calendarIcon";
+      calendarIcon.style.display = "none";
+      dateInputContainer.appendChild(calendarIcon);
+
+      const clearButton = document.createElement("button");
+      clearButton.innerHTML = "&times;";
+      clearButton.classList.add("clear-button");
+      clearButton.style.display = "none";
+      clearButton.onclick = () => {
+        dateInput.value = "";
+        clearButton.style.display = "none";
+        calendarIcon.style.display = "block";
+      };
+      dateInputContainer.appendChild(clearButton);
+
+      calendarIcon.style.transition = "opacity 0.3s ease-in-out";
+      clearButton.style.transition = "opacity 0.3s ease-in-out";
+
+      dateInputContainer.onmouseover = () => {
+        if (dateInput.value) {
+          clearButton.style.display = "block";
+          calendarIcon.style.display = "none";
+        }
+      };
+      dateInputContainer.onmouseout = () => {
+        clearButton.style.display = "none";
+        if (!radio1.checked) {
+          calendarIcon.style.display = "block";
+        }
+      };
+
+      this.chooseDateText = document.createElement("div");
+      this.chooseDateText.textContent = "Kies een datum";
+      this.chooseDateText.classList.add(
+        "text-size-small",
+        "text-weight-semibold"
       );
+      this.chooseDateText.style.display = "none";
 
-      const timePicker = document.createElement("div");
-      timePicker.id = "timePicker";
-      timePicker.classList.add("time-picker");
+      this.planAvailableUntilText = document.createElement("div");
+      this.planAvailableUntilText.textContent =
+        "Plan is beschikbaar tot " + this.calculateValidUntilDate();
+      this.planAvailableUntilText.classList.add(
+        "text-size-tiny",
+        "text-weight-bold"
+      );
+      this.planAvailableUntilText.style.color = "#9c9c9c";
+      this.planAvailableUntilText.style.display = "none";
 
-      const hourList = document.createElement("ul");
-      hourList.id = "hourList";
-      hourList.classList.add("time-list");
+      this.containerMijn.appendChild(this.chooseDateText);
+      this.containerMijn.appendChild(this.planAvailableUntilText);
 
-      for (let i = 0; i < 24; i++) {
-        const hourItem = document.createElement("li");
-        hourItem.textContent = (i < 10 ? "0" : "") + i;
-        hourItem.classList.add("time-item");
-        hourItem.onclick = () => {
-          this.setHourCalendar(i);
-          this.updateSelected(hourList, hourItem);
-        };
-        hourList.appendChild(hourItem);
-      }
+      this.containerMijn.appendChild(dateInputContainer);
 
-      const minuteList = document.createElement("ul");
-      minuteList.id = "minuteList";
-      minuteList.classList.add("time-list");
-
-      for (let i = 0; i < 60; i++) {
-        const minuteItem = document.createElement("li");
-        minuteItem.textContent = (i < 10 ? "0" : "") + i;
-        minuteItem.classList.add("time-item");
-        minuteItem.onclick = () => {
-          this.setMinuteCalendar(i);
-          this.updateSelected(minuteList, minuteItem);
-        };
-        minuteList.appendChild(minuteItem);
-      }
-
-      timePicker.appendChild(hourList);
-      timePicker.appendChild(minuteList);
-
-      this.containerMijn.appendChild(dateInput);
-      this.containerMijn.appendChild(timePicker);
+      flatpickr("#dateInput", {
+        enableTime: true,
+        dateFormat: "d-m-Y H:i",
+        minDate: "today",
+        time_24hr: true,
+        minuteIncrement: 1,
+        disableMobile: "true",
+        locale: {
+          firstDayOfWeek: 1,
+          weekdays: {
+            shorthand: ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"],
+            longhand: [
+              "Zondag",
+              "Maandag",
+              "Dinsdag",
+              "Woensdag",
+              "Donderdag",
+              "Vrijdag",
+              "Zaterdag",
+            ],
+          },
+          months: {
+            shorthand: [
+              "Jan",
+              "Feb",
+              "Mrt",
+              "Apr",
+              "Mei",
+              "Jun",
+              "Jul",
+              "Aug",
+              "Sep",
+              "Okt",
+              "Nov",
+              "Dec",
+            ],
+            longhand: [
+              "Januari",
+              "Februari",
+              "Maart",
+              "April",
+              "Mei",
+              "Juni",
+              "Juli",
+              "Augustus",
+              "September",
+              "Oktober",
+              "November",
+              "December",
+            ],
+          },
+        },
+        onChange: (selectedDates, dateStr, instance) => {
+          this.dateCalendar = instance.formatDate(
+            selectedDates[0],
+            "Y-m-d\\TH:i:00+01:00"
+          );
+          console.log(this.dateCalendar);
+          this.enableButton();
+          this.updatePlanAvailableUntilText();
+        },
+      });
     }
 
     handleRadioChange() {
       this.buttonLink.classList.add("disabled-button");
       const radio2 = document.getElementById("radio2");
       const dateInput = document.getElementById("dateInput");
-      const timePicker = document.getElementById("timePicker");
+      const calendarIcon = document.getElementById("calendarIcon");
       dateInput.style.display = radio2.checked ? "block" : "none";
+      calendarIcon.style.display = "block";
+      this.chooseDateText.style.display = radio2.checked ? "block" : "none";
+      this.planAvailableUntilText.style.display = radio2.checked
+        ? "block"
+        : "none";
     }
 
-    cleanCalendar() {
-      const dateInput = document.getElementById("dateInput");
-      if (dateInput) {
-        dateInput.value = "";
-      }
-
-      const hourListItems = document.querySelectorAll("#hourList .time-item");
-      const minuteListItems = document.querySelectorAll(
-        "#minuteList .time-item"
-      );
-
-      for (const item of hourListItems) {
-        item.classList.remove("selected");
-      }
-
-      for (const item of minuteListItems) {
-        item.classList.remove("selected");
-      }
-    }
-
-    updateSelected(list, selectedItem) {
-      list.querySelectorAll(".selected").forEach((item) => {
-        item.classList.remove("selected");
-      });
-      selectedItem.classList.add("selected");
-    }
-
-    setCalendarDate(event) {
-      const timePicker = document.getElementById("timePicker");
-      this.dateCalendar = event.target.value;
+    updatePlanAvailableUntilText() {
       if (this.dateCalendar) {
-        timePicker.classList.add("visible");
-      } else {
-        timePicker.classList.remove("visible");
-      }
-      this.enableButton();
-    }
-
-    setHourCalendar(hour) {
-      hour = Number(hour);
-      this.hourCalendar = hour < 10 ? "0" + hour : "" + hour;
-      this.enableButton();
-      if (this.minuteCalendar !== null) {
-        this.checkAndHideTimePicker();
-      }
-    }
-
-    setMinuteCalendar(minute) {
-      minute = Number(minute);
-      this.minuteCalendar = minute < 10 ? "0" + minute : "" + minute;
-      this.enableButton();
-      if (this.hourCalendar !== null) {
-        this.checkAndHideTimePicker();
-      }
-    }
-
-    checkAndHideTimePicker() {
-      const timePicker = document.getElementById("timePicker");
-      if (timePicker) {
-        timePicker.classList.remove("visible");
+        this.planAvailableUntilText.textContent =
+          "Plan is beschikbaar tot " + this.calculateValidUntilDate();
       }
     }
 
     enableButton() {
-      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
+      if (this.dateCalendar || this.getCurrentDateTime()) {
         this.buttonLink.classList.remove("disabled-button");
       } else {
         this.buttonLink.classList.add("disabled-button");
@@ -2745,10 +2804,32 @@ if (window.location.pathname === "/bestellen") {
     }
 
     formatCalendarDate() {
-      if (this.dateCalendar && this.hourCalendar && this.minuteCalendar) {
-        return `${this.dateCalendar}T${this.hourCalendar}:${this.minuteCalendar}:00+01:00`;
+      if (this.dateCalendar) {
+        return this.dateCalendar;
       }
       return this.getCurrentDateTime();
+    }
+
+    calculateValidUntilDate() {
+      let validUntilDate;
+      if (this.dateCalendar) {
+        validUntilDate = new Date(this.dateCalendar);
+      } else {
+        validUntilDate = new Date();
+      }
+      validUntilDate.setDate(validUntilDate.getDate() + 45);
+
+      return `${validUntilDate.getDate().toString().padStart(2, "0")}-${(
+        validUntilDate.getMonth() + 1
+      )
+        .toString()
+        .padStart(2, "0")}-${validUntilDate.getFullYear()} ${validUntilDate
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${validUntilDate
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
     }
 
     getCurrentDateTime() {
@@ -2831,6 +2912,7 @@ if (window.location.pathname === "/bestellen") {
       this.displayCourseNames(formData);
       this.updateRowVisibility(formData);
       this.updateSvgVisibility(formData);
+      this.updateVragenText(formData);
     }
 
     displayResumeConfiguration(formData) {
@@ -2909,13 +2991,18 @@ if (window.location.pathname === "/bestellen") {
         examTypeElement.textContent = examTypeText;
       }
     }
-
     displayCities(formData) {
       this.toggleElementVisibility(
         "citiesColumn",
-        formData.cities && formData.cities.length > 0
+        formData.cities &&
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
-      if (formData.cities && formData.cities.length > 0) {
+      if (
+        formData.cities &&
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
+      ) {
         const citiesElement = document.getElementById("citiesText");
         citiesElement.textContent = formData.cities.join(", ");
       }
@@ -3006,6 +3093,55 @@ if (window.location.pathname === "/bestellen") {
       }
     }
 
+    updateVragenText(formData) {
+      const isMijnReservationOnline =
+        formData.is_mijn_reservation && formData.course_type === "online";
+      this.toggleClass("defaultFaq", "hide", isMijnReservationOnline);
+      this.toggleClass("mijnFaq", "hide", !isMijnReservationOnline);
+      this.toggleClass("bestellenWanneerText", "hide", isMijnReservationOnline);
+
+      const totaalTextElement = document.getElementById("totaalText");
+      const aanbetalingTextElement = document.getElementById("aanbetalingText");
+
+      if (totaalTextElement) {
+        totaalTextElement.textContent = this.getTotaalTextContent(formData);
+      }
+
+      if (aanbetalingTextElement) {
+        aanbetalingTextElement.textContent =
+          this.getAanbetalingTextContent(formData);
+      }
+    }
+
+    toggleClass(elementId, className, condition) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        if (condition) {
+          element.classList.add(className);
+        } else {
+          element.classList.remove(className);
+        }
+      }
+    }
+
+    getTotaalTextContent(formData) {
+      if (formData.course_type === "offline") {
+        return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
+      } else if (formData.course_type === "online") {
+        return `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
+      }
+      return "";
+    }
+
+    getAanbetalingTextContent(formData) {
+      if (formData.course_type === "offline") {
+        return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
+      } else if (formData.course_type === "online") {
+        return `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
+      }
+      return "";
+    }
+
     handleStoredData(formData) {
       const amount = document.getElementById("btnAmount");
       const aanbetalingAmount = document.getElementById("aanbetalingTotal");
@@ -3029,23 +3165,38 @@ if (window.location.pathname === "/bestellen") {
   const orderManager = new OrderManager();
 }
 
+function logout() {
+  document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  window.location.href = "/inloggen";
+}
+
+function updateLoginButtonText() {
+  const loginButton = document.getElementById("btn-login");
+  if (loginButton) {
+    loginButton.textContent = thereIsToken() ? "Uitloggen" : "Inloggen";
+  }
+}
+
 function initializeLoginButton() {
   const loginButton = document.getElementById("btn-login");
   if (loginButton) {
-    if (localStorage.getItem("userLoggedIn")) {
-      loginButton.textContent = "Uitloggen";
-    } else {
-      loginButton.textContent = "Inloggen";
-    }
+    updateLoginButtonText();
 
     loginButton.addEventListener("click", (event) => {
       event.preventDefault();
-      window.location.href = "/inloggen";
+      if (!thereIsToken()) {
+        logout();
+      } else {
+        window.location.href = "/inloggen";
+      }
     });
   }
 }
 
-document.addEventListener("DOMContentLoaded", initializeLoginButton);
+function thereIsToken() {
+  const token = getCookiesToken();
+  return !!token && !!token.access;
+}
 
 function getCookiesToken() {
   const cookies = document.cookie.split(";");
@@ -3057,7 +3208,7 @@ function getCookiesToken() {
       try {
         const decodedTokens = decodeURIComponent(encodedTokens);
         const tokens = JSON.parse(decodedTokens);
-        return tokens.access;
+        return tokens;
       } catch (error) {
         console.error("Error al decodificar la cookie tokens:", error);
         return null;
@@ -3066,3 +3217,5 @@ function getCookiesToken() {
   }
   return null;
 }
+
+document.addEventListener("DOMContentLoaded", initializeLoginButton);
