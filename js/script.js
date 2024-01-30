@@ -2296,6 +2296,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       const data = await this.sendDataBack();
       if (data) {
         localStorage.setItem("formData", JSON.stringify(data));
+        localStorage.removeItem("fechaGlobalSeleccionada");
         const authTokens = data.auth_tokens;
         const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
         document.cookie = `tokens=${encodedTokens}`;
