@@ -3169,13 +3169,15 @@ if (window.location.pathname === "/bestellen") {
       if (tiempoGuardado) {
         const tiempoTranscurrido = Date.now() - parseInt(tiempoGuardado);
         tiempoInicio = setInterval(
-          this.refreshToken(),
-          30000 - (tiempoTranscurrido % 1000)
+          () => this.refreshToken(),
+          30000 - (tiempoTranscurrido % 30000)
         );
       } else {
-        tiempoInicio = setInterval(this.refreshToken(), 30000);
+        tiempoInicio = setInterval(() => this.refreshToken(), 30000);
       }
-      localStorage.setItem("tiempoTranscurrido", tiempoInicio);
+
+      // Almacenar el tiempo actual en el localStorage
+      localStorage.setItem("tiempoTranscurrido", Date.now());
     }
   }
   const orderManager = new OrderManager();
