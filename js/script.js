@@ -21,15 +21,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initBirthDateInput();
       this.isEditButtonsInitialized = false;
       this.handleFinalStepBound = this.handleFinalStep.bind(this);
-      this.urls = {
-        cities: "https://api.nutheorie.nl/api/cities/",
-        cbrsLocations:
-          "https://api.nutheorie.nl/api/applications/exam_locations/",
-        plans:
-          "https://api.nutheorie.nl/api/applications/online_plans/",
-        urlPostMultiStepForm:
-          "https://api.nutheorie.nl/api/applications/",
-      };
+      this.urlDevelop = "https://api.develop.nutheorie.be/api/";
+      this.urlProd = "https://api.nutheorie.nl/api/";
+      this.initAPIUrlVariables();
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
       this.dutchMonths = [
@@ -219,6 +213,24 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.setInitialCourseTypeUI();
       this.stepHistory.push(this.steps[this.currentStepIndex].id);
       this.showFormForStep(this.currentStepIndex);
+    }
+
+    initAPIUrlVariables() {
+      const apiBaseUrls = {
+        "www.develop.nutheorie.be": this.urlDevelop,
+        "www.nutheorie.nl": this.urlProd,
+        "webflow.nutheorie.nl": this.urlProd,
+        "webflow.nutheorie.be": this.urlDevelop
+      };
+
+      let apiBaseUrl = apiBaseUrls[window.location.hostname] ?? this.urlProd;
+
+      this.urls = {
+        cities: `${apiBaseUrl}cities/`,
+        cbrsLocations: `${apiBaseUrl}applications/exam_locations/`,
+        plans: `${apiBaseUrl}applications/online_plans/`,
+        urlPostMultiStepForm: `${apiBaseUrl}applications/`,
+      };
     }
 
     // HELPERS
@@ -1549,7 +1561,6 @@ if (window.location.pathname.includes("/aanmelden")) {
               order
             };
           });
-        console.log(this.allAvailablePlans);
         this.createPackages(this.allAvailablePlans);
       } catch (error) {
         console.log(error);
@@ -2362,13 +2373,13 @@ if (window.location.pathname === "/bestellen") {
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
-      this.urlRefreshToken = "https://api.nutheorie.nl/authorization/token/refresh/";
-      this.urlPaymentLink =
-        "https://api.nutheorie.nl/api/applications/payment_link/";
-      this.urlPackageStart =
-        "https://api.nutheorie.nl/api/applications/set_package_start/";
-      this.urlFinalRedirect = "https://www.nutheorie.nl/user-profile";
-      this.urlFailRedirect = "https://www.nutheorie.nl/betaling/failed";
+      this.urlDevelop = "https://api.develop.nutheorie.be/";
+      this.urlProd = "https://api.nutheorie.nl/";
+      this.urlFinalRedirectProd = "https://www.nutheorie.nl/user-profile";
+      this.urlFinalRedirectDevelop = "https://develop.nutheorie.be/user-profile";
+      this.urlFailRedirectProd = "https://www.nutheorie.nl/betaling/failed";
+      this.urlFailRedirectDevelop = "https://develop.nutheorie.be/betaling/failed";
+      this.initAPIUrlVariables();
       this.interval = setInterval(this.refreshToken.bind(this), 90000);
       this.initialize();
     }
@@ -2390,6 +2401,36 @@ if (window.location.pathname === "/bestellen") {
         );
         this.dateCalendar = null;
       }
+    }
+
+    initAPIUrlVariables() {
+      const apiBaseUrls = {
+        "www.develop.nutheorie.be": this.urlDevelop,
+        "www.nutheorie.nl": this.urlProd,
+        "webflow.nutheorie.nl": this.urlProd,
+        "webflow.nutheorie.be": this.urlDevelop
+      };
+
+      let apiBaseUrl = apiBaseUrls[window.location.hostname] || this.urlProd;
+
+      this.urlRefreshToken = `${apiBaseUrl}authorization/token/refresh/`;
+      this.urlPaymentLink = `${apiBaseUrl}api/applications/payment_link/`;
+      this.urlPackageStart = `${apiBaseUrl}api/applications/set_package_start/`;
+
+      const finalRedirectUrls = {
+        "www.develop.nutheorie.be": this.urlFinalRedirectDevelop,
+        "webflow.nutheorie.be": this.urlFinalRedirectDevelop,
+        default: this.urlFinalRedirectProd
+      };
+
+      const failRedirectUrls = {
+        "www.develop.nutheorie.be": this.urlFailRedirectDevelop,
+        "webflow.nutheorie.be": this.urlFailRedirectDevelop,
+        default: this.urlFailRedirectProd
+      };
+
+      this.urlFinalRedirect = finalRedirectUrls[window.location.hostname] || finalRedirectUrls.default;
+      this.urlFailRedirect = failRedirectUrls[window.location.hostname] || failRedirectUrls.default;
     }
 
     getLastDayOfMonth() {
