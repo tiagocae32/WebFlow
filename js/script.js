@@ -2372,7 +2372,7 @@ if (window.location.pathname === "/bestellen") {
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
       this.initialize();
-      setInterval(() => this.iniciarIntervaloToken(285000));
+      this.iniciarIntervaloToken(285000);
     }
 
     initialize() {
@@ -3175,8 +3175,9 @@ if (window.location.pathname === "/bestellen") {
         setInterval(() => this.refreshToken(), segundos);
       }
 
-      // Almacenar el tiempo actual en el localStorage
-      localStorage.setItem("tiempoTranscurrido", Date.now());
+      if (!tiempoGuardado) {
+        localStorage.setItem("tiempoTranscurrido", Date.now());
+      }
     }
   }
   const orderManager = new OrderManager();
