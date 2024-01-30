@@ -1739,7 +1739,7 @@ if (window.location.pathname.includes("/aanmelden")) {
             "div",
             "packageOldPrice",
             "heading-style-h6 text-weight-xbold",
-            `â‚¬ ${parseInt(pkg.old_price)}`
+            `€ ${parseInt(pkg.old_price)}`
           )
         );
         packageOldPriceContainer.appendChild(
@@ -2370,7 +2370,7 @@ if (window.location.pathname === "/bestellen") {
         "https://api.develop.nutheorie.be/api/applications/set_package_start/";
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
-      this.interval = setInterval(this.refreshToken.bind(this), 30000);
+      this.interval = setInterval(this.refreshToken.bind(this), 90000);
       this.initialize();
     }
 
@@ -3079,7 +3079,7 @@ if (window.location.pathname === "/bestellen") {
     handleStoredData(formData) {
       const amount = document.getElementById("btnAmount");
       const aanbetalingAmount = document.getElementById("aanbetalingTotal");
-      amount.textContent = `â‚¬ ${formData.payment_amount}`;
+      amount.textContent = `€ ${formData.payment_amount}`;
       const paymentAmount = parseFloat(formData.payment_amount);
       let formattedAmount = "";
 
