@@ -851,6 +851,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           break;
         case "step4Cities":
           this.getCities();
+          this.removeOnlineCity();
           break;
         case "step4Cbr":
           this.getCbrLocations();
@@ -999,6 +1000,13 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
       }
       this.createOptions(this.citiesList, "step4", true);
+    }
+
+    removeOnlineCity() {
+      if (this.formData.course_type === "offline" && Array.isArray(this.formData.cities)) {
+        const indexCityOnline = this.formData.cities.findIndex(city => city.is_online);
+        this.formData.cities.splice(indexCityOnline, 1);
+      }
     }
     // END CITIES
 
@@ -2234,6 +2242,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       const container = document.getElementById(
         this.resumeConfig["package_name"].elementId
       );
+      const offlineContent = document.getElementById("overzichtOffline");
 
       const existingPackages = container.getElementsByClassName(
         "overzicht_package-item"
@@ -2242,10 +2251,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         existingPackages[0].parentNode.removeChild(existingPackages[0]);
       }
       if (this.formData["course_type"] === "offline") {
-        const offlineContent = document.getElementById("overzichtOffline");
         offlineContent.classList.add("active");
       } else {
         // Render package
+        offlineContent.classList.remove("active");
         const selectedPackage = this.packageSelected;
         if (selectedPackage) {
           let packageElement = document.createElement("div");
