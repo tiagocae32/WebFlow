@@ -1166,11 +1166,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       let lastDatePicked = localStorage.getItem("fechaGlobalSeleccionada");
       this.datePicked = lastDatePicked;
 
-      if (!this.formData.examType) {
-        localStorage.removeItem("fechaGlobalSeleccionada");
-        this.datePicked = null;
-      }
-
       setInterval(() => {
         let getDatePicked = localStorage.getItem("fechaGlobalSeleccionada");
         if (getDatePicked !== lastDatePicked) {
@@ -1179,6 +1174,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.formatDateMijnFlow();
         }
       }, 1000);
+      console.log(this.datePicked);
     }
 
     setTimeInput() {
@@ -1195,7 +1191,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
         e.target.value = value;
         this.timePicked = value;
-        console.log(this.timePicked);
 
         this.validateTimeInput(value);
         this.formatDateMijnFlow();
