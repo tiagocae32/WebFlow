@@ -769,8 +769,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1366,9 +1366,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1740,7 +1739,7 @@ if (window.location.pathname.includes("/aanmelden")) {
             "div",
             "packageOldPrice",
             "heading-style-h6 text-weight-xbold",
-            `€ ${parseInt(pkg.old_price)}`
+            `â‚¬ ${parseInt(pkg.old_price)}`
           )
         );
         packageOldPriceContainer.appendChild(
@@ -1984,7 +1983,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         newStepHistory.push(currentStepId);
 
         if (++safetyCounter > 100) {
-          console.error("Se ha excedido el límite de seguridad en el bucle");
+          console.error("Se ha excedido el lÃ­mite de seguridad en el bucle");
           return;
         }
       }
@@ -2235,7 +2234,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.addPackageItemElements(packageElement, selectedPackage, true);
           container.appendChild(packageElement);
         } else {
-          container.textContent = "No se ha seleccionado ningún paquete.";
+          container.textContent = "No se ha seleccionado ningÃºn paquete.";
         }
       }
     }
@@ -2262,6 +2261,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       const data = await this.sendDataBack();
       if (data) {
         localStorage.setItem("formData", JSON.stringify(data));
+        localStorage.setItem("userLoggedIn", true);
         const authTokens = data.auth_tokens;
         const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
         document.cookie = `tokens=${encodedTokens}`;
@@ -2351,7 +2351,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 }
 
 if (window.location.pathname === "/bestellen") {
-  if (!thereIsToken()) {
+  if (!localStorage.getItem("userLoggedIn")) {
     window.location.href = "/inloggen";
   }
 
@@ -2363,16 +2363,15 @@ if (window.location.pathname === "/bestellen") {
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
-      this.urlRefreshToken =
-        "https://api.develop.nutheorie.be/authorization/token/refresh/";
+      this.urlRefreshToken = "https://api.develop.nutheorie.be/authorization/token/refresh/";
       this.urlPaymentLink =
         "https://api.develop.nutheorie.be/api/applications/payment_link/";
       this.urlPackageStart =
         "https://api.develop.nutheorie.be/api/applications/set_package_start/";
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
+      this.interval = setInterval(this.refreshToken.bind(this), 30000);
       this.initialize();
-      this.iniciarIntervaloToken(285000);
     }
 
     initialize() {
@@ -2533,8 +2532,8 @@ if (window.location.pathname === "/bestellen") {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ refresh: oldToken.refresh }),
-        });
+          body: JSON.stringify({ "refresh": oldToken.refresh }),
+        })
         const data = await respuesta.json();
         console.log(data);
         const encodedTokens = encodeURIComponent(JSON.stringify(data));
@@ -2654,8 +2653,7 @@ if (window.location.pathname === "/bestellen") {
       dateInputContainer.appendChild(dateInput);
 
       const calendarIcon = document.createElement("img");
-      calendarIcon.src =
-        "https://uploads-ssl.webflow.com/65575474f34982c6bd8b4b70/65b7f97b68336ec19817493a_calendar-date.svg";
+      calendarIcon.src = "https://uploads-ssl.webflow.com/65575474f34982c6bd8b4b70/65b7f97b68336ec19817493a_calendar-date.svg";
       calendarIcon.classList.add("calendar-icon");
       calendarIcon.id = "calendarIcon";
       calendarIcon.style.display = "none";
@@ -2666,7 +2664,7 @@ if (window.location.pathname === "/bestellen") {
       clearButton.classList.add("clear-button");
       clearButton.style.display = "none";
       clearButton.onclick = () => {
-        dateInput.value = "";
+        dateInput.value = '';
         clearButton.style.display = "none";
         calendarIcon.style.display = "block";
       };
@@ -2690,19 +2688,12 @@ if (window.location.pathname === "/bestellen") {
 
       this.chooseDateText = document.createElement("div");
       this.chooseDateText.textContent = "Kies een datum";
-      this.chooseDateText.classList.add(
-        "text-size-small",
-        "text-weight-semibold"
-      );
+      this.chooseDateText.classList.add("text-size-small", "text-weight-semibold");
       this.chooseDateText.style.display = "none";
 
       this.planAvailableUntilText = document.createElement("div");
-      this.planAvailableUntilText.textContent =
-        "Plan is beschikbaar tot " + this.calculateValidUntilDate();
-      this.planAvailableUntilText.classList.add(
-        "text-size-tiny",
-        "text-weight-bold"
-      );
+      this.planAvailableUntilText.textContent = "Plan is beschikbaar tot " + this.calculateValidUntilDate();
+      this.planAvailableUntilText.classList.add("text-size-tiny", "text-weight-bold");
       this.planAvailableUntilText.style.color = "#9c9c9c";
       this.planAvailableUntilText.style.display = "none";
 
@@ -2719,55 +2710,18 @@ if (window.location.pathname === "/bestellen") {
         minuteIncrement: 1,
         disableMobile: "true",
         locale: {
-          firstDayOfWeek: 1,
-          weekdays: {
-            shorthand: ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"],
-            longhand: [
-              "Zondag",
-              "Maandag",
-              "Dinsdag",
-              "Woensdag",
-              "Donderdag",
-              "Vrijdag",
-              "Zaterdag",
-            ],
+          "firstDayOfWeek": 1,
+          "weekdays": {
+            "shorthand": ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"],
+            "longhand": ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"],
           },
-          months: {
-            shorthand: [
-              "Jan",
-              "Feb",
-              "Mrt",
-              "Apr",
-              "Mei",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Okt",
-              "Nov",
-              "Dec",
-            ],
-            longhand: [
-              "Januari",
-              "Februari",
-              "Maart",
-              "April",
-              "Mei",
-              "Juni",
-              "Juli",
-              "Augustus",
-              "September",
-              "Oktober",
-              "November",
-              "December",
-            ],
+          "months": {
+            "shorthand": ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
+            "longhand": ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"],
           },
         },
         onChange: (selectedDates, dateStr, instance) => {
-          this.dateCalendar = instance.formatDate(
-            selectedDates[0],
-            "Y-m-d\\TH:i:00+01:00"
-          );
+          this.dateCalendar = instance.formatDate(selectedDates[0], "Y-m-d\\TH:i:00+01:00");
           console.log(this.dateCalendar);
           this.enableButton();
           this.updatePlanAvailableUntilText();
@@ -2783,15 +2737,12 @@ if (window.location.pathname === "/bestellen") {
       dateInput.style.display = radio2.checked ? "block" : "none";
       calendarIcon.style.display = "block";
       this.chooseDateText.style.display = radio2.checked ? "block" : "none";
-      this.planAvailableUntilText.style.display = radio2.checked
-        ? "block"
-        : "none";
+      this.planAvailableUntilText.style.display = radio2.checked ? "block" : "none";
     }
 
     updatePlanAvailableUntilText() {
       if (this.dateCalendar) {
-        this.planAvailableUntilText.textContent =
-          "Plan is beschikbaar tot " + this.calculateValidUntilDate();
+        this.planAvailableUntilText.textContent = "Plan is beschikbaar tot " + this.calculateValidUntilDate();
       }
     }
 
@@ -2819,17 +2770,7 @@ if (window.location.pathname === "/bestellen") {
       }
       validUntilDate.setDate(validUntilDate.getDate() + 45);
 
-      return `${validUntilDate.getDate().toString().padStart(2, "0")}-${(
-        validUntilDate.getMonth() + 1
-      )
-        .toString()
-        .padStart(2, "0")}-${validUntilDate.getFullYear()} ${validUntilDate
-        .getHours()
-        .toString()
-        .padStart(2, "0")}:${validUntilDate
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`;
+      return `${validUntilDate.getDate().toString().padStart(2, '0')}-${(validUntilDate.getMonth() + 1).toString().padStart(2, '0')}-${validUntilDate.getFullYear()} ${validUntilDate.getHours().toString().padStart(2, '0')}:${validUntilDate.getMinutes().toString().padStart(2, '0')}`;
     }
 
     getCurrentDateTime() {
@@ -2994,19 +2935,14 @@ if (window.location.pathname === "/bestellen") {
     displayCities(formData) {
       this.toggleElementVisibility(
         "citiesColumn",
-        formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities && formData.cities.length > 0 && formData.course_type === "offline"
       );
-      if (
-        formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
-      ) {
+      if (formData.cities && formData.cities.length > 0 && formData.course_type === "offline") {
         const citiesElement = document.getElementById("citiesText");
         citiesElement.textContent = formData.cities.join(", ");
       }
     }
+
 
     displayCBRLocations(formData) {
       this.toggleElementVisibility(
@@ -3094,8 +3030,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     updateVragenText(formData) {
-      const isMijnReservationOnline =
-        formData.is_mijn_reservation && formData.course_type === "online";
+      const isMijnReservationOnline = formData.is_mijn_reservation && formData.course_type === "online";
       this.toggleClass("defaultFaq", "hide", isMijnReservationOnline);
       this.toggleClass("mijnFaq", "hide", !isMijnReservationOnline);
       this.toggleClass("bestellenWanneerText", "hide", isMijnReservationOnline);
@@ -3108,8 +3043,7 @@ if (window.location.pathname === "/bestellen") {
       }
 
       if (aanbetalingTextElement) {
-        aanbetalingTextElement.textContent =
-          this.getAanbetalingTextContent(formData);
+        aanbetalingTextElement.textContent = this.getAanbetalingTextContent(formData);
       }
     }
 
@@ -3145,7 +3079,7 @@ if (window.location.pathname === "/bestellen") {
     handleStoredData(formData) {
       const amount = document.getElementById("btnAmount");
       const aanbetalingAmount = document.getElementById("aanbetalingTotal");
-      amount.textContent = `€ ${formData.payment_amount}`;
+      amount.textContent = `â‚¬ ${formData.payment_amount}`;
       const paymentAmount = parseFloat(formData.payment_amount);
       let formattedAmount = "";
 
@@ -3161,32 +3095,12 @@ if (window.location.pathname === "/bestellen") {
 
       aanbetalingAmount.textContent = ` ${formattedAmount}`;
     }
-
-    iniciarIntervaloToken(segundos) {
-      const tiempoGuardado = localStorage.getItem("tiempoTranscurrido");
-
-      if (tiempoGuardado) {
-        const tiempoTranscurrido = Date.now() - parseInt(tiempoGuardado);
-        setInterval(() => {
-          this.refreshToken();
-          localStorage.setItem("tiempoTranscurrido", Date.now());
-        }, segundos - (tiempoTranscurrido % segundos));
-      } else {
-        setInterval(() => {
-          this.refreshToken();
-          localStorage.setItem("tiempoTranscurrido", Date.now());
-        }, segundos);
-      }
-
-      if (!tiempoGuardado) {
-        localStorage.setItem("tiempoTranscurrido", Date.now());
-      }
-    }
   }
   const orderManager = new OrderManager();
 }
 
 function logout() {
+  localStorage.removeItem("userLoggedIn");
   document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   window.location.href = "/inloggen";
 }
@@ -3194,7 +3108,7 @@ function logout() {
 function updateLoginButtonText() {
   const loginButton = document.getElementById("btn-login");
   if (loginButton) {
-    loginButton.textContent = thereIsToken() ? "Uitloggen" : "Inloggen";
+    loginButton.textContent = localStorage.getItem("userLoggedIn") ? "Uitloggen" : "Inloggen";
   }
 }
 
@@ -3205,7 +3119,7 @@ function initializeLoginButton() {
 
     loginButton.addEventListener("click", (event) => {
       event.preventDefault();
-      if (!thereIsToken()) {
+      if (localStorage.getItem("userLoggedIn")) {
         logout();
       } else {
         window.location.href = "/inloggen";
@@ -3214,10 +3128,7 @@ function initializeLoginButton() {
   }
 }
 
-function thereIsToken() {
-  const token = getCookiesToken();
-  return !!token && !!token.access;
-}
+document.addEventListener("DOMContentLoaded", initializeLoginButton);
 
 function getCookiesToken() {
   const cookies = document.cookie.split(";");
@@ -3238,5 +3149,3 @@ function getCookiesToken() {
   }
   return null;
 }
-
-document.addEventListener("DOMContentLoaded", initializeLoginButton);
