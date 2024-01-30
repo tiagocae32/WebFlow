@@ -1,3 +1,12 @@
+const urlDevelop = "https://api.develop.nutheorie.be/";
+const urlProd = "https://api.nutheorie.nl/";
+const apiBaseUrls = {
+  "www.develop.nutheorie.be": urlDevelop,
+  "www.nutheorie.nl": urlProd,
+  "webflow.nutheorie.nl": urlProd,
+  "webflow.nutheorie.be": urlDevelop,
+};
+
 if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
@@ -21,8 +30,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initBirthDateInput();
       this.isEditButtonsInitialized = false;
       this.handleFinalStepBound = this.handleFinalStep.bind(this);
-      this.urlDevelop = "https://api.develop.nutheorie.be/api/";
-      this.urlProd = "https://api.nutheorie.nl/api/";
       this.initAPIUrlVariables();
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
@@ -216,13 +223,13 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     initAPIUrlVariables() {
-      let apiBaseUrl = apiBaseUrls[window.location.hostname] ?? this.urlProd;
+      let apiBaseUrl = apiBaseUrls[window.location.hostname] ?? urlProd;
 
       this.urls = {
-        cities: `${apiBaseUrl}cities/`,
-        cbrsLocations: `${apiBaseUrl}applications/exam_locations/`,
-        plans: `${apiBaseUrl}applications/online_plans/`,
-        urlPostMultiStepForm: `${apiBaseUrl}applications/`,
+        cities: `${apiBaseUrl}api/cities/`,
+        cbrsLocations: `${apiBaseUrl}api/applications/exam_locations/`,
+        plans: `${apiBaseUrl}api/applications/online_plans/`,
+        urlPostMultiStepForm: `${apiBaseUrl}api/applications/`,
       };
     }
 
@@ -774,8 +781,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1105,22 +1112,22 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     // CBR LOCATIONS GET
+
     async getCbrLocations(createElements = true) {
       if (this.cbrs_list.length === 0) {
         try {
           const resServer = await fetch(this.urls.cbrsLocations);
           const data = await resServer.json();
           this.cbrs_list = data;
-          if (createElements) {
-            this.createCbrElements(this.cbrs_list);
-          } else {
-            this.createCbrsSelect(this.cbrs_list);
-          }
         } catch (error) {
           console.log(error);
         }
-      } else if (createElements) {
+      }
+      if (createElements) {
         this.createCbrElements(this.cbrs_list);
+      } else {
+        this.formData["cbr_locations"] = [];
+        this.createCbrsSelect(this.cbrs_list);
       }
     }
 
@@ -1211,55 +1218,66 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     createCbrElements(elements) {
       const container = document.getElementById("step4check");
+
+      const createCheckboxElement = (element, index) => {
+        const itemContainer = document.createElement("div");
+        itemContainer.className = "aanmelden_step4-list_item";
+
+        const label = document.createElement("label");
+        label.className = "w-checkbox aanmelden_step4-item";
+
+        const checkboxDiv = document.createElement("div");
+        checkboxDiv.className = "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = index;
+        checkbox.name = element;
+        checkbox.style.opacity = 0;
+        checkbox.style.position = "absolute";
+        checkbox.style.zIndex = -1;
+
+        const span = document.createElement("span");
+        span.className = "text-weight-bold w-form-label";
+        span.setAttribute("for", element);
+        span.textContent = element;
+
+        label.appendChild(checkboxDiv);
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        itemContainer.appendChild(label);
+
+        container.appendChild(itemContainer);
+
+        checkbox.addEventListener("click", () => {
+          this.toggleCbrSelection(element);
+          this.checkEnableNextButton();
+        });
+
+        return checkboxDiv;
+      };
+
+      const updateCheckboxState = (checkbox, element, checkboxDiv) => {
+        checkbox.checked = this.formData["cbr_locations"]?.includes(element);
+        if (!checkbox.checked) {
+          checkboxDiv.classList.remove("w--redirected-checked");
+        }
+      };
+
       if (!container.hasChildNodes()) {
         this.cleanInterface(container);
         elements.forEach((element, index) => {
-          const itemContainer = document.createElement("div");
-          itemContainer.className = "aanmelden_step4-list_item";
-
-          const label = document.createElement("label");
-          label.className = "w-checkbox aanmelden_step4-item";
-
-          const checkboxDiv = document.createElement("div");
-          checkboxDiv.className =
-            "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
-
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.id = index;
-          checkbox.name = element;
-          checkbox.style.opacity = 0;
-          checkbox.style.position = "absolute";
-          checkbox.style.zIndex = -1;
-
-          const span = document.createElement("span");
-          span.className = "text-weight-bold w-form-label";
-          span.setAttribute("for", element);
-          span.textContent = element;
-
-          label.appendChild(checkboxDiv);
-          label.appendChild(checkbox);
-          label.appendChild(span);
-          itemContainer.appendChild(label);
-
-          container.appendChild(itemContainer);
-
-          if (this.formData["cbr_locations"]?.includes(element)) {
-            checkbox.checked = true;
-            checkboxDiv.classList.add("checked");
-          }
-
-          checkbox.addEventListener("click", () => {
-            this.toggleCbrSelection(element);
-            this.checkEnableNextButton();
-          });
+          const checkboxDiv = createCheckboxElement(element, index);
+          const checkbox = container.querySelector(`input[name="${element}"]`);
+          updateCheckboxState(checkbox, element, checkboxDiv);
         });
-      } else {
-        elements.forEach((element, index) => {
+      }
+      else {
+        elements.forEach((element) => {
           const checkbox = container.querySelector(`input[name="${element}"]`);
           if (checkbox) {
-            checkbox.checked =
-              this.formData["cbr_locations"]?.includes(element);
+            const checkboxDiv = checkbox.parentElement.querySelector(".w-checkbox-input");
+            updateCheckboxState(checkbox, element, checkboxDiv);
           }
         });
       }
@@ -1270,20 +1288,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.formData["cbr_locations"] = [];
       }
       const index = this.formData["cbr_locations"].indexOf(element);
-      if (index === -1) {
-        this.formData["cbr_locations"].push(element);
-      } else {
-        this.formData["cbr_locations"].splice(index, 1);
-      }
-    }
-
-    toggleCbrSelection(element) {
-      if (!Array.isArray(this.formData["cbr_locations"])) {
-        this.formData["cbr_locations"] = [];
-      }
-
-      const index = this.formData["cbr_locations"].indexOf(element);
-
       if (index === -1) {
         this.formData["cbr_locations"].push(element);
       } else {
@@ -1371,9 +1375,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -2280,7 +2283,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         const authTokens = data.auth_tokens;
         const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
         document.cookie = `tokens=${encodedTokens}`;
-        initializeLoginButton();
         return this.redirectTo("/bestellen");
       }
     }
@@ -2366,10 +2368,6 @@ if (window.location.pathname.includes("/aanmelden")) {
 }
 
 if (window.location.pathname === "/bestellen") {
-  if (!checkToken()) {
-    window.location.href = "/inloggen";
-  }
-
   class OrderManager {
     constructor() {
       this.package_starting_at = null;
@@ -2378,8 +2376,6 @@ if (window.location.pathname === "/bestellen") {
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
-      this.urlDevelop = "https://api.develop.nutheorie.be/";
-      this.urlProd = "https://api.nutheorie.nl/";
       this.urlFinalRedirectProd = "https://www.nutheorie.nl/user-profile";
       this.urlFinalRedirectDevelop =
         "https://develop.nutheorie.be/user-profile";
@@ -2410,7 +2406,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     initAPIUrlVariables() {
-      let apiBaseUrl = apiBaseUrls[window.location.hostname] || this.urlProd;
+      let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
 
       this.urlPaymentLink = `${apiBaseUrl}api/applications/payment_link/`;
       this.urlPackageStart = `${apiBaseUrl}api/applications/set_package_start/`;
@@ -2843,12 +2839,12 @@ if (window.location.pathname === "/bestellen") {
       )
         .toString()
         .padStart(2, "0")}-${validUntilDate.getFullYear()} ${validUntilDate
-        .getHours()
-        .toString()
-        .padStart(2, "0")}:${validUntilDate
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`;
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${validUntilDate
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
     }
 
     getCurrentDateTime() {
@@ -3014,8 +3010,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
       );
       if (
         formData.cities &&
@@ -3187,8 +3183,8 @@ if (window.location.pathname === "/bestellen") {
 class User {
   constructor() {
     document.addEventListener("DOMContentLoaded", () => {
-      initializeLoginButton();
-      setInterval(refreshToken, 90000);
+      this.initializeLoginButton();
+      setInterval(() => this.refreshToken(), 10000);
     });
   }
 
@@ -3207,8 +3203,8 @@ class User {
       const currentPath = window.location.pathname;
       const buttonTextMap = {
         "/user-profile": "Uitloggen",
-        "/bestellen": hasPaid() ? "Profiel" : "Uitloggen",
-        default: checkToken() ? "Profiel" : "Inloggen",
+        "/bestellen": this.hasPaid() ? "Profiel" : "Uitloggen",
+        default: this.checkToken() ? "Profiel" : "Inloggen",
       };
 
       loginButton.textContent =
@@ -3219,17 +3215,17 @@ class User {
   initializeLoginButton() {
     const loginButton = document.getElementById("btn-login");
     if (loginButton) {
-      updateLoginButtonText();
+      this.updateLoginButtonText();
 
       loginButton.addEventListener("click", () => {
         const currentPath = window.location.pathname;
         const actionMap = {
-          "/user-profile": () => logout(),
+          "/user-profile": () => this.logout(),
           "/bestellen": () =>
-            hasPaid() ? (window.location.href = "/user-profile") : logout(),
+            this.hasPaid() ? (window.location.href = "/user-profile") : this.logout(),
           default: () => {
-            if (checkToken()) {
-              if (!hasPaid()) {
+            if (this.checkToken()) {
+              if (!this.hasPaid()) {
                 window.location.href = "/bestellen";
               } else {
                 window.location.href = "/user-profile";
@@ -3254,53 +3250,48 @@ class User {
     const oldToken = getCookiesToken();
 
     let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
-    try {
-      const respuesta = await fetch(
-        `${apiBaseUrl}authorization/token/refresh/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh: oldToken.refresh }),
-        }
-      );
-      const data = await respuesta.json();
-      const encodedTokens = encodeURIComponent(JSON.stringify(data));
-      document.cookie = `tokens=${encodedTokens}`;
-    } catch (error) {
-      console.log("Error refreshtoken");
+    if (oldToken && oldToken.refresh) {
+      try {
+        const respuesta = await fetch(
+          `${apiBaseUrl}authorization/token/refresh/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refresh: oldToken.refresh }),
+          }
+        );
+        const data = await respuesta.json();
+        const encodedTokens = encodeURIComponent(JSON.stringify(data));
+        document.cookie = `tokens=${encodedTokens}`;
+      }
+      catch (error) {
+        console.log("Error refreshtoken");
+      }
     }
   }
 
-  getCookiesToken() {
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i];
-      const partes = cookie.split("=");
-      if (partes[0].trim() === "tokens") {
-        const encodedTokens = partes[1];
-        try {
-          const decodedTokens = decodeURIComponent(encodedTokens);
-          const tokens = JSON.parse(decodedTokens);
-          return tokens;
-        } catch (error) {
-          console.error("Error al decodificar la cookie tokens:", error);
-          return null;
-        }
-      }
-    }
-    return null;
-  }
 }
 
 const user = new User();
 
-const urlDevelop = "https://api.develop.nutheorie.be/";
-const urlProd = "https://api.nutheorie.nl/";
-const apiBaseUrls = {
-  "www.develop.nutheorie.be": urlDevelop,
-  "www.nutheorie.nl": urlProd,
-  "webflow.nutheorie.nl": urlProd,
-  "webflow.nutheorie.be": urlDevelop,
-};
+function getCookiesToken() {
+  const cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const partes = cookie.split("=");
+    if (partes[0].trim() === "tokens") {
+      const encodedTokens = partes[1];
+      try {
+        const decodedTokens = decodeURIComponent(encodedTokens);
+        const tokens = JSON.parse(decodedTokens);
+        return tokens;
+      } catch (error) {
+        console.error("Error al decodificar la cookie tokens:", error);
+        return null;
+      }
+    }
+  }
+  return null;
+}
