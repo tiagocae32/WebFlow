@@ -2371,8 +2371,8 @@ if (window.location.pathname === "/bestellen") {
         "https://api.develop.nutheorie.be/api/applications/set_package_start/";
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
-      this.iniciarIntervaloToken();
       this.initialize();
+      setInterval(() => this.iniciarIntervaloToken(285000));
     }
 
     initialize() {
@@ -3162,17 +3162,17 @@ if (window.location.pathname === "/bestellen") {
       aanbetalingAmount.textContent = ` ${formattedAmount}`;
     }
 
-    iniciarIntervaloToken() {
+    iniciarIntervaloToken(segundos) {
       const tiempoGuardado = localStorage.getItem("tiempoTranscurrido");
 
       if (tiempoGuardado) {
         const tiempoTranscurrido = Date.now() - parseInt(tiempoGuardado);
         setInterval(
           () => this.refreshToken(),
-          285000 - (tiempoTranscurrido % 285000)
+          segundos - (tiempoTranscurrido % segundos)
         );
       } else {
-        setInterval(() => this.refreshToken(), 285000);
+        setInterval(() => this.refreshToken(), segundos);
       }
 
       // Almacenar el tiempo actual en el localStorage
