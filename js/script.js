@@ -216,13 +216,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     initAPIUrlVariables() {
-      const apiBaseUrls = {
-        "www.develop.nutheorie.be": this.urlDevelop,
-        "www.nutheorie.nl": this.urlProd,
-        "webflow.nutheorie.nl": this.urlProd,
-        "webflow.nutheorie.be": this.urlDevelop
-      };
-
       let apiBaseUrl = apiBaseUrls[window.location.hostname] ?? this.urlProd;
 
       this.urls = {
@@ -781,8 +774,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -1378,8 +1371,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1535,32 +1529,43 @@ if (window.location.pathname.includes("/aanmelden")) {
         const isReapply = this.isReapplyFlow;
 
         this.allAvailablePlans = data
-          .filter(item =>
-            (item.type === (isReapply ? "REAPPLY" : "PUBLIC")) &&
-            item.license_type === this.formData.license_type &&
-            item.is_visible
+          .filter(
+            (item) =>
+              item.type === (isReapply ? "REAPPLY" : "PUBLIC") &&
+              item.license_type === this.formData.license_type &&
+              item.is_visible
           )
           .sort((a, b) => a.order - b.order)
-          .map(({ name, description_items, price, old_price, discount_label, order }) => {
-            const reapplyValue = this.REAPPLY_PLANS_DELTA;
-            const nonReapplyValue = this.PLANS_DELTA;
-
-            const modifiedPrice = isReapply
-              ? price = Number(price) + reapplyValue
-              : price = Number(price) + nonReapplyValue;
-            const modifiedOldPrice = isReapply
-              ? old_price = Number(old_price) + reapplyValue
-              : old_price = Number(old_price) + nonReapplyValue;
-
-            return {
+          .map(
+            ({
               name,
-              description_items: this.processDescriptionItems(description_items),
-              price: modifiedPrice,
-              old_price: modifiedOldPrice,
+              description_items,
+              price,
+              old_price,
               discount_label,
-              order
-            };
-          });
+              order,
+            }) => {
+              const reapplyValue = this.REAPPLY_PLANS_DELTA;
+              const nonReapplyValue = this.PLANS_DELTA;
+
+              const modifiedPrice = isReapply
+                ? (price = Number(price) + reapplyValue)
+                : (price = Number(price) + nonReapplyValue);
+              const modifiedOldPrice = isReapply
+                ? (old_price = Number(old_price) + reapplyValue)
+                : (old_price = Number(old_price) + nonReapplyValue);
+
+              return {
+                name,
+                description_items:
+                  this.processDescriptionItems(description_items),
+                price: modifiedPrice,
+                old_price: modifiedOldPrice,
+                discount_label,
+                order,
+              };
+            }
+          );
         this.createPackages(this.allAvailablePlans);
       } catch (error) {
         console.log(error);
@@ -2376,9 +2381,11 @@ if (window.location.pathname === "/bestellen") {
       this.urlDevelop = "https://api.develop.nutheorie.be/";
       this.urlProd = "https://api.nutheorie.nl/";
       this.urlFinalRedirectProd = "https://www.nutheorie.nl/user-profile";
-      this.urlFinalRedirectDevelop = "https://develop.nutheorie.be/user-profile";
+      this.urlFinalRedirectDevelop =
+        "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirectProd = "https://www.nutheorie.nl/betaling/failed";
-      this.urlFailRedirectDevelop = "https://develop.nutheorie.be/betaling/failed";
+      this.urlFailRedirectDevelop =
+        "https://develop.nutheorie.be/betaling/failed";
       this.initAPIUrlVariables();
       this.initialize();
     }
@@ -2403,13 +2410,6 @@ if (window.location.pathname === "/bestellen") {
     }
 
     initAPIUrlVariables() {
-      const apiBaseUrls = {
-        "www.develop.nutheorie.be": this.urlDevelop,
-        "www.nutheorie.nl": this.urlProd,
-        "webflow.nutheorie.nl": this.urlProd,
-        "webflow.nutheorie.be": this.urlDevelop
-      };
-
       let apiBaseUrl = apiBaseUrls[window.location.hostname] || this.urlProd;
 
       this.urlPaymentLink = `${apiBaseUrl}api/applications/payment_link/`;
@@ -2418,17 +2418,20 @@ if (window.location.pathname === "/bestellen") {
       const finalRedirectUrls = {
         "www.develop.nutheorie.be": this.urlFinalRedirectDevelop,
         "webflow.nutheorie.be": this.urlFinalRedirectDevelop,
-        default: this.urlFinalRedirectProd
+        default: this.urlFinalRedirectProd,
       };
 
       const failRedirectUrls = {
         "www.develop.nutheorie.be": this.urlFailRedirectDevelop,
         "webflow.nutheorie.be": this.urlFailRedirectDevelop,
-        default: this.urlFailRedirectProd
+        default: this.urlFailRedirectProd,
       };
 
-      this.urlFinalRedirect = finalRedirectUrls[window.location.hostname] || finalRedirectUrls.default;
-      this.urlFailRedirect = failRedirectUrls[window.location.hostname] || failRedirectUrls.default;
+      this.urlFinalRedirect =
+        finalRedirectUrls[window.location.hostname] ||
+        finalRedirectUrls.default;
+      this.urlFailRedirect =
+        failRedirectUrls[window.location.hostname] || failRedirectUrls.default;
     }
 
     getLastDayOfMonth() {
@@ -2781,7 +2784,10 @@ if (window.location.pathname === "/bestellen") {
           },
         },
         onChange: (selectedDates, dateStr, instance) => {
-          this.dateCalendar = instance.formatDate(selectedDates[0], "Y-m-d\\TH:i:00+01:00");
+          this.dateCalendar = instance.formatDate(
+            selectedDates[0],
+            "Y-m-d\\TH:i:00+01:00"
+          );
           this.enableButton();
           this.updatePlanAvailableUntilText();
         },
@@ -2837,12 +2843,12 @@ if (window.location.pathname === "/bestellen") {
       )
         .toString()
         .padStart(2, "0")}-${validUntilDate.getFullYear()} ${validUntilDate
-          .getHours()
-          .toString()
-          .padStart(2, "0")}:${validUntilDate
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${validUntilDate
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
     }
 
     getCurrentDateTime() {
@@ -3008,8 +3014,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&
@@ -3178,111 +3184,123 @@ if (window.location.pathname === "/bestellen") {
   const orderManager = new OrderManager();
 }
 
-function logout() {
-  document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  window.location.href = "/inloggen";
-}
-
-function hasPaid() {
-  return JSON.parse(localStorage.getItem("formData"))?.is_paid;
-}
-
-function updateLoginButtonText() {
-  const loginButton = document.getElementById("btn-login");
-  if (loginButton) {
-    const currentPath = window.location.pathname;
-    const buttonTextMap = {
-      "/user-profile": "Uitloggen",
-      "/bestellen": hasPaid() ? "Profiel" : "Uitloggen",
-      "default": checkToken() ? "Profiel" : "Inloggen"
-    };
-
-    loginButton.textContent = buttonTextMap[currentPath] ?? buttonTextMap["default"];
+class User {
+  constructor() {
+    document.addEventListener("DOMContentLoaded", () => {
+      initializeLoginButton();
+      setInterval(refreshToken, 90000);
+    });
   }
-}
 
-function initializeLoginButton() {
-  const loginButton = document.getElementById("btn-login");
-  if (loginButton) {
-    updateLoginButtonText();
+  logout() {
+    document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = "/inloggen";
+  }
 
-    loginButton.addEventListener("click", () => {
+  hasPaid() {
+    return JSON.parse(localStorage.getItem("formData"))?.is_paid;
+  }
+
+  updateLoginButtonText() {
+    const loginButton = document.getElementById("btn-login");
+    if (loginButton) {
       const currentPath = window.location.pathname;
-      const actionMap = {
-        "/user-profile": () => logout(),
-        "/bestellen": () => hasPaid() ? window.location.href = "/user-profile" : logout(),
-        "default": () => {
-          if (checkToken()) {
-            if (!hasPaid()) {
-              window.location.href = "/bestellen";
-            } else {
-              window.location.href = "/user-profile";
-            }
-          } else {
-            window.location.href = "/inloggen";
-          }
-        }
+      const buttonTextMap = {
+        "/user-profile": "Uitloggen",
+        "/bestellen": hasPaid() ? "Profiel" : "Uitloggen",
+        default: checkToken() ? "Profiel" : "Inloggen",
       };
 
-      (actionMap[currentPath] || actionMap["default"])();
-    });
-  }
-}
-
-function checkToken() {
-  const token = getCookiesToken();
-  return !!token && !!token.access;
-}
-
-
-async function refreshToken() {
-  const oldToken = getCookiesToken();
-  urlDevelop = "https://api.develop.nutheorie.be/";
-  urlProd = "https://api.nutheorie.nl/";
-  const apiBaseUrls = {
-    "www.develop.nutheorie.be": urlDevelop,
-    "www.nutheorie.nl": urlProd,
-    "webflow.nutheorie.nl": urlProd,
-    "webflow.nutheorie.be": urlDevelop
-  };
-
-  let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
-  try {
-    const respuesta = await fetch(`${apiBaseUrl}authorization/token/refresh/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh: oldToken.refresh }),
-    });
-    const data = await respuesta.json();
-    const encodedTokens = encodeURIComponent(JSON.stringify(data));
-    document.cookie = `tokens=${encodedTokens}`;
-  } catch (error) {
-    console.log("Error refreshtoken");
-  }
-}
-
-function getCookiesToken() {
-  const cookies = document.cookie.split(";");
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i];
-    const partes = cookie.split("=");
-    if (partes[0].trim() === "tokens") {
-      const encodedTokens = partes[1];
-      try {
-        const decodedTokens = decodeURIComponent(encodedTokens);
-        const tokens = JSON.parse(decodedTokens);
-        return tokens;
-      } catch (error) {
-        console.error("Error al decodificar la cookie tokens:", error);
-        return null;
-      }
+      loginButton.textContent =
+        buttonTextMap[currentPath] ?? buttonTextMap["default"];
     }
   }
-  return null;
+
+  initializeLoginButton() {
+    const loginButton = document.getElementById("btn-login");
+    if (loginButton) {
+      updateLoginButtonText();
+
+      loginButton.addEventListener("click", () => {
+        const currentPath = window.location.pathname;
+        const actionMap = {
+          "/user-profile": () => logout(),
+          "/bestellen": () =>
+            hasPaid() ? (window.location.href = "/user-profile") : logout(),
+          default: () => {
+            if (checkToken()) {
+              if (!hasPaid()) {
+                window.location.href = "/bestellen";
+              } else {
+                window.location.href = "/user-profile";
+              }
+            } else {
+              window.location.href = "/inloggen";
+            }
+          },
+        };
+
+        (actionMap[currentPath] || actionMap["default"])();
+      });
+    }
+  }
+
+  checkToken() {
+    const token = getCookiesToken();
+    return !!token && !!token.access;
+  }
+
+  async refreshToken() {
+    const oldToken = getCookiesToken();
+
+    let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+    try {
+      const respuesta = await fetch(
+        `${apiBaseUrl}authorization/token/refresh/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh: oldToken.refresh }),
+        }
+      );
+      const data = await respuesta.json();
+      const encodedTokens = encodeURIComponent(JSON.stringify(data));
+      document.cookie = `tokens=${encodedTokens}`;
+    } catch (error) {
+      console.log("Error refreshtoken");
+    }
+  }
+
+  getCookiesToken() {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const partes = cookie.split("=");
+      if (partes[0].trim() === "tokens") {
+        const encodedTokens = partes[1];
+        try {
+          const decodedTokens = decodeURIComponent(encodedTokens);
+          const tokens = JSON.parse(decodedTokens);
+          return tokens;
+        } catch (error) {
+          console.error("Error al decodificar la cookie tokens:", error);
+          return null;
+        }
+      }
+    }
+    return null;
+  }
 }
-document.addEventListener("DOMContentLoaded", () => {
-  initializeLoginButton()
-  setInterval(refreshToken, 90000);
-});
+
+const user = new User();
+
+const urlDevelop = "https://api.develop.nutheorie.be/";
+const urlProd = "https://api.nutheorie.nl/";
+const apiBaseUrls = {
+  "www.develop.nutheorie.be": urlDevelop,
+  "www.nutheorie.nl": urlProd,
+  "webflow.nutheorie.nl": urlProd,
+  "webflow.nutheorie.be": urlDevelop,
+};
