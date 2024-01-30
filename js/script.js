@@ -1194,31 +1194,43 @@ if (window.location.pathname.includes("/aanmelden")) {
             (value.length > 2 ? ":" + value.substring(2, 4) : "");
         }
         e.target.value = value;
+        this.timePicked = value;
+        console.log(this.timePicked);
 
-        const isValid =
-          value.length === 5 &&
-          parseInt(value.substring(0, 2), 10) <= 23 &&
-          parseInt(value.substring(3, 5), 10) <= 59;
-
-        if (isValid) {
-          timeError.style.display = "none";
-          this.timePicked = value;
-        } else {
-          timeError.style.display = "block";
-          this.timePicked = null;
-        }
-
+        this.validateTimeInput(value);
         this.formatDateMijnFlow();
       });
     }
 
+    validateTimeInput(value) {
+      const isValid =
+        value.length === 5 &&
+        parseInt(value.substring(0, 2), 10) <= 23 &&
+        parseInt(value.substring(3, 5), 10) <= 59;
+
+      if (isValid) {
+        document.getElementById("timeError").style.display = "none";
+      } else {
+        document.getElementById("timeError").style.display = "block";
+        this.timePicked = null;
+      }
+    }
+
     formatDateMijnFlow() {
-      if (this.datePicked && this.timePicked) {
+      const isTimeValid = this.timePicked && this.timePicked.length === 5 &&
+        parseInt(this.timePicked.substring(0, 2), 10) <= 23 &&
+        parseInt(this.timePicked.substring(3, 5), 10) <= 59;
+
+      if (this.datePicked && isTimeValid) {
         this.setFormData(
           "mijn_exam_datetime",
           `${this.datePicked}T${this.timePicked}:00+01:00`
         );
-      }
+      } else {
+        this.setFormData(
+          "mijn_exam_datetime", ""
+        )
+      };
       this.checkEnableNextButton();
     }
 
