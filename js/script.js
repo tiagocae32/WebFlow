@@ -2380,7 +2380,6 @@ if (window.location.pathname === "/bestellen") {
       this.urlFailRedirectProd = "https://www.nutheorie.nl/betaling/failed";
       this.urlFailRedirectDevelop = "https://develop.nutheorie.be/betaling/failed";
       this.initAPIUrlVariables();
-      this.interval = setInterval(this.refreshToken.bind(this), 90000);
       this.initialize();
     }
 
@@ -2413,7 +2412,6 @@ if (window.location.pathname === "/bestellen") {
 
       let apiBaseUrl = apiBaseUrls[window.location.hostname] || this.urlProd;
 
-      this.urlRefreshToken = `${apiBaseUrl}authorization/token/refresh/`;
       this.urlPaymentLink = `${apiBaseUrl}api/applications/payment_link/`;
       this.urlPackageStart = `${apiBaseUrl}api/applications/set_package_start/`;
 
@@ -2560,24 +2558,6 @@ if (window.location.pathname === "/bestellen") {
       }
       if (payment_link) {
         window.location.href = payment_link.payment_link;
-      }
-    }
-
-    async refreshToken() {
-      const oldToken = getCookiesToken();
-      try {
-        const respuesta = await fetch(this.urlRefreshToken, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh: oldToken.refresh }),
-        });
-        const data = await respuesta.json();
-        const encodedTokens = encodeURIComponent(JSON.stringify(data));
-        document.cookie = `tokens=${encodedTokens}`;
-      } catch (error) {
-        console.log("Error refreshtoken");
       }
     }
 
@@ -3203,10 +3183,21 @@ function logout() {
   window.location.href = "/inloggen";
 }
 
+function hasPaid() {
+  return JSON.parse(localStorage.getItem("formData"))?.is_paid;
+}
+
 function updateLoginButtonText() {
   const loginButton = document.getElementById("btn-login");
   if (loginButton) {
-    loginButton.textContent = checkToken() ? "Uitloggen" : "Inloggen";
+    const currentPath = window.location.pathname;
+    const buttonTextMap = {
+      "/user-profile": "Uitloggen",
+      "/bestellen": hasPaid() ? "Profiel" : "Uitloggen",
+      "default": checkToken() ? "Profiel" : "Inloggen"
+    };
+
+    loginButton.textContent = buttonTextMap[currentPath] ?? buttonTextMap["default"];
   }
 }
 
@@ -3215,12 +3206,25 @@ function initializeLoginButton() {
   if (loginButton) {
     updateLoginButtonText();
 
-    loginButton.addEventListener("click", (event) => {
-      if (checkToken()) {
-        logout();
-      } else {
-        window.location.href = "/inloggen";
-      }
+    loginButton.addEventListener("click", () => {
+      const currentPath = window.location.pathname;
+      const actionMap = {
+        "/user-profile": () => logout(),
+        "/bestellen": () => hasPaid() ? window.location.href = "/user-profile" : logout(),
+        "default": () => {
+          if (checkToken()) {
+            if (!hasPaid()) {
+              window.location.href = "/bestellen";
+            } else {
+              window.location.href = "/user-profile";
+            }
+          } else {
+            window.location.href = "/inloggen";
+          }
+        }
+      };
+
+      (actionMap[currentPath] || actionMap["default"])();
     });
   }
 }
@@ -3228,6 +3232,35 @@ function initializeLoginButton() {
 function checkToken() {
   const token = getCookiesToken();
   return !!token && !!token.access;
+}
+
+
+async function refreshToken() {
+  const oldToken = getCookiesToken();
+  urlDevelop = "https://api.develop.nutheorie.be/";
+  urlProd = "https://api.nutheorie.nl/";
+  const apiBaseUrls = {
+    "www.develop.nutheorie.be": urlDevelop,
+    "www.nutheorie.nl": urlProd,
+    "webflow.nutheorie.nl": urlProd,
+    "webflow.nutheorie.be": urlDevelop
+  };
+
+  let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+  try {
+    const respuesta = await fetch(`${apiBaseUrl}authorization/token/refresh/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh: oldToken.refresh }),
+    });
+    const data = await respuesta.json();
+    const encodedTokens = encodeURIComponent(JSON.stringify(data));
+    document.cookie = `tokens=${encodedTokens}`;
+  } catch (error) {
+    console.log("Error refreshtoken");
+  }
 }
 
 function getCookiesToken() {
@@ -3249,4 +3282,7 @@ function getCookiesToken() {
   }
   return null;
 }
-document.addEventListener("DOMContentLoaded", initializeLoginButton);
+document.addEventListener("DOMContentLoaded", () => {
+  initializeLoginButton()
+  setInterval(refreshToken, 90000);
+});
