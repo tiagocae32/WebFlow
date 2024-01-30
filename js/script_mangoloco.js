@@ -1,3 +1,12 @@
+const urlDevelop = "https://api.develop.nutheorie.be/";
+const urlProd = "https://api.nutheorie.nl/";
+const apiBaseUrls = {
+  "www.develop.nutheorie.be": urlDevelop,
+  "www.nutheorie.nl": urlProd,
+  "webflow.nutheorie.nl": urlProd,
+  "webflow.nutheorie.be": urlDevelop,
+};
+
 if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
@@ -21,15 +30,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initBirthDateInput();
       this.isEditButtonsInitialized = false;
       this.handleFinalStepBound = this.handleFinalStep.bind(this);
-      this.urls = {
-        cities: "https://api.develop.nutheorie.be/api/cities/",
-        cbrsLocations:
-          "https://api.develop.nutheorie.be/api/applications/exam_locations/",
-        plans:
-          "https://api.develop.nutheorie.be/api/applications/online_plans/",
-        urlPostMultiStepForm:
-          "https://api.develop.nutheorie.be/api/applications/",
-      };
+      this.initAPIUrlVariables();
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
       this.dutchMonths = [
@@ -219,6 +220,17 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.setInitialCourseTypeUI();
       this.stepHistory.push(this.steps[this.currentStepIndex].id);
       this.showFormForStep(this.currentStepIndex);
+    }
+
+    initAPIUrlVariables() {
+      let apiBaseUrl = apiBaseUrls[window.location.hostname] ?? urlProd;
+
+      this.urls = {
+        cities: `${apiBaseUrl}api/cities/`,
+        cbrsLocations: `${apiBaseUrl}api/applications/exam_locations/`,
+        plans: `${apiBaseUrl}api/applications/online_plans/`,
+        urlPostMultiStepForm: `${apiBaseUrl}api/applications/`,
+      };
     }
 
     // HELPERS
@@ -811,7 +823,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.token = accessToken.access;
         try {
           const resServer = await fetch(
-            "https://api.develop.nutheorie.be/api/applications/",
+            "https://api.nutheorie.nl/api/applications/",
             {
               method: "GET",
               headers: {
@@ -839,6 +851,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           break;
         case "step4Cities":
           this.getCities();
+          this.removeOnlineCity();
           break;
         case "step4Cbr":
           this.getCbrLocations();
@@ -988,6 +1001,18 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
       this.createOptions(this.citiesList, "step4", true);
     }
+
+    removeOnlineCity() {
+      if (
+        this.formData.course_type === "offline" &&
+        Array.isArray(this.formData.cities)
+      ) {
+        const indexCityOnline = this.formData.cities.findIndex(
+          (city) => city.is_online
+        );
+        this.formData.cities.splice(indexCityOnline, 1);
+      }
+    }
     // END CITIES
 
     // MONTHS
@@ -1100,22 +1125,22 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     // CBR LOCATIONS GET
+
     async getCbrLocations(createElements = true) {
       if (this.cbrs_list.length === 0) {
         try {
           const resServer = await fetch(this.urls.cbrsLocations);
           const data = await resServer.json();
           this.cbrs_list = data;
-          if (createElements) {
-            this.createCbrElements(this.cbrs_list);
-          } else {
-            this.createCbrsSelect(this.cbrs_list);
-          }
         } catch (error) {
           console.log(error);
         }
-      } else if (createElements) {
+      }
+      if (createElements) {
         this.createCbrElements(this.cbrs_list);
+      } else {
+        this.formData["cbr_locations"] = [];
+        this.createCbrsSelect(this.cbrs_list);
       }
     }
 
@@ -1146,11 +1171,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       let lastDatePicked = localStorage.getItem("fechaGlobalSeleccionada");
       this.datePicked = lastDatePicked;
 
-      if (!this.formData.examType) {
-        localStorage.removeItem("fechaGlobalSeleccionada");
-        this.datePicked = null;
-      }
-
       setInterval(() => {
         let getDatePicked = localStorage.getItem("fechaGlobalSeleccionada");
         if (getDatePicked !== lastDatePicked) {
@@ -1174,30 +1194,41 @@ if (window.location.pathname.includes("/aanmelden")) {
             (value.length > 2 ? ":" + value.substring(2, 4) : "");
         }
         e.target.value = value;
+        this.timePicked = value;
 
-        const isValid =
-          value.length === 5 &&
-          parseInt(value.substring(0, 2), 10) <= 23 &&
-          parseInt(value.substring(3, 5), 10) <= 59;
-
-        if (isValid) {
-          timeError.style.display = "none";
-          this.timePicked = value;
-        } else {
-          timeError.style.display = "block";
-          this.timePicked = null;
-        }
-
+        this.validateTimeInput(value);
         this.formatDateMijnFlow();
       });
     }
 
+    validateTimeInput(value) {
+      const isValid =
+        value.length === 5 &&
+        parseInt(value.substring(0, 2), 10) <= 23 &&
+        parseInt(value.substring(3, 5), 10) <= 59;
+
+      if (isValid) {
+        document.getElementById("timeError").style.display = "none";
+      } else {
+        document.getElementById("timeError").style.display = "block";
+        this.timePicked = null;
+      }
+    }
+
     formatDateMijnFlow() {
-      if (this.datePicked && this.timePicked) {
+      const isTimeValid =
+        this.timePicked &&
+        this.timePicked.length === 5 &&
+        parseInt(this.timePicked.substring(0, 2), 10) <= 23 &&
+        parseInt(this.timePicked.substring(3, 5), 10) <= 59;
+
+      if (this.datePicked && isTimeValid) {
         this.setFormData(
           "mijn_exam_datetime",
           `${this.datePicked}T${this.timePicked}:00+01:00`
         );
+      } else {
+        this.setFormData("mijn_exam_datetime", "");
       }
       this.checkEnableNextButton();
     }
@@ -1206,55 +1237,67 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     createCbrElements(elements) {
       const container = document.getElementById("step4check");
+
+      const createCheckboxElement = (element, index) => {
+        const itemContainer = document.createElement("div");
+        itemContainer.className = "aanmelden_step4-list_item";
+
+        const label = document.createElement("label");
+        label.className = "w-checkbox aanmelden_step4-item";
+
+        const checkboxDiv = document.createElement("div");
+        checkboxDiv.className =
+          "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = index;
+        checkbox.name = element;
+        checkbox.style.opacity = 0;
+        checkbox.style.position = "absolute";
+        checkbox.style.zIndex = -1;
+
+        const span = document.createElement("span");
+        span.className = "text-weight-bold w-form-label";
+        span.setAttribute("for", element);
+        span.textContent = element;
+
+        label.appendChild(checkboxDiv);
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        itemContainer.appendChild(label);
+
+        container.appendChild(itemContainer);
+
+        checkbox.addEventListener("click", () => {
+          this.toggleCbrSelection(element);
+          this.checkEnableNextButton();
+        });
+
+        return checkboxDiv;
+      };
+
+      const updateCheckboxState = (checkbox, element, checkboxDiv) => {
+        checkbox.checked = this.formData["cbr_locations"]?.includes(element);
+        if (!checkbox.checked) {
+          checkboxDiv.classList.remove("w--redirected-checked");
+        }
+      };
+
       if (!container.hasChildNodes()) {
         this.cleanInterface(container);
         elements.forEach((element, index) => {
-          const itemContainer = document.createElement("div");
-          itemContainer.className = "aanmelden_step4-list_item";
-
-          const label = document.createElement("label");
-          label.className = "w-checkbox aanmelden_step4-item";
-
-          const checkboxDiv = document.createElement("div");
-          checkboxDiv.className =
-            "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
-
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.id = index;
-          checkbox.name = element;
-          checkbox.style.opacity = 0;
-          checkbox.style.position = "absolute";
-          checkbox.style.zIndex = -1;
-
-          const span = document.createElement("span");
-          span.className = "text-weight-bold w-form-label";
-          span.setAttribute("for", element);
-          span.textContent = element;
-
-          label.appendChild(checkboxDiv);
-          label.appendChild(checkbox);
-          label.appendChild(span);
-          itemContainer.appendChild(label);
-
-          container.appendChild(itemContainer);
-
-          if (this.formData["cbr_locations"]?.includes(element)) {
-            checkbox.checked = true;
-            checkboxDiv.classList.add("checked");
-          }
-
-          checkbox.addEventListener("click", () => {
-            this.toggleCbrSelection(element);
-            this.checkEnableNextButton();
-          });
+          const checkboxDiv = createCheckboxElement(element, index);
+          const checkbox = container.querySelector(`input[name="${element}"]`);
+          updateCheckboxState(checkbox, element, checkboxDiv);
         });
       } else {
-        elements.forEach((element, index) => {
+        elements.forEach((element) => {
           const checkbox = container.querySelector(`input[name="${element}"]`);
           if (checkbox) {
-            checkbox.checked =
-              this.formData["cbr_locations"]?.includes(element);
+            const checkboxDiv =
+              checkbox.parentElement.querySelector(".w-checkbox-input");
+            updateCheckboxState(checkbox, element, checkboxDiv);
           }
         });
       }
@@ -1265,20 +1308,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.formData["cbr_locations"] = [];
       }
       const index = this.formData["cbr_locations"].indexOf(element);
-      if (index === -1) {
-        this.formData["cbr_locations"].push(element);
-      } else {
-        this.formData["cbr_locations"].splice(index, 1);
-      }
-    }
-
-    toggleCbrSelection(element) {
-      if (!Array.isArray(this.formData["cbr_locations"])) {
-        this.formData["cbr_locations"] = [];
-      }
-
-      const index = this.formData["cbr_locations"].indexOf(element);
-
       if (index === -1) {
         this.formData["cbr_locations"].push(element);
       } else {
@@ -1527,19 +1556,28 @@ if (window.location.pathname.includes("/aanmelden")) {
           .filter(
             (item) =>
               item.type === (isReapply ? "REAPPLY" : "PUBLIC") &&
-              item.license_type === this.formData.license_type
+              item.license_type === this.formData.license_type &&
+              item.is_visible
           )
+          .sort((a, b) => a.order - b.order)
           .map(
-            ({ name, description_items, price, old_price, discount_label }) => {
+            ({
+              name,
+              description_items,
+              price,
+              old_price,
+              discount_label,
+              order,
+            }) => {
               const reapplyValue = this.REAPPLY_PLANS_DELTA;
               const nonReapplyValue = this.PLANS_DELTA;
 
               const modifiedPrice = isReapply
-                ? price + reapplyValue
-                : price + nonReapplyValue;
+                ? (price = Number(price) + reapplyValue)
+                : (price = Number(price) + nonReapplyValue);
               const modifiedOldPrice = isReapply
-                ? old_price + reapplyValue
-                : old_price + nonReapplyValue;
+                ? (old_price = Number(old_price) + reapplyValue)
+                : (old_price = Number(old_price) + nonReapplyValue);
 
               return {
                 name,
@@ -1548,6 +1586,7 @@ if (window.location.pathname.includes("/aanmelden")) {
                 price: modifiedPrice,
                 old_price: modifiedOldPrice,
                 discount_label,
+                order,
               };
             }
           );
@@ -1871,8 +1910,21 @@ if (window.location.pathname.includes("/aanmelden")) {
       const locationsRow = document.getElementById("locationsRow");
       const datesRow = document.getElementById("datesRow");
 
+      let copyFormDataCities;
+      if (this.formData["cities"]) {
+        copyFormDataCities = JSON.parse(
+          JSON.stringify(this.formData["cities"])
+        );
+        const indexDelete = copyFormDataCities.findIndex(
+          (city) => city.is_online
+        );
+        copyFormDataCities.splice(indexDelete, 1);
+      } else {
+        copyFormDataCities = [];
+      }
+
       const showLocations =
-        (this.formData["cities"] && this.formData["cities"].length > 0) ||
+        (copyFormDataCities && copyFormDataCities.length > 0) ||
         (this.formData["cbr_locations"] &&
           this.formData["cbr_locations"].length > 0);
 
@@ -1984,7 +2036,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         newStepHistory.push(currentStepId);
 
         if (++safetyCounter > 100) {
-          console.error("Se ha excedido el límite de seguridad en el bucle");
+          console.error("Se ha excedido el lÃ­mite de seguridad en el bucle");
           return;
         }
       }
@@ -2216,6 +2268,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       const container = document.getElementById(
         this.resumeConfig["package_name"].elementId
       );
+      const offlineContent = document.getElementById("overzichtOffline");
 
       const existingPackages = container.getElementsByClassName(
         "overzicht_package-item"
@@ -2224,10 +2277,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         existingPackages[0].parentNode.removeChild(existingPackages[0]);
       }
       if (this.formData["course_type"] === "offline") {
-        const offlineContent = document.getElementById("overzichtOffline");
         offlineContent.classList.add("active");
       } else {
         // Render package
+        offlineContent.classList.remove("active");
         const selectedPackage = this.packageSelected;
         if (selectedPackage) {
           let packageElement = document.createElement("div");
@@ -2235,7 +2288,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.addPackageItemElements(packageElement, selectedPackage, true);
           container.appendChild(packageElement);
         } else {
-          container.textContent = "No se ha seleccionado ningún paquete.";
+          container.textContent = "No se ha seleccionado ningÃºn paquete.";
         }
       }
     }
@@ -2262,10 +2315,10 @@ if (window.location.pathname.includes("/aanmelden")) {
       const data = await this.sendDataBack();
       if (data) {
         localStorage.setItem("formData", JSON.stringify(data));
+        localStorage.removeItem("fechaGlobalSeleccionada");
         const authTokens = data.auth_tokens;
         const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
         document.cookie = `tokens=${encodedTokens}`;
-        initializeLoginButton();
         return this.redirectTo("/bestellen");
       }
     }
@@ -2351,10 +2404,6 @@ if (window.location.pathname.includes("/aanmelden")) {
 }
 
 if (window.location.pathname === "/bestellen") {
-  if (!thereIsToken()) {
-    window.location.href = "/inloggen";
-  }
-
   class OrderManager {
     constructor() {
       this.package_starting_at = null;
@@ -2363,16 +2412,14 @@ if (window.location.pathname === "/bestellen") {
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
-      this.urlRefreshToken =
-        "https://api.develop.nutheorie.be/authorization/token/refresh/";
-      this.urlPaymentLink =
-        "https://api.develop.nutheorie.be/api/applications/payment_link/";
-      this.urlPackageStart =
-        "https://api.develop.nutheorie.be/api/applications/set_package_start/";
-      this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
-      this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
+      this.urlFinalRedirectProd = "https://www.nutheorie.nl/user-profile";
+      this.urlFinalRedirectDevelop =
+        "https://develop.nutheorie.be/user-profile";
+      this.urlFailRedirectProd = "https://www.nutheorie.nl/betaling/failed";
+      this.urlFailRedirectDevelop =
+        "https://develop.nutheorie.be/betaling/failed";
+      this.initAPIUrlVariables();
       this.initialize();
-      this.iniciarIntervaloToken(285000);
     }
 
     initialize() {
@@ -2392,6 +2439,31 @@ if (window.location.pathname === "/bestellen") {
         );
         this.dateCalendar = null;
       }
+    }
+
+    initAPIUrlVariables() {
+      let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+
+      this.urlPaymentLink = `${apiBaseUrl}api/applications/payment_link/`;
+      this.urlPackageStart = `${apiBaseUrl}api/applications/set_package_start/`;
+
+      const finalRedirectUrls = {
+        "www.develop.nutheorie.be": this.urlFinalRedirectDevelop,
+        "webflow.nutheorie.be": this.urlFinalRedirectDevelop,
+        default: this.urlFinalRedirectProd,
+      };
+
+      const failRedirectUrls = {
+        "www.develop.nutheorie.be": this.urlFailRedirectDevelop,
+        "webflow.nutheorie.be": this.urlFailRedirectDevelop,
+        default: this.urlFailRedirectProd,
+      };
+
+      this.urlFinalRedirect =
+        finalRedirectUrls[window.location.hostname] ||
+        finalRedirectUrls.default;
+      this.urlFailRedirect =
+        failRedirectUrls[window.location.hostname] || failRedirectUrls.default;
     }
 
     getLastDayOfMonth() {
@@ -2493,7 +2565,6 @@ if (window.location.pathname === "/bestellen") {
       const { payment_amount } = formData;
 
       const access = getCookiesToken();
-      console.log(access);
 
       let payment_link;
       let package_starting_at = this.formatCalendarDate();
@@ -2522,25 +2593,6 @@ if (window.location.pathname === "/bestellen") {
       }
       if (payment_link) {
         window.location.href = payment_link.payment_link;
-      }
-    }
-
-    async refreshToken() {
-      const oldToken = getCookiesToken();
-      try {
-        const respuesta = await fetch(this.urlRefreshToken, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh: oldToken.refresh }),
-        });
-        const data = await respuesta.json();
-        console.log(data);
-        const encodedTokens = encodeURIComponent(JSON.stringify(data));
-        document.cookie = `tokens=${encodedTokens}`;
-      } catch (error) {
-        console.log("Error refreshtoken");
       }
     }
 
@@ -2768,7 +2820,6 @@ if (window.location.pathname === "/bestellen") {
             selectedDates[0],
             "Y-m-d\\TH:i:00+01:00"
           );
-          console.log(this.dateCalendar);
           this.enableButton();
           this.updatePlanAvailableUntilText();
         },
@@ -3161,60 +3212,105 @@ if (window.location.pathname === "/bestellen") {
 
       aanbetalingAmount.textContent = ` ${formattedAmount}`;
     }
-
-    iniciarIntervaloToken(segundos) {
-      const tiempoGuardado = localStorage.getItem("tiempoTranscurrido");
-
-      if (tiempoGuardado) {
-        const tiempoTranscurrido = Date.now() - parseInt(tiempoGuardado);
-        setInterval(
-          () => this.refreshToken(),
-          segundos - (tiempoTranscurrido % segundos)
-        );
-      } else {
-        setInterval(() => this.refreshToken(), segundos);
-      }
-
-      if (!tiempoGuardado) {
-        localStorage.setItem("tiempoTranscurrido", Date.now());
-      }
-    }
   }
   const orderManager = new OrderManager();
 }
 
-function logout() {
-  document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  window.location.href = "/inloggen";
-}
-
-function updateLoginButtonText() {
-  const loginButton = document.getElementById("btn-login");
-  if (loginButton) {
-    loginButton.textContent = thereIsToken() ? "Uitloggen" : "Inloggen";
-  }
-}
-
-function initializeLoginButton() {
-  const loginButton = document.getElementById("btn-login");
-  if (loginButton) {
-    updateLoginButtonText();
-
-    loginButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      if (!thereIsToken()) {
-        logout();
-      } else {
-        window.location.href = "/inloggen";
-      }
+class User {
+  constructor() {
+    document.addEventListener("DOMContentLoaded", () => {
+      this.initializeLoginButton();
+      setInterval(() => this.refreshToken(), 10000);
     });
   }
+
+  logout() {
+    document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = "/inloggen";
+  }
+
+  hasPaid() {
+    return JSON.parse(localStorage.getItem("formData"))?.is_paid;
+  }
+
+  updateLoginButtonText() {
+    const loginButton = document.getElementById("btn-login");
+    if (loginButton) {
+      const currentPath = window.location.pathname;
+      const buttonTextMap = {
+        "/user-profile": "Uitloggen",
+        "/bestellen": this.hasPaid() ? "Profiel" : "Uitloggen",
+        default: this.checkToken() ? "Profiel" : "Inloggen",
+      };
+
+      loginButton.textContent =
+        buttonTextMap[currentPath] ?? buttonTextMap["default"];
+    }
+  }
+
+  initializeLoginButton() {
+    const loginButton = document.getElementById("btn-login");
+    if (loginButton) {
+      this.updateLoginButtonText();
+
+      loginButton.addEventListener("click", () => {
+        const currentPath = window.location.pathname;
+        const actionMap = {
+          "/user-profile": () => this.logout(),
+          "/bestellen": () =>
+            this.hasPaid()
+              ? (window.location.href = "/user-profile")
+              : this.logout(),
+          default: () => {
+            if (this.checkToken()) {
+              if (!this.hasPaid()) {
+                window.location.href = "/bestellen";
+              } else {
+                window.location.href = "/user-profile";
+              }
+            } else {
+              window.location.href = "/inloggen";
+            }
+          },
+        };
+
+        (actionMap[currentPath] || actionMap["default"])();
+      });
+    }
+  }
+
+  checkToken() {
+    const token = getCookiesToken();
+    return !!token && !!token.access;
+  }
+
+  async refreshToken() {
+    const oldToken = getCookiesToken();
+
+    let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+    if (oldToken && oldToken.refresh) {
+      try {
+        const respuesta = await fetch(
+          `${apiBaseUrl}authorization/token/refresh/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refresh: oldToken.refresh }),
+          }
+        );
+        const data = await respuesta.json();
+        const encodedTokens = encodeURIComponent(JSON.stringify(data));
+        document.cookie = `tokens=${encodedTokens}`;
+      } catch (error) {
+        console.log("Error refreshtoken");
+      }
+    }
+  }
 }
 
-function thereIsToken() {
-  const token = getCookiesToken();
-  return !!token && !!token.access;
-}
+const user = new User();
 
 function getCookiesToken() {
   const cookies = document.cookie.split(";");
@@ -3235,5 +3331,3 @@ function getCookiesToken() {
   }
   return null;
 }
-
-document.addEventListener("DOMContentLoaded", initializeLoginButton);
