@@ -1534,11 +1534,11 @@ if (window.location.pathname.includes("/aanmelden")) {
             const nonReapplyValue = this.PLANS_DELTA;
 
             const modifiedPrice = isReapply
-              ? price + reapplyValue
-              : price + nonReapplyValue;
+              ? price = Number(price) + reapplyValue
+              : price = Number(price) + nonReapplyValue;
             const modifiedOldPrice = isReapply
-              ? old_price + reapplyValue
-              : old_price + nonReapplyValue;
+              ? old_price = Number(old_price) + reapplyValue
+              : old_price = Number(old_price) + nonReapplyValue;
 
             return {
               name,
@@ -1549,7 +1549,7 @@ if (window.location.pathname.includes("/aanmelden")) {
               order
             };
           });
-
+        console.log(this.allAvailablePlans);
         this.createPackages(this.allAvailablePlans);
       } catch (error) {
         console.log(error);
@@ -3187,7 +3187,7 @@ function initializeLoginButton() {
 
 function checkToken() {
   const token = getCookiesToken();
-  return !!token && !token.access;
+  return !!token && !!token.access;
 }
 
 function getCookiesToken() {
