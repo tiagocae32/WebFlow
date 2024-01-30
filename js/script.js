@@ -3216,7 +3216,6 @@ function initializeLoginButton() {
     updateLoginButtonText();
 
     loginButton.addEventListener("click", (event) => {
-      event.preventDefault();
       if (checkToken()) {
         logout();
       } else {
