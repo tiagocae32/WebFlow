@@ -3164,16 +3164,15 @@ if (window.location.pathname === "/bestellen") {
 
     iniciarIntervaloToken() {
       const tiempoGuardado = localStorage.getItem("tiempoTranscurrido");
-      let tiempoInicio;
 
       if (tiempoGuardado) {
         const tiempoTranscurrido = Date.now() - parseInt(tiempoGuardado);
-        tiempoInicio = setInterval(
+        setInterval(
           () => this.refreshToken(),
           285000 - (tiempoTranscurrido % 285000)
         );
       } else {
-        tiempoInicio = setInterval(() => this.refreshToken(), 285000);
+        setInterval(() => this.refreshToken(), 285000);
       }
 
       // Almacenar el tiempo actual en el localStorage
