@@ -1174,7 +1174,6 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.formatDateMijnFlow();
         }
       }, 1000);
-      console.log(this.datePicked);
     }
 
     setTimeInput() {
@@ -1904,8 +1903,17 @@ if (window.location.pathname.includes("/aanmelden")) {
       const locationsRow = document.getElementById("locationsRow");
       const datesRow = document.getElementById("datesRow");
 
+      let copyFormDataCities;
+      if (this.formData["cities"]) {
+        copyFormDataCities = JSON.parse(JSON.stringify(this.formData["cities"]));
+        const indexDelete = copyFormDataCities.findIndex(city => city.is_online);
+        copyFormDataCities.splice(indexDelete, 1);
+      } else {
+        copyFormDataCities = [];
+      }
+
       const showLocations =
-        (this.formData["cities"] && this.formData["cities"].length > 0) ||
+        (copyFormDataCities && copyFormDataCities.length > 0) ||
         (this.formData["cbr_locations"] &&
           this.formData["cbr_locations"].length > 0);
 
