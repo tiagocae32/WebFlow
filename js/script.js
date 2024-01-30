@@ -22,13 +22,13 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.isEditButtonsInitialized = false;
       this.handleFinalStepBound = this.handleFinalStep.bind(this);
       this.urls = {
-        cities: "https://api.develop.nutheorie.be/api/cities/",
+        cities: "https://api.nutheorie.nl/api/cities/",
         cbrsLocations:
-          "https://api.develop.nutheorie.be/api/applications/exam_locations/",
+          "https://api.nutheorie.nl/api/applications/exam_locations/",
         plans:
-          "https://api.develop.nutheorie.be/api/applications/online_plans/",
+          "https://api.nutheorie.nl/api/applications/online_plans/",
         urlPostMultiStepForm:
-          "https://api.develop.nutheorie.be/api/applications/",
+          "https://api.nutheorie.nl/api/applications/",
       };
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
@@ -811,7 +811,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.token = accessToken.access;
         try {
           const resServer = await fetch(
-            "https://api.develop.nutheorie.be/api/applications/",
+            "https://api.nutheorie.nl/api/applications/",
             {
               method: "GET",
               headers: {
@@ -1523,33 +1523,33 @@ if (window.location.pathname.includes("/aanmelden")) {
         const isReapply = this.isReapplyFlow;
 
         this.allAvailablePlans = data
-          .filter(
-            (item) =>
-              item.type === (isReapply ? "REAPPLY" : "PUBLIC") &&
-              item.license_type === this.formData.license_type
+          .filter(item =>
+            (item.type === (isReapply ? "REAPPLY" : "PUBLIC")) &&
+            item.license_type === this.formData.license_type &&
+            item.is_visible
           )
-          .map(
-            ({ name, description_items, price, old_price, discount_label }) => {
-              const reapplyValue = this.REAPPLY_PLANS_DELTA;
-              const nonReapplyValue = this.PLANS_DELTA;
+          .sort((a, b) => a.order - b.order)
+          .map(({ name, description_items, price, old_price, discount_label, order }) => {
+            const reapplyValue = this.REAPPLY_PLANS_DELTA;
+            const nonReapplyValue = this.PLANS_DELTA;
 
-              const modifiedPrice = isReapply
-                ? price + reapplyValue
-                : price + nonReapplyValue;
-              const modifiedOldPrice = isReapply
-                ? old_price + reapplyValue
-                : old_price + nonReapplyValue;
+            const modifiedPrice = isReapply
+              ? price + reapplyValue
+              : price + nonReapplyValue;
+            const modifiedOldPrice = isReapply
+              ? old_price + reapplyValue
+              : old_price + nonReapplyValue;
 
-              return {
-                name,
-                description_items:
-                  this.processDescriptionItems(description_items),
-                price: modifiedPrice,
-                old_price: modifiedOldPrice,
-                discount_label,
-              };
-            }
-          );
+            return {
+              name,
+              description_items: this.processDescriptionItems(description_items),
+              price: modifiedPrice,
+              old_price: modifiedOldPrice,
+              discount_label,
+              order
+            };
+          });
+
         this.createPackages(this.allAvailablePlans);
       } catch (error) {
         console.log(error);
@@ -2363,13 +2363,13 @@ if (window.location.pathname === "/bestellen") {
       this.containerDefault = document.getElementById("bestellenDefault");
       this.buttonLink = document.getElementById("btnLink");
       this.buttonText = document.getElementById("btnText");
-      this.urlRefreshToken = "https://api.develop.nutheorie.be/authorization/token/refresh/";
+      this.urlRefreshToken = "https://api.nutheorie.nl/authorization/token/refresh/";
       this.urlPaymentLink =
-        "https://api.develop.nutheorie.be/api/applications/payment_link/";
+        "https://api.nutheorie.nl/api/applications/payment_link/";
       this.urlPackageStart =
-        "https://api.develop.nutheorie.be/api/applications/set_package_start/";
-      this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
-      this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
+        "https://api.nutheorie.nl/api/applications/set_package_start/";
+      this.urlFinalRedirect = "https://www.nutheorie.nl/user-profile";
+      this.urlFailRedirect = "https://www.nutheorie.nl/betaling/failed";
       this.interval = setInterval(this.refreshToken.bind(this), 90000);
       this.initialize();
     }
@@ -2492,7 +2492,6 @@ if (window.location.pathname === "/bestellen") {
       const { payment_amount } = formData;
 
       const access = getCookiesToken();
-      console.log(access);
 
       let payment_link;
       let package_starting_at = this.formatCalendarDate();
@@ -2535,7 +2534,6 @@ if (window.location.pathname === "/bestellen") {
           body: JSON.stringify({ "refresh": oldToken.refresh }),
         })
         const data = await respuesta.json();
-        console.log(data);
         const encodedTokens = encodeURIComponent(JSON.stringify(data));
         document.cookie = `tokens=${encodedTokens}`;
       } catch (error) {
@@ -2722,7 +2720,6 @@ if (window.location.pathname === "/bestellen") {
         },
         onChange: (selectedDates, dateStr, instance) => {
           this.dateCalendar = instance.formatDate(selectedDates[0], "Y-m-d\\TH:i:00+01:00");
-          console.log(this.dateCalendar);
           this.enableButton();
           this.updatePlanAvailableUntilText();
         },
