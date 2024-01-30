@@ -2371,8 +2371,8 @@ if (window.location.pathname === "/bestellen") {
         "https://api.develop.nutheorie.be/api/applications/set_package_start/";
       this.urlFinalRedirect = "https://develop.nutheorie.be/user-profile";
       this.urlFailRedirect = "https://develop.nutheorie.be/betaling/failed";
-      this.iniciarIntervalo();
       this.initialize();
+      this.iniciarIntervaloToken(285000);
     }
 
     initialize() {
@@ -3162,20 +3162,22 @@ if (window.location.pathname === "/bestellen") {
       aanbetalingAmount.textContent = ` ${formattedAmount}`;
     }
 
-    iniciarIntervalo() {
+    iniciarIntervaloToken(segundos) {
       const tiempoGuardado = localStorage.getItem("tiempoTranscurrido");
-      let tiempoInicio;
 
       if (tiempoGuardado) {
         const tiempoTranscurrido = Date.now() - parseInt(tiempoGuardado);
-        tiempoInicio = setInterval(
-          this.refreshToken(),
-          30000 - (tiempoTranscurrido % 1000)
+        setInterval(
+          () => this.refreshToken(),
+          segundos - (tiempoTranscurrido % segundos)
         );
       } else {
-        tiempoInicio = setInterval(this.refreshToken(), 30000);
+        setInterval(() => this.refreshToken(), segundos);
       }
-      localStorage.setItem("tiempoTranscurrido", tiempoInicio);
+
+      if (!tiempoGuardado) {
+        localStorage.setItem("tiempoTranscurrido", Date.now());
+      }
     }
   }
   const orderManager = new OrderManager();
