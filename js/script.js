@@ -3167,12 +3167,15 @@ if (window.location.pathname === "/bestellen") {
 
       if (tiempoGuardado) {
         const tiempoTranscurrido = Date.now() - parseInt(tiempoGuardado);
-        setInterval(
-          () => this.refreshToken(),
-          segundos - (tiempoTranscurrido % segundos)
-        );
+        setInterval(() => {
+          this.refreshToken();
+          localStorage.setItem("tiempoTranscurrido", Date.now());
+        }, segundos - (tiempoTranscurrido % segundos));
       } else {
-        setInterval(() => this.refreshToken(), segundos);
+        setInterval(() => {
+          this.refreshToken();
+          localStorage.setItem("tiempoTranscurrido", Date.now());
+        }, segundos);
       }
 
       if (!tiempoGuardado) {
