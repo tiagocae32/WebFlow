@@ -11,7 +11,6 @@ if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
       this.userData = {};
-      this.token = null;
       this.steps = steps;
       this.currentStepIndex = 0;
       this.formData = {};
@@ -2308,7 +2307,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       };
 
       if (this.isReapplyFlow) {
-        const accessToken = this.token;
+        const accessToken = getCookiesToken().access;
         options.headers["Authorization"] = `Bearer ${accessToken}`;
       }
 
@@ -3190,11 +3189,10 @@ if (window.location.pathname === "/bestellen") {
 
 class User {
   constructor() {
-    //document.addEventListener("DOMContentLoaded", () => {
-    this.initializeLoginButton();
-    setInterval(() => this.refreshToken(), 10000);
-    this.getUserInfo();
-    //});
+    this.getUserInfo().then(() => {
+      this.initializeLoginButton();
+      setInterval(() => this.refreshToken(), 10000);
+    });
   }
 
   logout() {
@@ -3203,12 +3201,11 @@ class User {
   }
 
   hasPaid() {
-    return JSON.parse(localStorage.getItem("formData"))?.is_paid;
+    return this.userData?.is_paid;
   }
 
   async getUserInfo() {
-    const userData = await getUserInfoBack();
-    console.log(userData);
+    this.userData = await getUserInfoBack();
   }
 
   updateLoginButtonText() {
@@ -3283,6 +3280,7 @@ class User {
       catch (error) {
         console.log("Error refreshtoken");
       }
+      this.getUserInfo();
     }
   }
 
@@ -3313,14 +3311,14 @@ function getCookiesToken() {
 async function getUserInfoBack() {
   const accessToken = getCookiesToken();
   if (accessToken) {
-    this.token = accessToken.access;
     try {
-      const resServer = await fetch(
-        "https://api.nutheorie.nl/api/applications/",
+      const baseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+      const userInfoUrl = `${baseUrl}api/applications/`;
+      const resServer = await fetch(userInfoUrl,
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${this.token}`,
+            Authorization: `Bearer ${accessToken.access}`,
             "Content-Type": "application/json",
           },
         }
