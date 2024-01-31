@@ -12,7 +12,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     constructor(steps) {
       this.userData = {};
       this.token = null;
-      this.getUserInfoBack();
       this.steps = steps;
       this.currentStepIndex = 0;
       this.formData = {};
@@ -817,28 +816,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       else this.isReapplyFlow = false;
     }
 
-    async getUserInfoBack() {
-      const accessToken = getCookiesToken();
-      if (accessToken && this.isReapplyFlow) {
-        this.token = accessToken.access;
-        try {
-          const resServer = await fetch(
-            "https://api.nutheorie.nl/api/applications/",
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${this.token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          const userData = await resServer.json();
-          this.userData = userData;
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        this.userData = {};
+    async getUserInfo() {
+      if (this.isReapplyFlow) {
+        this.userData = await getUserInfoBack()
       }
     }
 
@@ -847,7 +827,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       switch (currentStepId) {
         case "step1":
           this.checkIsReapplyFlow();
-          this.getUserInfoBack();
+          this.getUserInfo();
           break;
         case "step4Cities":
           this.getCities();
@@ -1135,7 +1115,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.createCbrElements(this.cbrs_list);
       } else {
         this.formData["cbr_locations"] = [];
-        this.createCbrsSelect(this.cbrs_list);
+        if (!this.isCbrsSelectCreated) {
+          this.createCbrsSelect(this.cbrs_list);
+          this.isCbrsSelectCreated = true;
+        }
       }
     }
 
@@ -1772,7 +1755,7 @@ if (window.location.pathname.includes("/aanmelden")) {
             "div",
             "packageOldPrice",
             "heading-style-h6 text-weight-xbold",
-            `â‚¬ ${parseInt(pkg.old_price)}`
+            `€ ${parseInt(pkg.old_price)}`
           )
         );
         packageOldPriceContainer.appendChild(
@@ -2025,7 +2008,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         newStepHistory.push(currentStepId);
 
         if (++safetyCounter > 100) {
-          console.error("Se ha excedido el lÃƒÂ­mite de seguridad en el bucle");
+          console.error("Se ha excedido el lÃ­mite de seguridad en el bucle");
           return;
         }
       }
@@ -2277,7 +2260,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.addPackageItemElements(packageElement, selectedPackage, true);
           container.appendChild(packageElement);
         } else {
-          container.textContent = "No se ha seleccionado ningÃƒÂºn paquete.";
+          container.textContent = "No se ha seleccionado ningÃºn paquete.";
         }
       }
     }
@@ -3185,7 +3168,7 @@ if (window.location.pathname === "/bestellen") {
     handleStoredData(formData) {
       const amount = document.getElementById("btnAmount");
       const aanbetalingAmount = document.getElementById("aanbetalingTotal");
-      amount.textContent = `â‚¬ ${formData.payment_amount}`;
+      amount.textContent = `€ ${formData.payment_amount}`;
       const paymentAmount = parseFloat(formData.payment_amount);
       let formattedAmount = "";
 
@@ -3207,10 +3190,11 @@ if (window.location.pathname === "/bestellen") {
 
 class User {
   constructor() {
-    document.addEventListener("DOMContentLoaded", () => {
-      this.initializeLoginButton();
-      setInterval(() => this.refreshToken(), 10000);
-    });
+    //document.addEventListener("DOMContentLoaded", () => {
+    this.initializeLoginButton();
+    setInterval(() => this.refreshToken(), 10000);
+    this.getUserInfo();
+    //});
   }
 
   logout() {
@@ -3220,6 +3204,11 @@ class User {
 
   hasPaid() {
     return JSON.parse(localStorage.getItem("formData"))?.is_paid;
+  }
+
+  async getUserInfo() {
+    const userData = await getUserInfoBack();
+    console.log(userData);
   }
 
   updateLoginButtonText() {
@@ -3319,4 +3308,29 @@ function getCookiesToken() {
     }
   }
   return null;
+}
+
+async function getUserInfoBack() {
+  const accessToken = getCookiesToken();
+  if (accessToken) {
+    this.token = accessToken.access;
+    try {
+      const resServer = await fetch(
+        "https://api.nutheorie.nl/api/applications/",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const userData = await resServer.json();
+      return userData;
+    } catch (error) {
+      console.log(error);
+    }
+  } else {
+    return {};
+  }
 }

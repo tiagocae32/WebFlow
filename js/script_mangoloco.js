@@ -816,9 +816,28 @@ if (window.location.pathname.includes("/aanmelden")) {
       else this.isReapplyFlow = false;
     }
 
-    async getUserInfo() {
-      if (this.isReapplyFlow) {
-        this.userData = await getUserInfoBack()
+    async getUserInfoBack() {
+      const accessToken = getCookiesToken();
+      if (accessToken && this.isReapplyFlow) {
+        this.token = accessToken.access;
+        try {
+          const resServer = await fetch(
+            "https://api.develop.nutheorie.be/api/applications/",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${this.token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const userData = await resServer.json();
+          this.userData = userData;
+        } catch (error) {
+          console.log(error);
+        }
+      } else {
+        this.userData = {};
       }
     }
 
@@ -981,13 +1000,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
       this.createOptions(this.citiesList, "step4", true);
     }
-
-    removeOnlineCity() {
-      if (this.formData.course_type === "offline" && Array.isArray(this.formData.cities)) {
-        const indexCityOnline = this.formData.cities.findIndex(city => city.is_online);
-        this.formData.cities.splice(indexCityOnline, 1);
-      }
-    }
     // END CITIES
 
     // MONTHS
@@ -1107,18 +1119,16 @@ if (window.location.pathname.includes("/aanmelden")) {
           const resServer = await fetch(this.urls.cbrsLocations);
           const data = await resServer.json();
           this.cbrs_list = data;
+          if (createElements) {
+            this.createCbrElements(this.cbrs_list);
+          } else {
+            this.createCbrsSelect(this.cbrs_list);
+          }
         } catch (error) {
           console.log(error);
         }
-      }
-      if (createElements) {
+      } else if (createElements) {
         this.createCbrElements(this.cbrs_list);
-      } else {
-        this.formData["cbr_locations"] = [];
-        if (!this.isCbrsSelectCreated) {
-          this.createCbrsSelect(this.cbrs_list);
-          this.isCbrsSelectCreated = true;
-        }
       }
     }
 
@@ -1194,20 +1204,12 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     formatDateMijnFlow() {
-      const isTimeValid = this.timePicked && this.timePicked.length === 5 &&
-        parseInt(this.timePicked.substring(0, 2), 10) <= 23 &&
-        parseInt(this.timePicked.substring(3, 5), 10) <= 59;
-
-      if (this.datePicked && isTimeValid) {
+      if (this.datePicked && this.timePicked) {
         this.setFormData(
           "mijn_exam_datetime",
           `${this.datePicked}T${this.timePicked}:00+01:00`
         );
-      } else {
-        this.setFormData(
-          "mijn_exam_datetime", ""
-        )
-      };
+      }
       this.checkEnableNextButton();
     }
 
@@ -1224,7 +1226,8 @@ if (window.location.pathname.includes("/aanmelden")) {
         label.className = "w-checkbox aanmelden_step4-item";
 
         const checkboxDiv = document.createElement("div");
-        checkboxDiv.className = "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
+        checkboxDiv.className =
+          "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
@@ -1250,464 +1253,446 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.toggleCbrSelection(element);
           this.checkEnableNextButton();
         });
-
-        return checkboxDiv;
-      };
-
-      const updateCheckboxState = (checkbox, element, checkboxDiv) => {
-        checkbox.checked = this.formData["cbr_locations"]?.includes(element);
-        if (!checkbox.checked) {
-          checkboxDiv.classList.remove("w--redirected-checked");
-        }
-      };
-
-      if (!container.hasChildNodes()) {
-        this.cleanInterface(container);
-        elements.forEach((element, index) => {
-          const checkboxDiv = createCheckboxElement(element, index);
-          const checkbox = container.querySelector(`input[name="${element}"]`);
-          updateCheckboxState(checkbox, element, checkboxDiv);
-        });
-      }
-      else {
-        elements.forEach((element) => {
-          const checkbox = container.querySelector(`input[name="${element}"]`);
-          if (checkbox) {
-            const checkboxDiv = checkbox.parentElement.querySelector(".w-checkbox-input");
-            updateCheckboxState(checkbox, element, checkboxDiv);
-          }
-        });
-      }
-    }
-
-    toggleCbrSelection(element) {
-      if (!Array.isArray(this.formData["cbr_locations"])) {
-        this.formData["cbr_locations"] = [];
-      }
-      const index = this.formData["cbr_locations"].indexOf(element);
-      if (index === -1) {
-        this.formData["cbr_locations"].push(element);
-      } else {
-        this.formData["cbr_locations"].splice(index, 1);
-      }
-    }
-
-    // END LOCATIONS
-
-    // CALENDAR
-
-    initializeCalendar() {
-      this.todayCalendar = new Date();
-      this.currentMonthCalendar = this.todayCalendar.getMonth();
-      this.currentYearCalendar = this.todayCalendar.getFullYear();
-      this.selectedDates = new Set();
-      this.calendarElement = document.getElementById("calendar");
-      this.monthLabel = document.getElementById("monthLabel");
-      this.yearLabel = document.getElementById("yearLabel");
-      this.chanceElement = document.getElementById("chance");
-
-      if (!this.isAlreadyRender) {
-        this.initializeCalendarButtons();
-        this.renderCalendarForMonthYear(
-          this.currentMonthCalendar,
-          this.currentYearCalendar
-        );
-      }
-      this.isAlreadyRender = true;
-    }
-
-    initializeCalendarButtons() {
-      const prevMonthButton = document.getElementById("prev");
-      const nextMonthButton = document.getElementById("next");
-
-      if (prevMonthButton) {
-        prevMonthButton.addEventListener("click", (event) => {
-          event.preventDefault();
-          if (this.currentMonthCalendar === 0) {
-            this.currentMonthCalendar = 11;
-            this.currentYearCalendar--;
-          } else {
-            this.currentMonthCalendar--;
-          }
-          this.renderCalendarForMonthYear(
-            this.currentMonthCalendar,
-            this.currentYearCalendar
-          );
-        });
-      }
-
-      if (nextMonthButton) {
-        nextMonthButton.addEventListener("click", (event) => {
-          event.preventDefault();
-          if (this.currentMonthCalendar === 11) {
-            this.currentMonthCalendar = 0;
-            this.currentYearCalendar++;
-          } else {
-            this.currentMonthCalendar++;
-          }
-          this.renderCalendarForMonthYear(
-            this.currentMonthCalendar,
-            this.currentYearCalendar
-          );
-        });
-      }
-    }
-
-    renderCalendarForMonthYear(month, year) {
-      this.monthLabel.textContent = this.generateDutchMonths(12)[month];
-      this.yearLabel.textContent = year.toString();
-
-      const dayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = 32 - new Date(year, month, 32).getDate();
-      let calendar = `<table class="calendar-table"><thead><tr>`;
-
-      dayNames.forEach((day) => {
-        calendar += `<th>${day}</th>`;
       });
-      calendar += `</tr></thead><tbody><tr>`;
-
-      const firstDayAdjusted = firstDay === 0 ? 6 : firstDay - 1;
-      const previousMonth = new Date(year, month, 0);
-      const previousMonthDays = previousMonth.getDate();
-
-      for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+    } else {
+    elements.forEach((element, index) => {
+      const checkbox = container.querySelector(`input[name="${element}"]`);
+      if (checkbox) {
+        checkbox.checked =
+          this.formData["cbr_locations"]?.includes(element);
       }
+    });
+  }
+}
 
-      for (let day = 1; day <= daysInMonth; day++) {
-        let currentDate = new Date(year, month, day);
-        currentDate.setHours(12, 0, 0, 0);
-        let dateStr = currentDate.toISOString().split("T")[0];
-        let isEnabled = this.isDateEnabled(currentDate);
-        let tdClass = !isEnabled ? "disabled" : "";
-        tdClass += this.selectedDates.has(dateStr) ? " selected-date" : "";
+toggleCbrSelection(element) {
+  if (!Array.isArray(this.formData["cbr_locations"])) {
+    this.formData["cbr_locations"] = [];
+  }
+  const index = this.formData["cbr_locations"].indexOf(element);
+  if (index === -1) {
+    this.formData["cbr_locations"].push(element);
+  } else {
+    this.formData["cbr_locations"].splice(index, 1);
+  }
+}
 
-        calendar += `<td class="${tdClass}" data-date="${dateStr}">${day}</td>`;
-        if ((firstDayAdjusted + day) % 7 === 0 && day !== daysInMonth) {
-          calendar += `</tr><tr>`;
-        }
+// END LOCATIONS
+
+// CALENDAR
+
+initializeCalendar() {
+  this.todayCalendar = new Date();
+  this.currentMonthCalendar = this.todayCalendar.getMonth();
+  this.currentYearCalendar = this.todayCalendar.getFullYear();
+  this.selectedDates = new Set();
+  this.calendarElement = document.getElementById("calendar");
+  this.monthLabel = document.getElementById("monthLabel");
+  this.yearLabel = document.getElementById("yearLabel");
+  this.chanceElement = document.getElementById("chance");
+
+  if (!this.isAlreadyRender) {
+    this.initializeCalendarButtons();
+    this.renderCalendarForMonthYear(
+      this.currentMonthCalendar,
+      this.currentYearCalendar
+    );
+  }
+  this.isAlreadyRender = true;
+}
+
+initializeCalendarButtons() {
+  const prevMonthButton = document.getElementById("prev");
+  const nextMonthButton = document.getElementById("next");
+
+  if (prevMonthButton) {
+    prevMonthButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (this.currentMonthCalendar === 0) {
+        this.currentMonthCalendar = 11;
+        this.currentYearCalendar--;
+      } else {
+        this.currentMonthCalendar--;
       }
-
-      let daysAdded = 1;
-      while ((firstDayAdjusted + daysInMonth + daysAdded - 1) % 7 !== 0) {
-        calendar += `<td class="not-current-month disabled">${daysAdded}</td>`;
-        daysAdded++;
-      }
-
-      calendar += `</tr></tbody></table>`;
-      this.calendarElement.innerHTML = calendar;
-      this.addEventListenersToDays();
-    }
-
-    isDateEnabled(date) {
-      const currentDate = new Date();
-      currentDate.setHours(12, 0, 0, 0);
-      const maxDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 5,
-        currentDate.getDate()
+      this.renderCalendarForMonthYear(
+        this.currentMonthCalendar,
+        this.currentYearCalendar
       );
-      maxDate.setHours(23, 59, 59, 999);
-      date.setHours(12, 0, 0, 0);
+    });
+  }
 
-      return (
-        date <= maxDate &&
-        date >= currentDate &&
-        date.getDay() !== 6 &&
-        date.getDay() !== 0
+  if (nextMonthButton) {
+    nextMonthButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (this.currentMonthCalendar === 11) {
+        this.currentMonthCalendar = 0;
+        this.currentYearCalendar++;
+      } else {
+        this.currentMonthCalendar++;
+      }
+      this.renderCalendarForMonthYear(
+        this.currentMonthCalendar,
+        this.currentYearCalendar
       );
-    }
+    });
+  }
+}
 
-    checkDates() {
+renderCalendarForMonthYear(month, year) {
+  this.monthLabel.textContent = this.generateDutchMonths(12)[month];
+  this.yearLabel.textContent = year.toString();
+
+  const dayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = 32 - new Date(year, month, 32).getDate();
+  let calendar = `<table class="calendar-table"><thead><tr>`;
+
+  dayNames.forEach((day) => {
+    calendar += `<th>${day}</th>`;
+  });
+  calendar += `</tr></thead><tbody><tr>`;
+
+  const firstDayAdjusted = firstDay === 0 ? 6 : firstDay - 1;
+  const previousMonth = new Date(year, month, 0);
+  const previousMonthDays = previousMonth.getDate();
+
+  for (let i = 0; i < firstDayAdjusted; i++) {
+    calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+      }</td>`;
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    let currentDate = new Date(year, month, day);
+    currentDate.setHours(12, 0, 0, 0);
+    let dateStr = currentDate.toISOString().split("T")[0];
+    let isEnabled = this.isDateEnabled(currentDate);
+    let tdClass = !isEnabled ? "disabled" : "";
+    tdClass += this.selectedDates.has(dateStr) ? " selected-date" : "";
+
+    calendar += `<td class="${tdClass}" data-date="${dateStr}">${day}</td>`;
+    if ((firstDayAdjusted + day) % 7 === 0 && day !== daysInMonth) {
+      calendar += `</tr><tr>`;
+    }
+  }
+
+  let daysAdded = 1;
+  while ((firstDayAdjusted + daysInMonth + daysAdded - 1) % 7 !== 0) {
+    calendar += `<td class="not-current-month disabled">${daysAdded}</td>`;
+    daysAdded++;
+  }
+
+  calendar += `</tr></tbody></table>`;
+  this.calendarElement.innerHTML = calendar;
+  this.addEventListenersToDays();
+}
+
+isDateEnabled(date) {
+  const currentDate = new Date();
+  currentDate.setHours(12, 0, 0, 0);
+  const maxDate = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 5,
+    currentDate.getDate()
+  );
+  maxDate.setHours(23, 59, 59, 999);
+  date.setHours(12, 0, 0, 0);
+
+  return (
+    date <= maxDate &&
+    date >= currentDate &&
+    date.getDay() !== 6 &&
+    date.getDay() !== 0
+  );
+}
+
+checkDates() {
+  const storedDates = this.formData["course_dates"];
+  if (storedDates) {
+    const datesFormData = new Set(this.formData["course_dates"]);
+    this.selectedDates = datesFormData;
+    const days = this.calendarElement.querySelectorAll(
+      "td:not(.disabled):not(.not-current-month)"
+    );
+    days.forEach((day) => {
+      const date = day.getAttribute("data-date");
+      if (this.selectedDates.has(date)) {
+        day.classList.add("selected-date");
+      } else {
+        day.classList.remove("selected-date");
+      }
+    });
+  }
+}
+
+addEventListenersToDays() {
+  const days = this.calendarElement.querySelectorAll(
+    "td:not(.disabled):not(.not-current-month)"
+  );
+  days.forEach((day) => {
+    day.addEventListener("click", () => {
       const storedDates = this.formData["course_dates"];
       if (storedDates) {
-        const datesFormData = new Set(this.formData["course_dates"]);
-        this.selectedDates = datesFormData;
-        const days = this.calendarElement.querySelectorAll(
-          "td:not(.disabled):not(.not-current-month)"
-        );
-        days.forEach((day) => {
-          const date = day.getAttribute("data-date");
-          if (this.selectedDates.has(date)) {
-            day.classList.add("selected-date");
-          } else {
-            day.classList.remove("selected-date");
-          }
-        });
+        this.selectedDates = new Set(storedDates);
       }
+      const date = day.getAttribute("data-date");
+      if (this.selectedDates.has(date)) {
+        this.selectedDates.delete(date);
+        day.classList.remove("selected-date");
+      } else {
+        this.selectedDates.add(date);
+        day.classList.add("selected-date");
+      }
+      this.setFormData("course_dates", this.selectedDates);
+      this.updateChanceText();
+    });
+  });
+}
+
+updateChanceText() {
+  const count = this.selectedDates.size;
+
+  const ranges = [
+    { min: 1, max: 4, text: "klein-gemiddeld" },
+    { min: 5, max: 8, text: "gemiddeld" },
+    { min: 9, max: Infinity, text: "gemiddeld-groot" },
+  ];
+
+  const selectedRange = ranges.find(
+    (range) => count >= range.min && count <= range.max
+  );
+  const text = selectedRange ? selectedRange.text : "- (selecteer data)";
+
+  this.chanceElement.textContent = text;
+  this.formData["course_dates"] = [...this.selectedDates].sort(
+    (a, b) => new Date(a) - new Date(b)
+  );
+  this.formData["chance"] = text;
+}
+
+// END CALENDAR
+
+// PACKAGES
+
+getLastDayOfMonth() {
+  const now = new Date();
+  const lastDayOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0
+  ).getDate();
+  const currentMonthInDutch = this.dutchMonths[now.getMonth()];
+
+  return `${lastDayOfMonth} ${currentMonthInDutch}`;
+}
+
+processDescriptionItems(descriptionItems) {
+  return descriptionItems.map((item) => {
+    if (typeof item.description === "string") {
+      return {
+        ...item,
+        description: item.description.replace(
+          "{{ getLastDayOfMonth }}",
+          this.getLastDayOfMonth()
+        ),
+      };
     }
-
-    addEventListenersToDays() {
-      const days = this.calendarElement.querySelectorAll(
-        "td:not(.disabled):not(.not-current-month)"
-      );
-      days.forEach((day) => {
-        day.addEventListener("click", () => {
-          const storedDates = this.formData["course_dates"];
-          if (storedDates) {
-            this.selectedDates = new Set(storedDates);
-          }
-          const date = day.getAttribute("data-date");
-          if (this.selectedDates.has(date)) {
-            this.selectedDates.delete(date);
-            day.classList.remove("selected-date");
-          } else {
-            this.selectedDates.add(date);
-            day.classList.add("selected-date");
-          }
-          this.setFormData("course_dates", this.selectedDates);
-          this.updateChanceText();
-        });
-      });
-    }
-
-    updateChanceText() {
-      const count = this.selectedDates.size;
-
-      const ranges = [
-        { min: 1, max: 4, text: "klein-gemiddeld" },
-        { min: 5, max: 8, text: "gemiddeld" },
-        { min: 9, max: Infinity, text: "gemiddeld-groot" },
-      ];
-
-      const selectedRange = ranges.find(
-        (range) => count >= range.min && count <= range.max
-      );
-      const text = selectedRange ? selectedRange.text : "- (selecteer data)";
-
-      this.chanceElement.textContent = text;
-      this.formData["course_dates"] = [...this.selectedDates].sort(
-        (a, b) => new Date(a) - new Date(b)
-      );
-      this.formData["chance"] = text;
-    }
-
-    // END CALENDAR
-
-    // PACKAGES
-
-    getLastDayOfMonth() {
-      const now = new Date();
-      const lastDayOfMonth = new Date(
-        now.getFullYear(),
-        now.getMonth() + 1,
-        0
-      ).getDate();
-      const currentMonthInDutch = this.dutchMonths[now.getMonth()];
-
-      return `${lastDayOfMonth} ${currentMonthInDutch}`;
-    }
-
-    processDescriptionItems(descriptionItems) {
-      return descriptionItems.map((item) => {
-        if (typeof item.description === "string") {
-          return {
-            ...item,
-            description: item.description.replace(
-              "{{ getLastDayOfMonth }}",
-              this.getLastDayOfMonth()
-            ),
-          };
-        }
-        return item;
-      });
-    }
+    return item;
+  });
+}
 
     async getPackages() {
-      if (this.formData["package_name"]) {
-        return;
-      }
+  if (this.formData["package_name"]) {
+    return;
+  }
 
-      const url = this.urls.plans;
+  const url = this.urls.plans;
 
-      try {
-        const resServer = await fetch(url);
-        const data = await resServer.json();
+  try {
+    const resServer = await fetch(url);
+    const data = await resServer.json();
 
-        const isReapply = this.isReapplyFlow;
+    const isReapply = this.isReapplyFlow;
 
-        this.allAvailablePlans = data
-          .filter(
-            (item) =>
-              item.type === (isReapply ? "REAPPLY" : "PUBLIC") &&
-              item.license_type === this.formData.license_type &&
-              item.is_visible
-          )
-          .sort((a, b) => a.order - b.order)
-          .map(
-            ({
-              name,
-              description_items,
-              price,
-              old_price,
-              discount_label,
-              order,
-            }) => {
-              const reapplyValue = this.REAPPLY_PLANS_DELTA;
-              const nonReapplyValue = this.PLANS_DELTA;
+    this.allAvailablePlans = data
+      .filter(
+        (item) =>
+          item.type === (isReapply ? "REAPPLY" : "PUBLIC") &&
+          item.license_type === this.formData.license_type &&
+          item.is_visible
+      )
+      .sort((a, b) => a.order - b.order)
+      .map(
+        ({
+          name,
+          description_items,
+          price,
+          old_price,
+          discount_label,
+          order,
+        }) => {
+          const reapplyValue = this.REAPPLY_PLANS_DELTA;
+          const nonReapplyValue = this.PLANS_DELTA;
 
-              const modifiedPrice = isReapply
-                ? (price = Number(price) + reapplyValue)
-                : (price = Number(price) + nonReapplyValue);
-              const modifiedOldPrice = isReapply
-                ? (old_price = Number(old_price) + reapplyValue)
-                : (old_price = Number(old_price) + nonReapplyValue);
+          const modifiedPrice = isReapply
+            ? (price = Number(price) + reapplyValue)
+            : (price = Number(price) + nonReapplyValue);
+          const modifiedOldPrice = isReapply
+            ? (old_price = Number(old_price) + reapplyValue)
+            : (old_price = Number(old_price) + nonReapplyValue);
 
-              return {
-                name,
-                description_items:
-                  this.processDescriptionItems(description_items),
-                price: modifiedPrice,
-                old_price: modifiedOldPrice,
-                discount_label,
-                order,
-              };
-            }
-          );
-        this.createPackages(this.allAvailablePlans);
-      } catch (error) {
-        console.log(error);
-      }
-    }
+          return {
+            name,
+            description_items:
+              this.processDescriptionItems(description_items),
+            price: modifiedPrice,
+            old_price: modifiedOldPrice,
+            discount_label,
+            order,
+          };
+        }
+      );
+    this.createPackages(this.allAvailablePlans);
+  } catch (error) {
+    console.log(error);
+  }
+}
 
-    createPackages(packages) {
-      const packageListElement = document.getElementById("packageList");
+createPackages(packages) {
+  const packageListElement = document.getElementById("packageList");
 
-      this.cleanInterface(packageListElement);
+  this.cleanInterface(packageListElement);
 
-      packages.forEach((pkg) => {
-        let packageItem = document.createElement("div");
-        packageItem.className = "aanmelden_package-item";
-        packageItem.setAttribute("data-package-name", pkg.name);
+  packages.forEach((pkg) => {
+    let packageItem = document.createElement("div");
+    packageItem.className = "aanmelden_package-item";
+    packageItem.setAttribute("data-package-name", pkg.name);
 
-        packageItem.addEventListener("click", () => {
-          this.setFormData("package_name", pkg.name);
-          this.packageSelected = pkg;
-          const allPackageItems = document.querySelectorAll(
-            ".aanmelden_package-item"
-          );
-          allPackageItems.forEach((item) => {
-            item.classList.remove("selected-option");
-          });
-
-          packageItem.classList.add("selected-option");
-        });
-
-        this.addPackageItemElements(packageItem, pkg);
-
-        packageListElement.appendChild(packageItem);
+    packageItem.addEventListener("click", () => {
+      this.setFormData("package_name", pkg.name);
+      this.packageSelected = pkg;
+      const allPackageItems = document.querySelectorAll(
+        ".aanmelden_package-item"
+      );
+      allPackageItems.forEach((item) => {
+        item.classList.remove("selected-option");
       });
-    }
 
-    createSvgElement(svgHTML) {
-      const template = document.createElement("template");
-      svgHTML = svgHTML.trim();
-      template.innerHTML = svgHTML;
-      return template.content.firstChild;
-    }
+      packageItem.classList.add("selected-option");
+    });
 
-    createElementWithClass(elementType, className) {
-      const element = document.createElement(elementType);
-      element.className = className;
-      return element;
-    }
+    this.addPackageItemElements(packageItem, pkg);
 
-    createTextElement(elementType, id, className, text) {
-      const element = this.createElementWithClass(elementType, className);
-      element.id = id;
-      element.textContent = text;
-      return element;
-    }
+    packageListElement.appendChild(packageItem);
+  });
+}
 
-    appendSvgToElement(element, svgHTML) {
-      const svgElement = this.createSvgElement(svgHTML);
-      element.appendChild(svgElement);
-    }
+createSvgElement(svgHTML) {
+  const template = document.createElement("template");
+  svgHTML = svgHTML.trim();
+  template.innerHTML = svgHTML;
+  return template.content.firstChild;
+}
 
-    addPackageItemElements(packageItem, pkg, isFinalStep = false) {
-      const packageInfoContainer = this.createElementWithClass(
-        "div",
-        "aanmelden_package-info"
-      );
-      const packagePriceMarginContainer = this.createElementWithClass(
-        "div",
-        "margin-bottom margin-custom4"
-      );
-      const packagePriceNameContainer = this.createElementWithClass(
-        "div",
-        "margin-bottom margin-xsmall"
-      );
-      const packagePriceNameElement = this.createElementWithClass(
-        "div",
-        "aanmelden_package-name"
-      );
-      const separatorClass = isFinalStep
-        ? "aanmelden_package-separator_overzicht"
-        : "aanmelden_package-separator";
-      const packageSeparator = this.createElementWithClass(
-        "div",
-        separatorClass
-      );
-      const packagePriceContainer = this.createElementWithClass(
-        "div",
-        "aanmelden_package-price"
-      );
-      const packagePriceElement = this.createTextElement(
-        "div",
-        "packagePrice",
-        "heading-style-h4",
-        `${parseInt(pkg.price)}`
-      );
-      const packagePriceSmallElement = this.createTextElement(
-        "div",
-        "packagePriceSmall",
-        "text-size-medium text-weight-bold",
-        `${((pkg.price % 1) * 100).toFixed(0).padStart(2, "0")}`
-      );
-      const packageNameElement = this.createTextElement(
-        "div",
-        "packageName",
-        "text-weight-bold",
-        pkg.name
-      );
+createElementWithClass(elementType, className) {
+  const element = document.createElement(elementType);
+  element.className = className;
+  return element;
+}
 
-      this.appendSvgToElement(
-        packagePriceNameElement,
-        `<svg data-v-035cdeba="" width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4 5.6V4C14.4 3.78783 14.3157 3.58434 14.1657 3.43431C14.0157 3.28429 13.8122 3.2 13.6 3.2H12.8V4C12.8 4.21217 12.7157 4.41566 12.5657 4.56568C12.4157 4.71571 12.2122 4.8 12 4.8C11.7878 4.8 11.5843 4.71571 11.4343 4.56568C11.2843 4.41566 11.2 4.21217 11.2 4V3.2H4.8V4C4.8 4.21217 4.71571 4.41566 4.56569 4.56568C4.41566 4.71571 4.21217 4.8 4 4.8C3.78783 4.8 3.58434 4.71571 3.43431 4.56568C3.28429 4.41566 3.2 4.21217 3.2 4V3.2H2.4C2.18783 3.2 1.98434 3.28429 1.83431 3.43431C1.68429 3.58434 1.6 3.78783 1.6 4V5.6H14.4ZM14.4 7.2H1.6V12C1.6 12.2122 1.68429 12.4157 1.83431 12.5657C1.98434 12.7157 2.18783 12.8 2.4 12.8H13.6C13.8122 12.8 14.0157 12.7157 14.1657 12.5657C14.3157 12.4157 14.4 12.2122 14.4 12V7.2ZM12.8 1.6H13.6C14.2365 1.6 14.847 1.85286 15.2971 2.30294C15.7471 2.75303 16 3.36348 16 4V12C16 12.6365 15.7471 13.247 15.2971 13.6971C14.847 14.1471 14.2365 14.4 13.6 14.4H2.4C1.76348 14.4 1.15303 14.1471 0.702944 13.6971C0.252856 13.247 0 12.6365 0 12L0 4C0 3.36348 0.252856 2.75303 0.702944 2.30294C1.15303 1.85286 1.76348 1.6 2.4 1.6H3.2V0.8C3.2 0.587827 3.28429 0.384344 3.43431 0.234315C3.58434 0.0842855 3.78783 0 4 0C4.21217 0 4.41566 0.0842855 4.56569 0.234315C4.71571 0.384344 4.8 0.587827 4.8 0.8V1.6H11.2V0.8C11.2 0.587827 11.2843 0.384344 11.4343 0.234315C11.5843 0.0842855 11.7878 0 12 0C12.2122 0 12.4157 0.0842855 12.5657 0.234315C12.7157 0.384344 12.8 0.587827 12.8 0.8V1.6Z" fill="#161616"></path></svg>`
-      );
-      packagePriceContainer.append(
-        packagePriceElement,
-        packagePriceSmallElement
-      );
-      packagePriceMarginContainer.appendChild(packagePriceContainer);
-      packagePriceNameContainer.appendChild(packagePriceNameElement);
-      packagePriceNameElement.appendChild(packageNameElement);
-      packageInfoContainer.append(
-        packagePriceMarginContainer,
-        packagePriceNameContainer,
-        packageSeparator
-      );
+createTextElement(elementType, id, className, text) {
+  const element = this.createElementWithClass(elementType, className);
+  element.id = id;
+  element.textContent = text;
+  return element;
+}
 
-      const packageDescriptionListMargin = this.createElementWithClass(
-        "div",
-        "margin-top margin-xsmall"
-      );
-      const packageDescriptionList = this.createElementWithClass(
-        "div",
-        "aanmelden_package-list"
-      );
-      packageDescriptionListMargin.appendChild(packageDescriptionList);
+appendSvgToElement(element, svgHTML) {
+  const svgElement = this.createSvgElement(svgHTML);
+  element.appendChild(svgElement);
+}
 
-      pkg.description_items.forEach((desc) => {
-        const packageDescriptionItem = this.createElementWithClass(
-          "div",
-          "aanmelden_package-description"
-        );
-        this.appendSvgToElement(
-          packageDescriptionItem,
-          `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+addPackageItemElements(packageItem, pkg, isFinalStep = false) {
+  const packageInfoContainer = this.createElementWithClass(
+    "div",
+    "aanmelden_package-info"
+  );
+  const packagePriceMarginContainer = this.createElementWithClass(
+    "div",
+    "margin-bottom margin-custom4"
+  );
+  const packagePriceNameContainer = this.createElementWithClass(
+    "div",
+    "margin-bottom margin-xsmall"
+  );
+  const packagePriceNameElement = this.createElementWithClass(
+    "div",
+    "aanmelden_package-name"
+  );
+  const separatorClass = isFinalStep
+    ? "aanmelden_package-separator_overzicht"
+    : "aanmelden_package-separator";
+  const packageSeparator = this.createElementWithClass(
+    "div",
+    separatorClass
+  );
+  const packagePriceContainer = this.createElementWithClass(
+    "div",
+    "aanmelden_package-price"
+  );
+  const packagePriceElement = this.createTextElement(
+    "div",
+    "packagePrice",
+    "heading-style-h4",
+    `${parseInt(pkg.price)}`
+  );
+  const packagePriceSmallElement = this.createTextElement(
+    "div",
+    "packagePriceSmall",
+    "text-size-medium text-weight-bold",
+    `${((pkg.price % 1) * 100).toFixed(0).padStart(2, "0")}`
+  );
+  const packageNameElement = this.createTextElement(
+    "div",
+    "packageName",
+    "text-weight-bold",
+    pkg.name
+  );
+
+  this.appendSvgToElement(
+    packagePriceNameElement,
+    `<svg data-v-035cdeba="" width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4 5.6V4C14.4 3.78783 14.3157 3.58434 14.1657 3.43431C14.0157 3.28429 13.8122 3.2 13.6 3.2H12.8V4C12.8 4.21217 12.7157 4.41566 12.5657 4.56568C12.4157 4.71571 12.2122 4.8 12 4.8C11.7878 4.8 11.5843 4.71571 11.4343 4.56568C11.2843 4.41566 11.2 4.21217 11.2 4V3.2H4.8V4C4.8 4.21217 4.71571 4.41566 4.56569 4.56568C4.41566 4.71571 4.21217 4.8 4 4.8C3.78783 4.8 3.58434 4.71571 3.43431 4.56568C3.28429 4.41566 3.2 4.21217 3.2 4V3.2H2.4C2.18783 3.2 1.98434 3.28429 1.83431 3.43431C1.68429 3.58434 1.6 3.78783 1.6 4V5.6H14.4ZM14.4 7.2H1.6V12C1.6 12.2122 1.68429 12.4157 1.83431 12.5657C1.98434 12.7157 2.18783 12.8 2.4 12.8H13.6C13.8122 12.8 14.0157 12.7157 14.1657 12.5657C14.3157 12.4157 14.4 12.2122 14.4 12V7.2ZM12.8 1.6H13.6C14.2365 1.6 14.847 1.85286 15.2971 2.30294C15.7471 2.75303 16 3.36348 16 4V12C16 12.6365 15.7471 13.247 15.2971 13.6971C14.847 14.1471 14.2365 14.4 13.6 14.4H2.4C1.76348 14.4 1.15303 14.1471 0.702944 13.6971C0.252856 13.247 0 12.6365 0 12L0 4C0 3.36348 0.252856 2.75303 0.702944 2.30294C1.15303 1.85286 1.76348 1.6 2.4 1.6H3.2V0.8C3.2 0.587827 3.28429 0.384344 3.43431 0.234315C3.58434 0.0842855 3.78783 0 4 0C4.21217 0 4.41566 0.0842855 4.56569 0.234315C4.71571 0.384344 4.8 0.587827 4.8 0.8V1.6H11.2V0.8C11.2 0.587827 11.2843 0.384344 11.4343 0.234315C11.5843 0.0842855 11.7878 0 12 0C12.2122 0 12.4157 0.0842855 12.5657 0.234315C12.7157 0.384344 12.8 0.587827 12.8 0.8V1.6Z" fill="#161616"></path></svg>`
+  );
+  packagePriceContainer.append(
+    packagePriceElement,
+    packagePriceSmallElement
+  );
+  packagePriceMarginContainer.appendChild(packagePriceContainer);
+  packagePriceNameContainer.appendChild(packagePriceNameElement);
+  packagePriceNameElement.appendChild(packageNameElement);
+  packageInfoContainer.append(
+    packagePriceMarginContainer,
+    packagePriceNameContainer,
+    packageSeparator
+  );
+
+  const packageDescriptionListMargin = this.createElementWithClass(
+    "div",
+    "margin-top margin-xsmall"
+  );
+  const packageDescriptionList = this.createElementWithClass(
+    "div",
+    "aanmelden_package-list"
+  );
+  packageDescriptionListMargin.appendChild(packageDescriptionList);
+
+  pkg.description_items.forEach((desc) => {
+    const packageDescriptionItem = this.createElementWithClass(
+      "div",
+      "aanmelden_package-description"
+    );
+    this.appendSvgToElement(
+      packageDescriptionItem,
+      `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                                               <g clip-path="url(#clip0_410_3698)">
                                               <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
                                               </g>
@@ -1717,662 +1702,653 @@ if (window.location.pathname.includes("/aanmelden")) {
                                               </clipPath>
                                               </defs>
                                               </svg >`
-        );
+    );
 
-        const descriptionItem = this.createElementWithClass(
-          "div",
-          "text-size-tiny"
-        );
-        descriptionItem.textContent = desc.description;
-        packageDescriptionItem.appendChild(descriptionItem);
-        packageDescriptionList.appendChild(packageDescriptionItem);
-      });
+    const descriptionItem = this.createElementWithClass(
+      "div",
+      "text-size-tiny"
+    );
+    descriptionItem.textContent = desc.description;
+    packageDescriptionItem.appendChild(descriptionItem);
+    packageDescriptionList.appendChild(packageDescriptionItem);
+  });
 
-      packageInfoContainer.appendChild(packageDescriptionListMargin);
-      packageItem.appendChild(packageInfoContainer);
+  packageInfoContainer.appendChild(packageDescriptionListMargin);
+  packageItem.appendChild(packageInfoContainer);
 
-      const packageLabelContainer = this.createElementWithClass(
+  const packageLabelContainer = this.createElementWithClass(
+    "div",
+    "aanmelden_package-label"
+  );
+  if (pkg.discount_label) {
+    packageLabelContainer.appendChild(
+      this.createTextElement(
         "div",
-        "aanmelden_package-label"
-      );
-      if (pkg.discount_label) {
-        packageLabelContainer.appendChild(
-          this.createTextElement(
-            "div",
-            "packageDiscountLabel",
-            "text-size-xtiny text-weight-bold text-style-allcaps",
-            pkg.discount_label
-          )
-        );
-      }
-      if (pkg.old_price) {
-        const packageOldPriceContainer = this.createElementWithClass(
-          "div",
-          "aanmelden_package-label_price"
-        );
-        packageOldPriceContainer.appendChild(
-          this.createTextElement(
-            "div",
-            "packageOldPrice",
-            "heading-style-h6 text-weight-xbold",
-            `€ ${parseInt(pkg.old_price)}`
-          )
-        );
-        packageOldPriceContainer.appendChild(
-          this.createTextElement(
-            "div",
-            "packageOldPriceSmall",
-            "text-size-tiny text-weight-bold",
-            `${((pkg.old_price % 1) * 100).toFixed(0).padStart(2, "0")}`
-          )
-        );
-        packageOldPriceContainer.appendChild(
-          this.createElementWithClass(
-            "div",
-            "online_pricing-separator is-aanmelden"
-          )
-        );
-        packageLabelContainer.appendChild(packageOldPriceContainer);
-      }
-      if (!isFinalStep) {
-        packageItem.appendChild(packageLabelContainer);
-      }
-      if (isFinalStep && pkg.old_price) {
-        const discountAmount = pkg.old_price - pkg.price;
-        const formattedDiscountAmount = `- ${discountAmount.toFixed(2)}`;
+        "packageDiscountLabel",
+        "text-size-xtiny text-weight-bold text-style-allcaps",
+        pkg.discount_label
+      )
+    );
+  }
+  if (pkg.old_price) {
+    const packageOldPriceContainer = this.createElementWithClass(
+      "div",
+      "aanmelden_package-label_price"
+    );
+    packageOldPriceContainer.appendChild(
+      this.createTextElement(
+        "div",
+        "packageOldPrice",
+        "heading-style-h6 text-weight-xbold",
+        `€ ${parseInt(pkg.old_price)}`
+      )
+    );
+    packageOldPriceContainer.appendChild(
+      this.createTextElement(
+        "div",
+        "packageOldPriceSmall",
+        "text-size-tiny text-weight-bold",
+        `${((pkg.old_price % 1) * 100).toFixed(0).padStart(2, "0")}`
+      )
+    );
+    packageOldPriceContainer.appendChild(
+      this.createElementWithClass(
+        "div",
+        "online_pricing-separator is-aanmelden"
+      )
+    );
+    packageLabelContainer.appendChild(packageOldPriceContainer);
+  }
+  if (!isFinalStep) {
+    packageItem.appendChild(packageLabelContainer);
+  }
+  if (isFinalStep && pkg.old_price) {
+    const discountAmount = pkg.old_price - pkg.price;
+    const formattedDiscountAmount = `- ${discountAmount.toFixed(2)}`;
 
-        const additionalSeparatorMargin = this.createElementWithClass(
-          "div",
-          "margin-top margin-xsmall"
-        );
-        const additionalSeparator = this.createElementWithClass(
-          "div",
-          separatorClass
-        );
-        const pricingElementMargin = this.createElementWithClass(
-          "div",
-          "margin-top margin-xsmall"
-        );
-        const pricingElementList = this.createElementWithClass(
-          "div",
-          "overzicht_pricing-list"
-        );
-        const pricingElementItem = this.createElementWithClass(
-          "div",
-          "overzicht_pricing-item"
-        );
-        const oldPriceText = this.createTextElement(
-          "div",
-          "",
-          "text-weight-bold",
-          "Subtotaal"
-        );
-        const formattedOldPrice = `${parseFloat(pkg.old_price).toFixed(2)}`;
-        const oldPrice = this.createTextElement(
-          "div",
-          "",
-          "text-weight-bold",
-          formattedOldPrice
-        );
-        const pricingElementItemDiscount = this.createElementWithClass(
-          "div",
-          "overzicht_pricing-item"
-        );
-        const discountText = this.createTextElement(
-          "div",
-          "",
-          "text-weight-bold text-color-pink",
-          "Korting"
-        );
-        const discountPrice = this.createTextElement(
-          "div",
-          "",
-          "text-weight-bold text-color-pink",
-          formattedDiscountAmount
-        );
-        const pricingTotalMargin = this.createElementWithClass(
-          "div",
-          "margin-top margin-xsmall"
-        );
-        const pricingTotal = this.createElementWithClass(
-          "div",
-          "overzicht_pricing-total"
-        );
-        const formattedPrice = `Totaal: ${parseFloat(pkg.price).toFixed(2)}`;
-        const totalTextElement = this.createTextElement(
-          "div",
-          "",
-          "text-size-large text-weight-bold",
-          formattedPrice
-        );
+    const additionalSeparatorMargin = this.createElementWithClass(
+      "div",
+      "margin-top margin-xsmall"
+    );
+    const additionalSeparator = this.createElementWithClass(
+      "div",
+      separatorClass
+    );
+    const pricingElementMargin = this.createElementWithClass(
+      "div",
+      "margin-top margin-xsmall"
+    );
+    const pricingElementList = this.createElementWithClass(
+      "div",
+      "overzicht_pricing-list"
+    );
+    const pricingElementItem = this.createElementWithClass(
+      "div",
+      "overzicht_pricing-item"
+    );
+    const oldPriceText = this.createTextElement(
+      "div",
+      "",
+      "text-weight-bold",
+      "Subtotaal"
+    );
+    const formattedOldPrice = `${parseFloat(pkg.old_price).toFixed(2)}`;
+    const oldPrice = this.createTextElement(
+      "div",
+      "",
+      "text-weight-bold",
+      formattedOldPrice
+    );
+    const pricingElementItemDiscount = this.createElementWithClass(
+      "div",
+      "overzicht_pricing-item"
+    );
+    const discountText = this.createTextElement(
+      "div",
+      "",
+      "text-weight-bold text-color-pink",
+      "Korting"
+    );
+    const discountPrice = this.createTextElement(
+      "div",
+      "",
+      "text-weight-bold text-color-pink",
+      formattedDiscountAmount
+    );
+    const pricingTotalMargin = this.createElementWithClass(
+      "div",
+      "margin-top margin-xsmall"
+    );
+    const pricingTotal = this.createElementWithClass(
+      "div",
+      "overzicht_pricing-total"
+    );
+    const formattedPrice = `Totaal: ${parseFloat(pkg.price).toFixed(2)}`;
+    const totalTextElement = this.createTextElement(
+      "div",
+      "",
+      "text-size-large text-weight-bold",
+      formattedPrice
+    );
 
-        packageItem.appendChild(additionalSeparatorMargin);
-        packageItem.appendChild(pricingElementMargin);
-        additionalSeparatorMargin.appendChild(additionalSeparator);
-        pricingElementMargin.appendChild(pricingElementList);
-        pricingElementList.appendChild(pricingElementItem);
-        pricingElementList.appendChild(pricingElementItemDiscount);
-        pricingElementItem.appendChild(oldPriceText);
-        pricingElementItem.appendChild(oldPrice);
-        pricingElementItemDiscount.appendChild(discountText);
-        pricingElementItemDiscount.appendChild(discountPrice);
-        pricingTotal.appendChild(totalTextElement);
-        packageItem.appendChild(pricingTotalMargin);
-        pricingTotalMargin.appendChild(pricingTotal);
+    packageItem.appendChild(additionalSeparatorMargin);
+    packageItem.appendChild(pricingElementMargin);
+    additionalSeparatorMargin.appendChild(additionalSeparator);
+    pricingElementMargin.appendChild(pricingElementList);
+    pricingElementList.appendChild(pricingElementItem);
+    pricingElementList.appendChild(pricingElementItemDiscount);
+    pricingElementItem.appendChild(oldPriceText);
+    pricingElementItem.appendChild(oldPrice);
+    pricingElementItemDiscount.appendChild(discountText);
+    pricingElementItemDiscount.appendChild(discountPrice);
+    pricingTotal.appendChild(totalTextElement);
+    packageItem.appendChild(pricingTotalMargin);
+    pricingTotalMargin.appendChild(pricingTotal);
+  }
+}
+
+// END PACKAGES
+
+updateSvgVisibility() {
+  const licenseType = this.formData.license_type;
+  const licenseTypes = ["auto", "scooter", "motor"];
+
+  licenseTypes.forEach((type) => {
+    const svgId = `${type}Svg`;
+    const svgElement = document.getElementById(svgId);
+
+    if (svgElement) {
+      if (type === licenseType) {
+        svgElement.classList.remove("hide");
+      } else {
+        svgElement.classList.add("hide");
       }
     }
+  });
+}
 
-    // END PACKAGES
+updateRowVisibility() {
+  const locationsRow = document.getElementById("locationsRow");
+  const datesRow = document.getElementById("datesRow");
 
-    updateSvgVisibility() {
-      const licenseType = this.formData.license_type;
-      const licenseTypes = ["auto", "scooter", "motor"];
+  const showLocations =
+    (copyFormDataCities && copyFormDataCities.length > 0) ||
+    (this.formData["cbr_locations"] &&
+      this.formData["cbr_locations"].length > 0);
 
-      licenseTypes.forEach((type) => {
-        const svgId = `${type}Svg`;
-        const svgElement = document.getElementById(svgId);
+  const showDates =
+    (this.formData["course_names"] &&
+      this.formData["course_names"].length > 0) ||
+    (this.formData["course_dates"] &&
+      this.formData["course_dates"].length > 0);
 
-        if (svgElement) {
-          if (type === licenseType) {
-            svgElement.classList.remove("hide");
+  if (showLocations) {
+    locationsRow.classList.add("active");
+  } else {
+    locationsRow.classList.remove("active");
+  }
+
+  if (showDates) {
+    datesRow.classList.add("active");
+  } else {
+    datesRow.classList.remove("active");
+  }
+}
+
+// Edit information, go to step
+
+createEditStepButtons() {
+  this.backupFormData();
+  if (!this.isEditButtonsInitialized) {
+    const buttonsData = [
+      { id: "editLocations", callback: () => this.determineLocationStep() },
+      { id: "editDates", callback: () => this.determineDateStep() },
+      { id: "editInputs", callback: () => this.goToStep("stepInputs") },
+      {
+        id: "editOnlinePackages",
+        callback: () => this.goToStep("stepOnlinePackage"),
+      },
+    ];
+    buttonsData.forEach((buttonData) => {
+      const button = document.getElementById(buttonData.id);
+      if (button) {
+        button.addEventListener("click", () => {
+          this.isEditing = true;
+          buttonData.callback();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          this.initializeEditButtons();
+          this.showEditButtons();
+        });
+
+        if (buttonData.id === "editOnlinePackages") {
+          if (this.formData.course_type === "online") {
+            button.classList.remove("hide");
           } else {
-            svgElement.classList.add("hide");
+            button.classList.add("hide");
           }
         }
-      });
-    }
-
-    updateRowVisibility() {
-      const locationsRow = document.getElementById("locationsRow");
-      const datesRow = document.getElementById("datesRow");
-
-      let copyFormDataCities;
-      if (this.formData["cities"]) {
-        copyFormDataCities = JSON.parse(JSON.stringify(this.formData["cities"]));
-        const indexDelete = copyFormDataCities.findIndex(city => city.is_online);
-        copyFormDataCities.splice(indexDelete, 1);
-      } else {
-        copyFormDataCities = [];
       }
+    });
+  }
+  this.isEditButtonsInitialized = true;
+}
 
-      const showLocations =
-        (copyFormDataCities && copyFormDataCities.length > 0) ||
-        (this.formData["cbr_locations"] &&
-          this.formData["cbr_locations"].length > 0);
+backupFormData() {
+  this.originalFormData = JSON.parse(JSON.stringify(this.formData));
+}
+determineLocationStep() {
+  if (this.formData.course_type === "online") {
+    this.goToStep("step4Cbr");
+  } else {
+    this.goToStep("step4Cities");
+  }
+}
 
-      const showDates =
-        (this.formData["course_names"] &&
-          this.formData["course_names"].length > 0) ||
-        (this.formData["course_dates"] &&
-          this.formData["course_dates"].length > 0);
+// DETERMINE STEP
+determineDateStep() {
+  const categoryMap = {
+    per_dates: "step6",
+    per_month: "stepMonths",
+    calendar: "stepCalendar",
+  };
 
-      if (showLocations) {
-        locationsRow.classList.add("active");
-      } else {
-        locationsRow.classList.remove("active");
-      }
+  const category = this.formData.course_category;
+  const step = categoryMap[category];
 
-      if (showDates) {
-        datesRow.classList.add("active");
-      } else {
-        datesRow.classList.remove("active");
-      }
-    }
+  if (step) {
+    this.goToStep(step);
+  }
+}
 
-    // Edit information, go to step
+goToStep(targetStepId) {
+  const stepIndex = this.steps.findIndex(
+    (step) => step.id === targetStepId
+  );
+  if (stepIndex === -1) return;
 
-    createEditStepButtons() {
-      this.backupFormData();
-      if (!this.isEditButtonsInitialized) {
-        const buttonsData = [
-          { id: "editLocations", callback: () => this.determineLocationStep() },
-          { id: "editDates", callback: () => this.determineDateStep() },
-          { id: "editInputs", callback: () => this.goToStep("stepInputs") },
-          {
-            id: "editOnlinePackages",
-            callback: () => this.goToStep("stepOnlinePackage"),
-          },
-        ];
-        buttonsData.forEach((buttonData) => {
-          const button = document.getElementById(buttonData.id);
-          if (button) {
-            button.addEventListener("click", () => {
-              this.isEditing = true;
-              buttonData.callback();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-              this.initializeEditButtons();
-              this.showEditButtons();
-            });
+  let currentStepId = this.steps[0].id;
+  const newStepHistory = [currentStepId];
+  let safetyCounter = 0;
 
-            if (buttonData.id === "editOnlinePackages") {
-              if (this.formData.course_type === "online") {
-                button.classList.remove("hide");
-              } else {
-                button.classList.add("hide");
-              }
-            }
-          }
-        });
-      }
-      this.isEditButtonsInitialized = true;
-    }
-
-    backupFormData() {
-      this.originalFormData = JSON.parse(JSON.stringify(this.formData));
-    }
-    determineLocationStep() {
-      if (this.formData.course_type === "online") {
-        this.goToStep("step4Cbr");
-      } else {
-        this.goToStep("step4Cities");
-      }
-    }
-
-    // DETERMINE STEP
-    determineDateStep() {
-      const categoryMap = {
-        per_dates: "step6",
-        per_month: "stepMonths",
-        calendar: "stepCalendar",
-      };
-
-      const category = this.formData.course_category;
-      const step = categoryMap[category];
-
-      if (step) {
-        this.goToStep(step);
-      }
-    }
-
-    goToStep(targetStepId) {
-      const stepIndex = this.steps.findIndex(
-        (step) => step.id === targetStepId
+  while (currentStepId !== targetStepId) {
+    currentStepId = this.getNextStepId(currentStepId);
+    if (
+      !currentStepId ||
+      !this.steps.find((step) => step.id === currentStepId)
+    ) {
+      console.error(
+        "No se puede alcanzar el paso objetivo desde el paso actual."
       );
-      if (stepIndex === -1) return;
-
-      let currentStepId = this.steps[0].id;
-      const newStepHistory = [currentStepId];
-      let safetyCounter = 0;
-
-      while (currentStepId !== targetStepId) {
-        currentStepId = this.getNextStepId(currentStepId);
-        if (
-          !currentStepId ||
-          !this.steps.find((step) => step.id === currentStepId)
-        ) {
-          console.error(
-            "No se puede alcanzar el paso objetivo desde el paso actual."
-          );
-          return;
-        }
-        newStepHistory.push(currentStepId);
-
-        if (++safetyCounter > 100) {
-          console.error("Se ha excedido el lÃ­mite de seguridad en el bucle");
-          return;
-        }
-      }
-
-      this.currentStepIndex = stepIndex;
-      this.stepHistory = newStepHistory;
-      this.showFormForStep(this.currentStepIndex);
-      this.updateStepIndexText();
+      return;
     }
+    newStepHistory.push(currentStepId);
 
-    // End edit information
-
-    // Cancel edit of the data and save new data
-
-    showEditButtons() {
-      const btnEditWrapper = document.getElementById("btnEditWrapper");
-      const btnWrapper = document.getElementById("btnWrapper");
-
-      btnEditWrapper.classList.remove("hide");
-      btnWrapper.classList.add("hide");
+    if (++safetyCounter > 100) {
+      console.error("Se ha excedido el lÃ­mite de seguridad en el bucle");
+      return;
     }
+  }
 
-    initializeEditButtons() {
-      const btnEditWrapper = document.getElementById("btnEditWrapper");
-      const btnSendWrapper = document.getElementById("btnSendWrapper");
+  this.currentStepIndex = stepIndex;
+  this.stepHistory = newStepHistory;
+  this.showFormForStep(this.currentStepIndex);
+  this.updateStepIndexText();
+}
 
-      this.btnEditSave.classList.remove("disabled-button");
-      const btnEditCancel = document.getElementById("btnEditCancel");
+// End edit information
 
-      btnEditCancel.addEventListener("click", () => {
-        this.formData = JSON.parse(JSON.stringify(this.originalFormData));
-        this.goToStep("overzicht");
-        btnEditWrapper.classList.add("hide");
-        btnSendWrapper.classList.remove("hide");
-      });
+// Cancel edit of the data and save new data
 
-      this.btnEditSave.addEventListener("click", () => {
-        this.goToStep("overzicht");
-        btnEditWrapper.classList.add("hide");
-        btnSendWrapper.classList.remove("hide");
-      });
-    }
+showEditButtons() {
+  const btnEditWrapper = document.getElementById("btnEditWrapper");
+  const btnWrapper = document.getElementById("btnWrapper");
 
-    // RESUME
+  btnEditWrapper.classList.remove("hide");
+  btnWrapper.classList.add("hide");
+}
 
-    completeResume() {
-      Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
-      this.completeDataInputs();
-      this.updateSvgVisibility();
-    }
+initializeEditButtons() {
+  const btnEditWrapper = document.getElementById("btnEditWrapper");
+  const btnSendWrapper = document.getElementById("btnSendWrapper");
 
-    completeField(key) {
-      const config = this.resumeConfig[key];
-      if (!config) return;
+  this.btnEditSave.classList.remove("disabled-button");
+  const btnEditCancel = document.getElementById("btnEditCancel");
 
-      if (config.customHandler) {
-        config.customHandler.call(this);
-        return;
-      }
+  btnEditCancel.addEventListener("click", () => {
+    this.formData = JSON.parse(JSON.stringify(this.originalFormData));
+    this.goToStep("overzicht");
+    btnEditWrapper.classList.add("hide");
+    btnSendWrapper.classList.remove("hide");
+  });
 
+  this.btnEditSave.addEventListener("click", () => {
+    this.goToStep("overzicht");
+    btnEditWrapper.classList.add("hide");
+    btnSendWrapper.classList.remove("hide");
+  });
+}
+
+// RESUME
+
+completeResume() {
+  Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
+  this.completeDataInputs();
+  this.updateSvgVisibility();
+}
+
+completeField(key) {
+  const config = this.resumeConfig[key];
+  if (!config) return;
+
+  if (config.customHandler) {
+    config.customHandler.call(this);
+    return;
+  }
+
+  const element = document.getElementById(config.elementId);
+  if (!element) return;
+
+  const value = this.formData[key];
+  element.textContent = config.textMap[value] ?? value;
+
+  const existingList = element.querySelector(".overzicht_online-list");
+  if (existingList) {
+    element.removeChild(existingList);
+  }
+
+  if (key === "course_type" && value === "online") {
+    const list = document.createElement("ul");
+    list.className = "overzicht_online-list";
+
+    const items = ["Videocursus", "CBR oefenexamens", "E-book"];
+    items.forEach((item) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = item;
+      list.appendChild(listItem);
+    });
+    element.appendChild(list);
+  }
+}
+
+completeDataInputs() {
+  Object.keys(this.resumeConfigInputs).forEach((key) => {
+    const config = this.resumeConfigInputs[key];
+    if (config && config.elementId) {
       const element = document.getElementById(config.elementId);
-      if (!element) return;
-
-      const value = this.formData[key];
-      element.textContent = config.textMap[value] ?? value;
-
-      const existingList = element.querySelector(".overzicht_online-list");
-      if (existingList) {
-        element.removeChild(existingList);
-      }
-
-      if (key === "course_type" && value === "online") {
-        const list = document.createElement("ul");
-        list.className = "overzicht_online-list";
-
-        const items = ["Videocursus", "CBR oefenexamens", "E-book"];
-        items.forEach((item) => {
-          const listItem = document.createElement("li");
-          listItem.textContent = item;
-          list.appendChild(listItem);
-        });
-        element.appendChild(list);
-      }
-    }
-
-    completeDataInputs() {
-      Object.keys(this.resumeConfigInputs).forEach((key) => {
-        const config = this.resumeConfigInputs[key];
-        if (config && config.elementId) {
-          const element = document.getElementById(config.elementId);
-          if (element) {
-            if (key === "birth_date" && this.formData[key]) {
-              const dateParts = this.formData[key].split("-");
-              element.textContent = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-            } else {
-              element.textContent = this.formData[key] ?? "-";
-            }
-          }
-        }
-      });
-    }
-
-    completeCities() {
-      const container = document.getElementById("citiesColumn");
-      if (this.formData["course_type"] === "offline") {
-        const text = document.getElementById(
-          this.resumeConfig["cities"].elementId
-        );
-        if (this.formData["cities"].length > 0) {
-          const selectedCityNames = this.formData["cities"].map((cityId) => {
-            const city = this.citiesList.find((c) => c.id === cityId);
-            return city ? city.name : "";
-          });
-
-          text.textContent = selectedCityNames.join(", ");
-          container.classList.remove("hide");
-        }
-      } else {
-        container.classList.add("hide");
-      }
-      this.updateRowVisibility();
-    }
-
-    completeCbrLocations() {
-      const data = this.formData["cbr_locations"];
-      if (!data) return;
-      const container = document.getElementById("cbrsColumn");
-      const text = document.getElementById(
-        this.resumeConfig["cbr_locations"].elementId
-      );
-
-      if (data.length > 0) {
-        text.textContent = data.join(", ");
-        container.classList.remove("hide");
-      } else {
-        container.classList.add("hide");
-      }
-      this.updateRowVisibility();
-    }
-
-    completeCourseCategory() {
-      const key = this.formData["course_category"];
-      const courseCategoryTypeTextMap = {
-        per_dates: "zo-snel",
-        per_month: "maand",
-        calendar: "specifieke",
-      };
-
-      const allCategoryElements = document.querySelectorAll(
-        ".overzicht_info-dates"
-      );
-      allCategoryElements.forEach((el) => el.classList.remove("active"));
-
-      const selectedElement = document.getElementById(
-        courseCategoryTypeTextMap[key]
-      );
-      if (selectedElement) selectedElement.classList.add("active");
-    }
-
-    completeCourseNames() {
-      const category = this.formData["course_category"];
-      const elementId =
-        category === "per_dates" ? "zo-snelResume" : "maandResume";
-      const targetElement = document.getElementById(elementId);
-
-      if (
-        targetElement &&
-        Array.isArray(this.formData["course_names"]) &&
-        this.formData["course_names"].length > 0
-      ) {
-        targetElement.textContent = this.formData["course_names"].join(", ");
-        targetElement.classList.remove("hide");
-      } else if (targetElement) {
-        targetElement.classList.add("hide");
-      }
-      this.updateRowVisibility();
-    }
-
-    completeCourseDates() {
-      const courseDates = this.formData["course_dates"];
-      const container = document.getElementById("specifiekeDates");
-      container.innerHTML = "";
-
-      const monthNames = [
-        "Jan",
-        "Feb",
-        "Mrt",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Dec",
-      ];
-
-      if (Array.isArray(courseDates) && courseDates.length > 0) {
-        const sortedDates = courseDates.sort(
-          (a, b) => new Date(a) - new Date(b)
-        );
-        sortedDates.forEach((courseDate) => {
-          const dateParts = courseDate.split("-");
-          const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-
-          const dayElement = document.createElement("div");
-          dayElement.id = "daySelected";
-          dayElement.textContent = date.getDate();
-          dayElement.classList.add("text-size-tiny", "text-weight-bold");
-
-          const monthElement = document.createElement("div");
-          monthElement.id = "monthSelected";
-          monthElement.textContent = monthNames[date.getMonth()];
-          monthElement.classList.add("text-size-xtiny", "text-weight-bold");
-
-          const dateElement = document.createElement("div");
-          dateElement.classList.add("overzicht_info-date");
-          dateElement.appendChild(dayElement);
-          dateElement.appendChild(monthElement);
-
-          container.appendChild(dateElement);
-        });
-      }
-      this.updateRowVisibility();
-    }
-
-    completePackage() {
-      const container = document.getElementById(
-        this.resumeConfig["package_name"].elementId
-      );
-      const offlineContent = document.getElementById("overzichtOffline");
-
-      const existingPackages = container.getElementsByClassName(
-        "overzicht_package-item"
-      );
-      while (existingPackages.length > 0) {
-        existingPackages[0].parentNode.removeChild(existingPackages[0]);
-      }
-      if (this.formData["course_type"] === "offline") {
-        offlineContent.classList.add("active");
-      } else {
-        // Render package
-        offlineContent.classList.remove("active");
-        const selectedPackage = this.packageSelected;
-        if (selectedPackage) {
-          let packageElement = document.createElement("div");
-          packageElement.classList.add("overzicht_package-item");
-          this.addPackageItemElements(packageElement, selectedPackage, true);
-          container.appendChild(packageElement);
+      if (element) {
+        if (key === "birth_date" && this.formData[key]) {
+          const dateParts = this.formData[key].split("-");
+          element.textContent = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
         } else {
-          container.textContent = "No se ha seleccionado ningÃºn paquete.";
+          element.textContent = this.formData[key] ?? "-";
         }
       }
     }
+  });
+}
 
-    //END RESUME
-
-    applySubmissionRules() {
-      Object.keys(this.submissionRules).forEach((key) => {
-        const value = this.formData[key];
-        const rules = this.submissionRules[key][value];
-
-        if (rules) {
-          rules.forEach((field) => {
-            this.formData[field] = [];
-          });
-        }
+completeCities() {
+  const container = document.getElementById("citiesColumn");
+  if (this.formData["course_type"] === "offline") {
+    const text = document.getElementById(
+      this.resumeConfig["cities"].elementId
+    );
+    if (this.formData["cities"].length > 0) {
+      const selectedCityNames = this.formData["cities"].map((cityId) => {
+        const city = this.citiesList.find((c) => c.id === cityId);
+        return city ? city.name : "";
       });
-      return this.formData;
+
+      text.textContent = selectedCityNames.join(", ");
+      container.classList.remove("hide");
     }
+  } else {
+    container.classList.add("hide");
+  }
+  this.updateRowVisibility();
+}
+
+completeCbrLocations() {
+  const data = this.formData["cbr_locations"];
+  if (!data) return;
+  const container = document.getElementById("cbrsColumn");
+  const text = document.getElementById(
+    this.resumeConfig["cbr_locations"].elementId
+  );
+
+  if (data.length > 0) {
+    text.textContent = data.join(", ");
+    container.classList.remove("hide");
+  } else {
+    container.classList.add("hide");
+  }
+  this.updateRowVisibility();
+}
+
+completeCourseCategory() {
+  const key = this.formData["course_category"];
+  const courseCategoryTypeTextMap = {
+    per_dates: "zo-snel",
+    per_month: "maand",
+    calendar: "specifieke",
+  };
+
+  const allCategoryElements = document.querySelectorAll(
+    ".overzicht_info-dates"
+  );
+  allCategoryElements.forEach((el) => el.classList.remove("active"));
+
+  const selectedElement = document.getElementById(
+    courseCategoryTypeTextMap[key]
+  );
+  if (selectedElement) selectedElement.classList.add("active");
+}
+
+completeCourseNames() {
+  const category = this.formData["course_category"];
+  const elementId =
+    category === "per_dates" ? "zo-snelResume" : "maandResume";
+  const targetElement = document.getElementById(elementId);
+
+  if (
+    targetElement &&
+    Array.isArray(this.formData["course_names"]) &&
+    this.formData["course_names"].length > 0
+  ) {
+    targetElement.textContent = this.formData["course_names"].join(", ");
+    targetElement.classList.remove("hide");
+  } else if (targetElement) {
+    targetElement.classList.add("hide");
+  }
+  this.updateRowVisibility();
+}
+
+completeCourseDates() {
+  const courseDates = this.formData["course_dates"];
+  const container = document.getElementById("specifiekeDates");
+  container.innerHTML = "";
+
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mrt",
+    "Apr",
+    "Mei",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Okt",
+    "Nov",
+    "Dec",
+  ];
+
+  if (Array.isArray(courseDates) && courseDates.length > 0) {
+    const sortedDates = courseDates.sort(
+      (a, b) => new Date(a) - new Date(b)
+    );
+    sortedDates.forEach((courseDate) => {
+      const dateParts = courseDate.split("-");
+      const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+
+      const dayElement = document.createElement("div");
+      dayElement.id = "daySelected";
+      dayElement.textContent = date.getDate();
+      dayElement.classList.add("text-size-tiny", "text-weight-bold");
+
+      const monthElement = document.createElement("div");
+      monthElement.id = "monthSelected";
+      monthElement.textContent = monthNames[date.getMonth()];
+      monthElement.classList.add("text-size-xtiny", "text-weight-bold");
+
+      const dateElement = document.createElement("div");
+      dateElement.classList.add("overzicht_info-date");
+      dateElement.appendChild(dayElement);
+      dateElement.appendChild(monthElement);
+
+      container.appendChild(dateElement);
+    });
+  }
+  this.updateRowVisibility();
+}
+
+completePackage() {
+  const container = document.getElementById(
+    this.resumeConfig["package_name"].elementId
+  );
+  const offlineContent = document.getElementById("overzichtOffline");
+
+  const existingPackages = container.getElementsByClassName(
+    "overzicht_package-item"
+  );
+  while (existingPackages.length > 0) {
+    existingPackages[0].parentNode.removeChild(existingPackages[0]);
+  }
+  if (this.formData["course_type"] === "offline") {
+    offlineContent.classList.add("active");
+  } else {
+    // Render package
+    offlineContent.classList.remove("active");
+    const selectedPackage = this.packageSelected;
+    if (selectedPackage) {
+      let packageElement = document.createElement("div");
+      packageElement.classList.add("overzicht_package-item");
+      this.addPackageItemElements(packageElement, selectedPackage, true);
+      container.appendChild(packageElement);
+    } else {
+      container.textContent = "No se ha seleccionado ningÃºn paquete.";
+    }
+  }
+}
+
+//END RESUME
+
+applySubmissionRules() {
+  Object.keys(this.submissionRules).forEach((key) => {
+    const value = this.formData[key];
+    const rules = this.submissionRules[key][value];
+
+    if (rules) {
+      rules.forEach((field) => {
+        this.formData[field] = [];
+      });
+    }
+  });
+  return this.formData;
+}
 
     //SEND DATA
 
     async handleFinalStep() {
-      const data = await this.sendDataBack();
-      if (data) {
-        localStorage.setItem("formData", JSON.stringify(data));
-        localStorage.removeItem("fechaGlobalSeleccionada");
-        const authTokens = data.auth_tokens;
-        const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
-        document.cookie = `tokens=${encodedTokens}`;
-        return this.redirectTo("/bestellen");
-      }
-    }
+  const data = await this.sendDataBack();
+  if (data) {
+    localStorage.setItem("formData", JSON.stringify(data));
+    localStorage.removeItem("fechaGlobalSeleccionada");
+    const authTokens = data.auth_tokens;
+    const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
+    document.cookie = `tokens=${encodedTokens}`;
+    return this.redirectTo("/bestellen");
+  }
+}
 
     async sendDataBack() {
-      const data = this.getFormData();
-      const url = this.urls.urlPostMultiStepForm;
+  const data = this.getFormData();
+  const url = this.urls.urlPostMultiStepForm;
 
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      };
+  const options = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  };
 
-      if (this.isReapplyFlow) {
-        const accessToken = this.token;
-        options.headers["Authorization"] = `Bearer ${accessToken}`;
-      }
+  if (this.isReapplyFlow) {
+    const accessToken = this.token;
+    options.headers["Authorization"] = `Bearer ${accessToken}`;
+  }
 
-      try {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          throw new Error("Error en la respuesta de la red");
-        }
-        localStorage.removeItem("fechaGlobalSeleccionada");
-        const responseData = await response.json();
-        return responseData;
-      } catch (error) {
-        console.error("Error when sending data:", error);
-        return false;
-      }
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error("Error en la respuesta de la red");
     }
+    localStorage.removeItem("fechaGlobalSeleccionada");
+    const responseData = await response.json();
+    return responseData;
+  } catch (error) {
+    console.error("Error when sending data:", error);
+    return false;
+  }
+}
     // END SEND DATA
   }
 
-  // STEPS
-  const steps = [
-    { id: "step1", keyBack: "license_type", attribute: "data-license-type" },
-    { id: "step2", keyBack: "course_type", attribute: "data-course-type" },
-    { id: "step3", keyBack: "exam_type", attribute: "data-exam-type" },
-    { id: "step4Cities", keyBack: "cities" },
-    { id: "step4Cbr", keyBack: "cbr_locations" },
-    { id: "step4Mijn", keysBack: ["mijn_exam_location", "mijn_exam_datetime"] },
-    {
-      id: "step5",
-      keyBack: "course_category",
-      attribute: "data-course-category",
-    },
-    {
-      id: "step6",
-      keyBack: "course_names",
-      attribute: "data-course-name",
-      keyArray: true,
-    },
-    {
-      id: "stepMonths",
-      keyBack: "course_names",
-      attribute: "data-course-name",
-    },
-    {
-      id: "stepCalendar",
-      keyBack: "course_dates",
-      attribute: "data-course-name",
-    },
-    {
-      id: "stepOnlinePackage",
-      attribute: "data-package-name",
-      form: "package_name",
-      keyBack: "package_name",
-    },
-    {
-      id: "stepInputs",
-      form: "allInputs",
-    },
-    { id: "overzicht", form: "Resume" },
-  ];
-  //END STEPS
+// STEPS
+const steps = [
+  { id: "step1", keyBack: "license_type", attribute: "data-license-type" },
+  { id: "step2", keyBack: "course_type", attribute: "data-course-type" },
+  { id: "step3", keyBack: "exam_type", attribute: "data-exam-type" },
+  { id: "step4Cities", keyBack: "cities" },
+  { id: "step4Cbr", keyBack: "cbr_locations" },
+  { id: "step4Mijn", keysBack: ["mijn_exam_location", "mijn_exam_datetime"] },
+  {
+    id: "step5",
+    keyBack: "course_category",
+    attribute: "data-course-category",
+  },
+  {
+    id: "step6",
+    keyBack: "course_names",
+    attribute: "data-course-name",
+    keyArray: true,
+  },
+  {
+    id: "stepMonths",
+    keyBack: "course_names",
+    attribute: "data-course-name",
+  },
+  {
+    id: "stepCalendar",
+    keyBack: "course_dates",
+    attribute: "data-course-name",
+  },
+  {
+    id: "stepOnlinePackage",
+    attribute: "data-package-name",
+    form: "package_name",
+    keyBack: "package_name",
+  },
+  {
+    id: "stepInputs",
+    form: "allInputs",
+  },
+  { id: "overzicht", form: "Resume" },
+];
+//END STEPS
 
-  const formManager = new FormManager(steps);
-  formManager.initialize();
+const formManager = new FormManager(steps);
+formManager.initialize();
 }
 
 if (window.location.pathname === "/bestellen") {
@@ -3188,107 +3164,38 @@ if (window.location.pathname === "/bestellen") {
   const orderManager = new OrderManager();
 }
 
-class User {
-  constructor() {
-    //document.addEventListener("DOMContentLoaded", () => {
-    this.initializeLoginButton();
-    setInterval(() => this.refreshToken(), 10000);
-    this.getUserInfo();
-    //});
-  }
-
-  logout() {
-    document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/inloggen";
-  }
-
-  hasPaid() {
-    return JSON.parse(localStorage.getItem("formData"))?.is_paid;
-  }
-
-  async getUserInfo() {
-    const userData = await getUserInfoBack();
-    console.log(userData);
-  }
-
-  updateLoginButtonText() {
-    const loginButton = document.getElementById("btn-login");
-    if (loginButton) {
-      const currentPath = window.location.pathname;
-      const buttonTextMap = {
-        "/user-profile": "Uitloggen",
-        "/bestellen": this.hasPaid() ? "Profiel" : "Uitloggen",
-        default: this.checkToken() ? "Profiel" : "Inloggen",
-      };
-
-      loginButton.textContent =
-        buttonTextMap[currentPath] ?? buttonTextMap["default"];
-    }
-  }
-
-  initializeLoginButton() {
-    const loginButton = document.getElementById("btn-login");
-    if (loginButton) {
-      this.updateLoginButtonText();
-
-      loginButton.addEventListener("click", () => {
-        const currentPath = window.location.pathname;
-        const actionMap = {
-          "/user-profile": () => this.logout(),
-          "/bestellen": () =>
-            this.hasPaid() ? (window.location.href = "/user-profile") : this.logout(),
-          default: () => {
-            if (this.checkToken()) {
-              if (!this.hasPaid()) {
-                window.location.href = "/bestellen";
-              } else {
-                window.location.href = "/user-profile";
-              }
-            } else {
-              window.location.href = "/inloggen";
-            }
-          },
-        };
-
-        (actionMap[currentPath] || actionMap["default"])();
-      });
-    }
-  }
-
-  checkToken() {
-    const token = getCookiesToken();
-    return !!token && !!token.access;
-  }
-
-  async refreshToken() {
-    const oldToken = getCookiesToken();
-
-    let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
-    if (oldToken && oldToken.refresh) {
-      try {
-        const respuesta = await fetch(
-          `${apiBaseUrl}authorization/token/refresh/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ refresh: oldToken.refresh }),
-          }
-        );
-        const data = await respuesta.json();
-        const encodedTokens = encodeURIComponent(JSON.stringify(data));
-        document.cookie = `tokens=${encodedTokens}`;
-      }
-      catch (error) {
-        console.log("Error refreshtoken");
-      }
-    }
-  }
-
+function logout() {
+  document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  window.location.href = "/inloggen";
 }
 
-const user = new User();
+function updateLoginButtonText() {
+  const loginButton = document.getElementById("btn-login");
+  if (loginButton) {
+    loginButton.textContent = thereIsToken() ? "Uitloggen" : "Inloggen";
+  }
+}
+
+function initializeLoginButton() {
+  const loginButton = document.getElementById("btn-login");
+  if (loginButton) {
+    updateLoginButtonText();
+
+    loginButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (!thereIsToken()) {
+        logout();
+      } else {
+        window.location.href = "/inloggen";
+      }
+    });
+  }
+}
+
+function thereIsToken() {
+  const token = getCookiesToken();
+  return !!token && !!token.access;
+}
 
 function getCookiesToken() {
   const cookies = document.cookie.split(";");
@@ -3310,27 +3217,4 @@ function getCookiesToken() {
   return null;
 }
 
-async function getUserInfoBack() {
-  const accessToken = getCookiesToken();
-  if (accessToken) {
-    this.token = accessToken.access;
-    try {
-      const resServer = await fetch(
-        "https://api.nutheorie.nl/api/applications/",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const userData = await resServer.json();
-      return userData;
-    } catch (error) {
-      console.log(error);
-    }
-  } else {
-    return {};
-  }
-}
+document.addEventListener("DOMContentLoaded", initializeLoginButton);
