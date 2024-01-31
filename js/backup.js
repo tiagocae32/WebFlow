@@ -107,6 +107,13 @@ if (window.location.pathname.includes("/aanmelden")) {
       };
 
       this.isReapplyFlow;
+      this.CHANCES_TYPES = {
+        LOWER: "klein",
+        AVERAGE_LOW: "klein-gemiddeld",
+        AVERAGE: "gemiddeld",
+        AVERAGE_BIG: "gemiddeld-groot",
+        BIG: "groot",
+      };
     }
 
     initStepRules() {
@@ -779,8 +786,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -817,7 +824,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     async getUserInfo() {
       if (this.isReapplyFlow) {
-        this.userData = await getUserInfoBack()
+        this.userData = await getUserInfoBack();
       }
     }
 
@@ -982,8 +989,13 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     removeOnlineCity() {
-      if (this.formData.course_type === "offline" && Array.isArray(this.formData.cities)) {
-        const indexCityOnline = this.formData.cities.findIndex(city => city.is_online);
+      if (
+        this.formData.course_type === "offline" &&
+        Array.isArray(this.formData.cities)
+      ) {
+        const indexCityOnline = this.formData.cities.findIndex(
+          (city) => city.is_online
+        );
         this.formData.cities.splice(indexCityOnline, 1);
       }
     }
@@ -1006,6 +1018,29 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.createOptions(months, "stepMonthsList", false);
     }
 
+    handleTextChanceMonths(options) {
+      const minLength = 1;
+      const data = this.formData["course_names"];
+      let text;
+      if (!data.length) text = "";
+      if (data.length > minLength) text = this.CHANCES_TYPES.AVERAGE_BIG;
+      else {
+        const currentMonth = new Date().getMonth();
+        const [selectedMonth] = data;
+        const selectedMonthIndex = options.findIndex(
+          (option) => option === selectedMonth
+        );
+        text =
+          selectedMonthIndex === currentMonth
+            ? this.CHANCES_TYPES.AVERAGE_LOW
+            : this.CHANCES_TYPES.AVERAGE_BIG;
+      }
+
+      document.getElementById("chanceMonths").textContent = text;
+      this.formData["chance"] = text;
+    }
+
+    /*
     handleTextChanceMonths() {
       const data = this.formData["course_names"];
       const currentDate = new Date();
@@ -1029,6 +1064,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         chanceElement.textContent = text;
       }
     }
+    */
 
     handleCourseCategoryChange(newCategory) {
       this.formData["course_category"] = newCategory;
@@ -1126,12 +1162,26 @@ if (window.location.pathname.includes("/aanmelden")) {
     createCbrsSelect(data) {
       const selectElement = document.getElementById("selectCbrs");
 
+      data = ["Kies CBR examenlocatie", ...data];
       data.forEach((option) => {
-        const optionElement = document.createElement("option");
-        optionElement.value = option;
-        optionElement.text = option;
-        selectElement.add(optionElement);
+        if (option) {
+          const optionElement = document.createElement("option");
+          optionElement.value = option;
+          optionElement.id = option;
+          optionElement.text = option;
+          selectElement.add(optionElement);
+        }
       });
+      const tryHideFirstDropdownLink = () => {
+        const firstDropdownLink = document.querySelector(".dropdown-link");
+        if (firstDropdownLink) {
+          firstDropdownLink.style.display = "none";
+        } else {
+          setTimeout(tryHideFirstDropdownLink, 50);
+        }
+      };
+
+      tryHideFirstDropdownLink();
 
       selectElement.addEventListener("change", (event) => {
         const selectedValue = event.target.value;
@@ -1193,7 +1243,9 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     formatDateMijnFlow() {
-      const isTimeValid = this.timePicked && this.timePicked.length === 5 &&
+      const isTimeValid =
+        this.timePicked &&
+        this.timePicked.length === 5 &&
         parseInt(this.timePicked.substring(0, 2), 10) <= 23 &&
         parseInt(this.timePicked.substring(3, 5), 10) <= 59;
 
@@ -1203,10 +1255,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           `${this.datePicked}T${this.timePicked}:00+01:00`
         );
       } else {
-        this.setFormData(
-          "mijn_exam_datetime", ""
-        )
-      };
+        this.setFormData("mijn_exam_datetime", "");
+      }
       this.checkEnableNextButton();
     }
 
@@ -1223,7 +1273,8 @@ if (window.location.pathname.includes("/aanmelden")) {
         label.className = "w-checkbox aanmelden_step4-item";
 
         const checkboxDiv = document.createElement("div");
-        checkboxDiv.className = "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
+        checkboxDiv.className =
+          "w-checkbox-input w-checkbox-input--inputType-custom aanmelden_step4-item_checkbox";
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
@@ -1267,12 +1318,12 @@ if (window.location.pathname.includes("/aanmelden")) {
           const checkbox = container.querySelector(`input[name="${element}"]`);
           updateCheckboxState(checkbox, element, checkboxDiv);
         });
-      }
-      else {
+      } else {
         elements.forEach((element) => {
           const checkbox = container.querySelector(`input[name="${element}"]`);
           if (checkbox) {
-            const checkboxDiv = checkbox.parentElement.querySelector(".w-checkbox-input");
+            const checkboxDiv =
+              checkbox.parentElement.querySelector(".w-checkbox-input");
             updateCheckboxState(checkbox, element, checkboxDiv);
           }
         });
@@ -1371,8 +1422,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1463,7 +1515,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     updateChanceText() {
-      const count = this.selectedDates.size;
+      /*const count = this.selectedDates.size;
 
       const ranges = [
         { min: 1, max: 4, text: "klein-gemiddeld" },
@@ -1475,12 +1527,33 @@ if (window.location.pathname.includes("/aanmelden")) {
         (range) => count >= range.min && count <= range.max
       );
       const text = selectedRange ? selectedRange.text : "- (selecteer data)";
+      */
 
-      this.chanceElement.textContent = text;
+      const value = this.getCalendarChances();
+      this.chanceElement.textContent = value;
       this.formData["course_dates"] = [...this.selectedDates].sort(
         (a, b) => new Date(a) - new Date(b)
       );
-      this.formData["chance"] = text;
+      this.formData["chance"] = value;
+    }
+
+    getCalendarChances() {
+      if (!this.selectedDates.length) return "";
+      if (this.formData["course_type"] === "online") {
+        if (this.selectedDates.length >= 9) return this.CHANCES_TYPES.BIG;
+        else if (this.selectedDates.length >= 5)
+          return this.CHANCES_TYPES.AVERAGE_BIG;
+        else if (this.selectedDates.length >= 1)
+          return this.CHANCES_TYPES.AVERAGE;
+      } else {
+        if (this.selectedDates.length >= 9)
+          return this.CHANCES_TYPES.AVERAGE_BIG;
+        else if (this.selectedDates.length >= 5)
+          return this.CHANCES_TYPES.AVERAGE;
+        else if (this.selectedDates.length >= 1)
+          return this.CHANCES_TYPES.AVERAGE_LOW;
+      }
+      return this.CHANCES_TYPES.LOWER;
     }
 
     // END CALENDAR
@@ -1887,8 +1960,12 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       let copyFormDataCities;
       if (this.formData["cities"]) {
-        copyFormDataCities = JSON.parse(JSON.stringify(this.formData["cities"]));
-        const indexDelete = copyFormDataCities.findIndex(city => city.is_online);
+        copyFormDataCities = JSON.parse(
+          JSON.stringify(this.formData["cities"])
+        );
+        const indexDelete = copyFormDataCities.findIndex(
+          (city) => city.is_online
+        );
         copyFormDataCities.splice(indexDelete, 1);
       } else {
         copyFormDataCities = [];
@@ -2846,12 +2923,12 @@ if (window.location.pathname === "/bestellen") {
       )
         .toString()
         .padStart(2, "0")}-${validUntilDate.getFullYear()} ${validUntilDate
-          .getHours()
-          .toString()
-          .padStart(2, "0")}:${validUntilDate
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${validUntilDate
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
     }
 
     getCurrentDateTime() {
@@ -3017,8 +3094,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&
@@ -3233,7 +3310,9 @@ class User {
         const actionMap = {
           "/user-profile": () => this.logout(),
           "/bestellen": () =>
-            this.hasPaid() ? (window.location.href = "/user-profile") : this.logout(),
+            this.hasPaid()
+              ? (window.location.href = "/user-profile")
+              : this.logout(),
           default: () => {
             if (this.checkToken()) {
               if (!this.hasPaid()) {
@@ -3276,14 +3355,12 @@ class User {
         const data = await respuesta.json();
         const encodedTokens = encodeURIComponent(JSON.stringify(data));
         document.cookie = `tokens=${encodedTokens}`;
-      }
-      catch (error) {
+      } catch (error) {
         console.log("Error refreshtoken");
       }
       this.getUserInfo();
     }
   }
-
 }
 
 const user = new User();
@@ -3314,15 +3391,13 @@ async function getUserInfoBack() {
     try {
       const baseUrl = apiBaseUrls[window.location.hostname] || urlProd;
       const userInfoUrl = `${baseUrl}api/applications/`;
-      const resServer = await fetch(userInfoUrl,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken.access}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const resServer = await fetch(userInfoUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken.access}`,
+          "Content-Type": "application/json",
+        },
+      });
       const userData = await resServer.json();
       return userData;
     } catch (error) {
