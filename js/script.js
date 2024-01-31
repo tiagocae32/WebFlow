@@ -1124,14 +1124,29 @@ if (window.location.pathname.includes("/aanmelden")) {
     // MIJN STEP
 
     createCbrsSelect(data) {
+
       const selectElement = document.getElementById("selectCbrs");
 
+      data = ["Kies CBR examenlocatie", ...data];
       data.forEach((option) => {
-        const optionElement = document.createElement("option");
-        optionElement.value = option;
-        optionElement.text = option;
-        selectElement.add(optionElement);
+        if (option) {
+          const optionElement = document.createElement("option");
+          optionElement.value = option;
+          optionElement.id = option;
+          optionElement.text = option;
+          selectElement.add(optionElement);
+        }
       });
+      const tryHideFirstDropdownLink = () => {
+        const firstDropdownLink = document.querySelector('.dropdown-link');
+        if (firstDropdownLink) {
+          firstDropdownLink.style.display = 'none';
+        } else {
+          setTimeout(tryHideFirstDropdownLink, 50);
+        }
+      };
+
+      tryHideFirstDropdownLink();
 
       selectElement.addEventListener("change", (event) => {
         const selectedValue = event.target.value;
