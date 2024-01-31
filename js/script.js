@@ -1772,7 +1772,7 @@ if (window.location.pathname.includes("/aanmelden")) {
             "div",
             "packageOldPrice",
             "heading-style-h6 text-weight-xbold",
-            `€ ${parseInt(pkg.old_price)}`
+            `â‚¬ ${parseInt(pkg.old_price)}`
           )
         );
         packageOldPriceContainer.appendChild(
@@ -2025,7 +2025,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         newStepHistory.push(currentStepId);
 
         if (++safetyCounter > 100) {
-          console.error("Se ha excedido el lÃ­mite de seguridad en el bucle");
+          console.error("Se ha excedido el lÃƒÂ­mite de seguridad en el bucle");
           return;
         }
       }
@@ -2277,7 +2277,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.addPackageItemElements(packageElement, selectedPackage, true);
           container.appendChild(packageElement);
         } else {
-          container.textContent = "No se ha seleccionado ningÃºn paquete.";
+          container.textContent = "No se ha seleccionado ningÃƒÂºn paquete.";
         }
       }
     }
@@ -3185,7 +3185,7 @@ if (window.location.pathname === "/bestellen") {
     handleStoredData(formData) {
       const amount = document.getElementById("btnAmount");
       const aanbetalingAmount = document.getElementById("aanbetalingTotal");
-      amount.textContent = `€ ${formData.payment_amount}`;
+      amount.textContent = `â‚¬ ${formData.payment_amount}`;
       const paymentAmount = parseFloat(formData.payment_amount);
       let formattedAmount = "";
 
