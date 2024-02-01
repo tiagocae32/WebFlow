@@ -446,9 +446,17 @@ if (window.location.pathname.includes("/aanmelden")) {
       return this.getCurrentStepId() === "overzicht";
     }
 
+    checkChanceKey() {
+      const isMijn = this.isMijnReservation();
+      if (isMijn) {
+        delete this.formData["chance"];
+      }
+    }
+
     applyLastStepChanges() {
       this.enableButton();
       this.convertDate();
+      this.checkChanceKey();
       this.handleProductMijnReservation();
       this.applySubmissionRules();
       this.completeResume();
@@ -3255,7 +3263,7 @@ class User {
   constructor() {
     this.getUserInfo().then(() => {
       this.initializeLoginButton();
-      setInterval(() => this.refreshToken(), 10000);
+      setInterval(() => this.refreshToken(), 240000);
     });
   }
 
