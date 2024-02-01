@@ -114,6 +114,23 @@ if (window.location.pathname.includes("/aanmelden")) {
         AVERAGE_BIG: "gemiddeld-groot",
         BIG: "groot",
       };
+      this.courseChancesMapping = {
+        "online": {
+          "Binnen een maand": this.CHANCES_TYPES.AVERAGE_BIG,
+          "Binnen 1.5 maand": this.CHANCES_TYPES.BIG,
+          "Binnen 2 maanden": this.CHANCES_TYPES.BIG,
+        },
+        "offline": {
+          "Binnen een maand": this.CHANCES_TYPES.AVERAGE,
+          "Binnen 1.5 maand": this.CHANCES_TYPES.AVERAGE_BIG,
+          "Binnen 2 maanden": this.CHANCES_TYPES.BIG,
+        },
+        "reapply": {
+          "Binnen 15 dagen": this.CHANCES_TYPES.AVERAGE_BIG,
+          "Binnen een maand": this.CHANCES_TYPES.AVERAGE_BIG,
+          "Binnen 1.5 maand": this.CHANCES_TYPES.BIG,
+        }
+      };
     }
 
     initStepRules() {
@@ -522,6 +539,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
       }
       this.checkEnableNextButton();
+      if (this.getCurrentStepId() === "step6") {
+        const value = this.isReapplyFlow ? this.getCardReapplyChance() : this.getCardChance();
+        this.formData["chance"] = value;
+      }
     }
 
     formatBirthDate(value) {
@@ -808,28 +829,21 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (this.isReapplyFlow) {
         datesReapply.style.display = "flex";
         datesNoReapply.style.display = "none";
-        this.getCardReapplyChance();
       } else {
         datesNoReapply.style.display = "flex";
         datesReapply.style.display = "none";
-        this.getCardChance();
       }
     }
 
-    getCardChance(card) {
-      this.onlineType = this.formData["course_type"] === "online";
-      if (this.onlineType && card.id === 1) return this.CHANCES_TYPES.AVERAGE_BIG;
-      if (this.onlineType && card.id === 2) return this.CHANCES_TYPES.BIG;
-      if (this.onlineType && card.id === 3) return this.CHANCES_TYPES.BIG;
-      if (!this.onlineType && card.id === 1) return this.CHANCES_TYPES.AVERAGE;
-      if (!this.onlineType && card.id === 2) return this.CHANCES_TYPES.AVERAGE_BIG;
-      if (!this.onlineType && card.id === 3) return this.CHANCES_TYPES.BIG;
+    getCardChance() {
+      const courseType = this.formData["course_type"] === "online" ? "online" : "offline";
+      const value = this.formData["course_names"]?.[0] ?? "";
+      return this.courseChancesMapping[courseType][value];
     }
 
-    getCardReapplyChance(card) {
-      if (card.id === 1) return this.CHANCES_TYPES.AVERAGE_BIG;
-      if (card.id === 2) return this.CHANCES_TYPES.AVERAGE_BIG;
-      if (card.id === 3) return this.CHANCES_TYPES.BIG;
+    getCardReapplyChance() {
+      const value = this.formData["course_names"]?.[0] ?? "";
+      return this.courseChancesMapping["reapply"][value];
     }
 
     // Check if is reapply flow
