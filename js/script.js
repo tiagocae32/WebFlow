@@ -115,21 +115,21 @@ if (window.location.pathname.includes("/aanmelden")) {
         BIG: "groot",
       };
       this.courseChancesMapping = {
-        "online": {
+        online: {
           "Binnen een maand": this.CHANCES_TYPES.AVERAGE_BIG,
           "Binnen 1.5 maand": this.CHANCES_TYPES.BIG,
           "Binnen 2 maanden": this.CHANCES_TYPES.BIG,
         },
-        "offline": {
+        offline: {
           "Binnen een maand": this.CHANCES_TYPES.AVERAGE,
           "Binnen 1.5 maand": this.CHANCES_TYPES.AVERAGE_BIG,
           "Binnen 2 maanden": this.CHANCES_TYPES.BIG,
         },
-        "reapply": {
+        reapply: {
           "Binnen 15 dagen": this.CHANCES_TYPES.AVERAGE_BIG,
           "Binnen een maand": this.CHANCES_TYPES.AVERAGE_BIG,
           "Binnen 1.5 maand": this.CHANCES_TYPES.BIG,
-        }
+        },
       };
     }
 
@@ -548,7 +548,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
       this.checkEnableNextButton();
       if (this.getCurrentStepId() === "step6") {
-        const value = this.isReapplyFlow ? this.getCardReapplyChance() : this.getCardChance();
+        const value = this.isReapplyFlow
+          ? this.getCardReapplyChance()
+          : this.getCardChance();
         this.formData["chance"] = value;
       }
     }
@@ -815,8 +817,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -844,7 +846,8 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     getCardChance() {
-      const courseType = this.formData["course_type"] === "online" ? "online" : "offline";
+      const courseType =
+        this.formData["course_type"] === "online" ? "online" : "offline";
       const value = this.formData["course_names"]?.[0] ?? "";
       return this.courseChancesMapping[courseType][value];
     }
@@ -1061,13 +1064,17 @@ if (window.location.pathname.includes("/aanmelden")) {
     handleTextChanceMonths() {
       const minLength = 1;
       const data = this.formData["course_names"];
-      if (!data || data.length === 0) return '';
+      if (!data || data.length === 0) return "";
       if (data.length > minLength) return this.CHANCES_TYPES.AVERAGE_BIG;
       else {
         const currentMonth = new Date().getMonth();
         const [selectedMonth] = data;
-        const selectedMonthIndex = this.dutchMonths.findIndex(month => month === selectedMonth);
-        return selectedMonthIndex === currentMonth ? this.CHANCES_TYPES.AVERAGE_LOW : this.CHANCES_TYPES.AVERAGE_BIG;
+        const selectedMonthIndex = this.dutchMonths.findIndex(
+          (month) => month === selectedMonth
+        );
+        return selectedMonthIndex === currentMonth
+          ? this.CHANCES_TYPES.AVERAGE_LOW
+          : this.CHANCES_TYPES.AVERAGE_BIG;
       }
     }
 
@@ -1097,7 +1104,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.checkEnableNextButton();
           if (!isCity) {
             const value = this.handleTextChanceMonths();
-            document.getElementById("chanceMonths").textContent = value.length > 0 ? value : "- (selecteer data)";
+            document.getElementById("chanceMonths").textContent =
+              value.length > 0 ? value : "- (selecteer data)";
             this.formData["chance"] = value;
           }
         });
@@ -1431,8 +1439,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1524,7 +1533,8 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     updateChanceText() {
       const value = this.getCalendarChances();
-      this.chanceElement.textContent = value.length > 0 ? value : "- (selecteer data)";
+      this.chanceElement.textContent =
+        value.length > 0 ? value : "- (selecteer data)";
       this.formData["course_dates"] = [...this.selectedDates].sort(
         (a, b) => new Date(a) - new Date(b)
       );
@@ -1536,17 +1546,12 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (!size) return "";
       if (this.formData["course_type"] === "online") {
         if (size >= 9) return this.CHANCES_TYPES.BIG;
-        else if (size >= 5)
-          return this.CHANCES_TYPES.AVERAGE_BIG;
-        else if (size >= 1)
-          return this.CHANCES_TYPES.AVERAGE;
+        else if (size >= 5) return this.CHANCES_TYPES.AVERAGE_BIG;
+        else if (size >= 1) return this.CHANCES_TYPES.AVERAGE;
       } else {
-        if (size >= 9)
-          return this.CHANCES_TYPES.AVERAGE_BIG;
-        else if (size >= 5)
-          return this.CHANCES_TYPES.AVERAGE;
-        else if (size >= 1)
-          return this.CHANCES_TYPES.AVERAGE_LOW;
+        if (size >= 9) return this.CHANCES_TYPES.AVERAGE_BIG;
+        else if (size >= 5) return this.CHANCES_TYPES.AVERAGE;
+        else if (size >= 1) return this.CHANCES_TYPES.AVERAGE_LOW;
       }
       return this.CHANCES_TYPES.LOWER;
     }
@@ -2918,12 +2923,12 @@ if (window.location.pathname === "/bestellen") {
       )
         .toString()
         .padStart(2, "0")}-${validUntilDate.getFullYear()} ${validUntilDate
-          .getHours()
-          .toString()
-          .padStart(2, "0")}:${validUntilDate
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${validUntilDate
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
     }
 
     getCurrentDateTime() {
@@ -3089,8 +3094,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&

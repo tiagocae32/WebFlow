@@ -114,6 +114,23 @@ if (window.location.pathname.includes("/aanmelden")) {
         AVERAGE_BIG: "gemiddeld-groot",
         BIG: "groot",
       };
+      this.courseChancesMapping = {
+        online: {
+          "Binnen een maand": this.CHANCES_TYPES.AVERAGE_BIG,
+          "Binnen 1.5 maand": this.CHANCES_TYPES.BIG,
+          "Binnen 2 maanden": this.CHANCES_TYPES.BIG,
+        },
+        offline: {
+          "Binnen een maand": this.CHANCES_TYPES.AVERAGE,
+          "Binnen 1.5 maand": this.CHANCES_TYPES.AVERAGE_BIG,
+          "Binnen 2 maanden": this.CHANCES_TYPES.BIG,
+        },
+        reapply: {
+          "Binnen 15 dagen": this.CHANCES_TYPES.AVERAGE_BIG,
+          "Binnen een maand": this.CHANCES_TYPES.AVERAGE_BIG,
+          "Binnen 1.5 maand": this.CHANCES_TYPES.BIG,
+        },
+      };
     }
 
     initStepRules() {
@@ -328,15 +345,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       const currentStepId = this.getCurrentStepId();
       const nextStepId = this.getNextStepId(currentStepId);
 
-      if (
-        currentStepId === "step4Mijn" &&
-        this.formData.course_type === "offline"
-      ) {
-        if (!this.formData.cities) {
-          this.formData.cities = [];
-        }
-      }
-
       const nextStepIndex = this.steps.findIndex(
         (step) => step.id === nextStepId
       );
@@ -429,9 +437,17 @@ if (window.location.pathname.includes("/aanmelden")) {
       return this.getCurrentStepId() === "overzicht";
     }
 
+    checkChanceKey() {
+      const isMijn = this.isMijnReservation();
+      if (isMijn) {
+        delete this.formData["chance"];
+      }
+    }
+
     applyLastStepChanges() {
       this.enableButton();
       this.convertDate();
+      this.checkChanceKey();
       this.handleProductMijnReservation();
       this.applySubmissionRules();
       this.completeResume();
@@ -522,6 +538,12 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
       }
       this.checkEnableNextButton();
+      if (this.getCurrentStepId() === "step6") {
+        const value = this.isReapplyFlow
+          ? this.getCardReapplyChance()
+          : this.getCardChance();
+        this.formData["chance"] = value;
+      }
     }
 
     formatBirthDate(value) {
@@ -814,6 +836,18 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
+    getCardChance() {
+      const courseType =
+        this.formData["course_type"] === "online" ? "online" : "offline";
+      const value = this.formData["course_names"]?.[0] ?? "";
+      return this.courseChancesMapping[courseType][value];
+    }
+
+    getCardReapplyChance() {
+      const value = this.formData["course_names"]?.[0] ?? "";
+      return this.courseChancesMapping["reapply"][value];
+    }
+
     // Check if is reapply flow
     checkIsReapplyFlow() {
       const url = window.location.href;
@@ -825,6 +859,14 @@ if (window.location.pathname.includes("/aanmelden")) {
     async getUserInfo() {
       if (this.isReapplyFlow) {
         this.userData = await getUserInfoBack();
+      }
+    }
+
+    initializeFormDataCities() {
+      if (this.formData.course_type === "offline") {
+        if (!this.formData.cities) {
+          this.formData.cities = [];
+        }
       }
     }
 
@@ -846,6 +888,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.getPackages();
           break;
         case "step4Mijn":
+          this.initializeFormDataCities();
           this.getCbrLocations(false);
           this.setDateInput();
           this.setTimeInput();
@@ -1018,53 +1061,22 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.createOptions(months, "stepMonthsList", false);
     }
 
-    handleTextChanceMonths(options) {
+    handleTextChanceMonths() {
       const minLength = 1;
       const data = this.formData["course_names"];
-      let text;
-      if (!data.length) text = "";
-      if (data.length > minLength) text = this.CHANCES_TYPES.AVERAGE_BIG;
+      if (!data || data.length === 0) return "";
+      if (data.length > minLength) return this.CHANCES_TYPES.AVERAGE_BIG;
       else {
         const currentMonth = new Date().getMonth();
         const [selectedMonth] = data;
-        const selectedMonthIndex = options.findIndex(
-          (option) => option === selectedMonth
+        const selectedMonthIndex = this.dutchMonths.findIndex(
+          (month) => month === selectedMonth
         );
-        text =
-          selectedMonthIndex === currentMonth
-            ? this.CHANCES_TYPES.AVERAGE_LOW
-            : this.CHANCES_TYPES.AVERAGE_BIG;
-      }
-
-      document.getElementById("chanceMonths").textContent = text;
-      this.formData["chance"] = text;
-    }
-
-    /*
-    handleTextChanceMonths() {
-      const data = this.formData["course_names"];
-      const currentDate = new Date();
-      const isWithinFiveDays = currentDate.getDate() >= 5;
-      let text = "";
-
-      if (data.length === 0) {
-        text = "- (selecteer data)";
-      } else if (
-        data.length === 1 &&
-        this.isActualMonth(data[0]) &&
-        isWithinFiveDays
-      ) {
-        text = "klein-gemiggeld";
-      } else {
-        text = "gemiggeld-groot";
-      }
-
-      const chanceElement = document.getElementById("chanceMonths");
-      if (chanceElement) {
-        chanceElement.textContent = text;
+        return selectedMonthIndex === currentMonth
+          ? this.CHANCES_TYPES.AVERAGE_LOW
+          : this.CHANCES_TYPES.AVERAGE_BIG;
       }
     }
-    */
 
     handleCourseCategoryChange(newCategory) {
       this.formData["course_category"] = newCategory;
@@ -1090,7 +1102,12 @@ if (window.location.pathname.includes("/aanmelden")) {
         divElement.addEventListener("click", () => {
           this.toggleOptionSelection(option, divElement, isCity);
           this.checkEnableNextButton();
-          if (!isCity) this.handleTextChanceMonths(options);
+          if (!isCity) {
+            const value = this.handleTextChanceMonths();
+            document.getElementById("chanceMonths").textContent =
+              value.length > 0 ? value : "- (selecteer data)";
+            this.formData["chance"] = value;
+          }
         });
 
         const paragraph = document.createElement("p");
@@ -1404,7 +1421,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     renderCalendarForMonthYear(month, year) {
-      this.monthLabel.textContent = this.generateDutchMonths(12)[month];
+      this.monthLabel.textContent = this.dutchMonths[month];
       this.yearLabel.textContent = year.toString();
 
       const dayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
@@ -1515,22 +1532,9 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     updateChanceText() {
-      /*const count = this.selectedDates.size;
-
-      const ranges = [
-        { min: 1, max: 4, text: "klein-gemiddeld" },
-        { min: 5, max: 8, text: "gemiddeld" },
-        { min: 9, max: Infinity, text: "gemiddeld-groot" },
-      ];
-
-      const selectedRange = ranges.find(
-        (range) => count >= range.min && count <= range.max
-      );
-      const text = selectedRange ? selectedRange.text : "- (selecteer data)";
-      */
-
       const value = this.getCalendarChances();
-      this.chanceElement.textContent = value;
+      this.chanceElement.textContent =
+        value.length > 0 ? value : "- (selecteer data)";
       this.formData["course_dates"] = [...this.selectedDates].sort(
         (a, b) => new Date(a) - new Date(b)
       );
@@ -1538,20 +1542,16 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     getCalendarChances() {
-      if (!this.selectedDates.length) return "";
+      const size = this.selectedDates.size;
+      if (!size) return "";
       if (this.formData["course_type"] === "online") {
-        if (this.selectedDates.length >= 9) return this.CHANCES_TYPES.BIG;
-        else if (this.selectedDates.length >= 5)
-          return this.CHANCES_TYPES.AVERAGE_BIG;
-        else if (this.selectedDates.length >= 1)
-          return this.CHANCES_TYPES.AVERAGE;
+        if (size >= 9) return this.CHANCES_TYPES.BIG;
+        else if (size >= 5) return this.CHANCES_TYPES.AVERAGE_BIG;
+        else if (size >= 1) return this.CHANCES_TYPES.AVERAGE;
       } else {
-        if (this.selectedDates.length >= 9)
-          return this.CHANCES_TYPES.AVERAGE_BIG;
-        else if (this.selectedDates.length >= 5)
-          return this.CHANCES_TYPES.AVERAGE;
-        else if (this.selectedDates.length >= 1)
-          return this.CHANCES_TYPES.AVERAGE_LOW;
+        if (size >= 9) return this.CHANCES_TYPES.AVERAGE_BIG;
+        else if (size >= 5) return this.CHANCES_TYPES.AVERAGE;
+        else if (size >= 1) return this.CHANCES_TYPES.AVERAGE_LOW;
       }
       return this.CHANCES_TYPES.LOWER;
     }
@@ -3268,12 +3268,13 @@ class User {
   constructor() {
     this.getUserInfo().then(() => {
       this.initializeLoginButton();
-      setInterval(() => this.refreshToken(), 10000);
+      this.interval = setInterval(() => this.refreshToken(), 240000);
     });
   }
 
   logout() {
     document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    clearInterval(this.interval);
     window.location.href = "/inloggen";
   }
 
