@@ -313,7 +313,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.stepHistory = [this.steps[0].id, this.steps[1].id];
           this.currentStepIndex = 2;
           this.calculateTotalSteps();
-          this.updateStepIndexText();
+          this.updateStepIndexText(true);
         }
       }
     }
@@ -776,8 +776,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       return true;
     }
 
-    updateStepIndexText() {
-      let currentStepNumber = this.stepHistory.length;
+    updateStepIndexText(add = false) {
+      let currentStepNumber = add ? this.stepHistory.length + 1 : this.stepHistory.length;
 
       if (currentStepNumber === 0) {
         currentStepNumber = 1;
