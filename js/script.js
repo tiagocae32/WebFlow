@@ -345,15 +345,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       const currentStepId = this.getCurrentStepId();
       const nextStepId = this.getNextStepId(currentStepId);
 
-      if (
-        currentStepId === "step4Mijn" &&
-        this.formData.course_type === "offline"
-      ) {
-        if (!this.formData.cities) {
-          this.formData.cities = [];
-        }
-      }
-
       const nextStepIndex = this.steps.findIndex(
         (step) => step.id === nextStepId
       );
@@ -373,11 +364,13 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.stepHistory.pop();
         const previousStepId = this.stepHistory[this.stepHistory.length - 1];
 
-        this.currentStepIndex = this.steps.findIndex(
+        const prevStepIndex = this.steps.findIndex(
           (step) => step.id === previousStepId
         );
-
-        this.showFormForStep(this.currentStepIndex);
+        if (prevStepIndex > -1) {
+          this.currentStepIndex = prevStepIndex;
+          this.showFormForStep(this.currentStepIndex);
+        }
         this.updateStepIndexText();
       }
     }
@@ -817,8 +810,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -871,6 +864,14 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
+    initializeFormDataCities() {
+      if (this.formData.course_type === "offline") {
+        if (!this.formData.cities) {
+          this.formData.cities = [];
+        }
+      }
+    }
+
     handleSideEffects() {
       const currentStepId = this.getCurrentStepId();
       switch (currentStepId) {
@@ -889,6 +890,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.getPackages();
           break;
         case "step4Mijn":
+          this.initializeFormDataCities();
           this.getCbrLocations(false);
           this.setDateInput();
           this.setTimeInput();
@@ -1039,7 +1041,9 @@ if (window.location.pathname.includes("/aanmelden")) {
         const indexCityOnline = this.formData.cities.findIndex(
           (city) => city.is_online
         );
-        this.formData.cities.splice(indexCityOnline, 1);
+        if (indexCityOnline > -1) {
+          this.formData.cities.splice(indexCityOnline, 1);
+        }
       }
     }
     // END CITIES
@@ -1439,9 +1443,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1966,7 +1969,9 @@ if (window.location.pathname.includes("/aanmelden")) {
         const indexDelete = copyFormDataCities.findIndex(
           (city) => city.is_online
         );
-        copyFormDataCities.splice(indexDelete, 1);
+        if (indexDelete > -1) {
+          copyFormDataCities.splice(indexDelete, 1);
+        }
       } else {
         copyFormDataCities = [];
       }
@@ -2923,12 +2928,12 @@ if (window.location.pathname === "/bestellen") {
       )
         .toString()
         .padStart(2, "0")}-${validUntilDate.getFullYear()} ${validUntilDate
-        .getHours()
-        .toString()
-        .padStart(2, "0")}:${validUntilDate
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`;
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${validUntilDate
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
     }
 
     getCurrentDateTime() {
@@ -3094,8 +3099,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
       );
       if (
         formData.cities &&
@@ -3268,12 +3273,13 @@ class User {
   constructor() {
     this.getUserInfo().then(() => {
       this.initializeLoginButton();
-      setInterval(() => this.refreshToken(), 240000);
+      this.interval = setInterval(() => this.refreshToken(), 240000);
     });
   }
 
   logout() {
     document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    clearInterval(this.interval);
     window.location.href = "/inloggen";
   }
 
