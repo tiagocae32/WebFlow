@@ -1082,13 +1082,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-    handleCourseCategoryChange(newCategory) {
-      this.formData["course_category"] = newCategory;
-      if (!this.isEditing) {
-        this.formData["course_names"] = [];
-      }
-    }
-
     isActualMonth(month) {
       return this.dutchMonths.indexOf(month) === new Date().getMonth();
     }
@@ -1131,6 +1124,11 @@ if (window.location.pathname.includes("/aanmelden")) {
     toggleOptionSelection(option, divElement, isCity) {
       const key = isCity ? "cities" : "course_names";
       const value = isCity ? option.id : option;
+
+      const zoSnelOptions = ["Binnen 15 dagen", "Binnen een maand", "Binnen 1.5 maand", "Binnen 2 maanden"];
+      if (zoSnelOptions.some(opt => this.formData[key]?.includes(opt))) {
+        this.formData[key].splice(0, 1);
+      }
 
       if (!Array.isArray(this.formData[key])) {
         this.formData[key] = [];
