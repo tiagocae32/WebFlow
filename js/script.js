@@ -1213,6 +1213,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     setDateInput() {
       const fechaInput = document.getElementById("dateInput");
       const currentDate = new Date();
+      currentDate.setHours(12, 0, 0, 0);
       const formattedDate = currentDate.toISOString().split("T")[0];
       fechaInput.min = formattedDate;
 
