@@ -1304,7 +1304,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         checkbox.style.zIndex = -1;
 
         const span = document.createElement("span");
-        span.className = "text-weight-bold w-form-label";
+        span.className = "text-weight-bold text-size-small w-form-label";
         span.setAttribute("for", element);
         span.textContent = element;
 
