@@ -428,9 +428,11 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     enableButton() {
       this.nextButton.classList.remove("disabled-button");
+      this.btnEditSave.classList.remove("disabled-button");
     }
     disableButton() {
       this.nextButton.classList.add("disabled-button");
+      this.btnEditSave.classList.add("disabled-button");
     }
 
     //END
