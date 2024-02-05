@@ -454,20 +454,22 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.checkChanceKey();
       this.handleProductMijnReservation();
       this.applySubmissionRules();
+      this.checkCityOnline();
       this.completeResume();
-      if (this.formData["course_type"] === "online" && !this.checkedCities) {
-        this.checkCities();
-        this.checkedCities = true;
-      }
     }
 
-    async checkCities() {
-      if (this.checkedCities) return;
-      const data = await this.fetchCities();
-      const citiesOnline = data
-        .filter((city) => city.is_online)
-        .map((city) => city.id);
-      this.formData["cities"] = citiesOnline;
+    async checkCityOnline() {
+      if (this.formData["course_type"] === "online") {
+        const data = await this.fetchCities();
+        const cityOnline = data
+          .filter((city) => city.is_online)
+          .map((city) => city.id);
+        this.formData["cities"] = cityOnline;
+        this.idOnline = cityOnline;
+      } else {
+        const indexDelete = this.formData["cities"].findIndex(city => city === this.idOnline);
+        this.formData["cities"].splice(indexDelete, 1);
+      }
     }
 
     hideAllForms() {
@@ -1967,20 +1969,15 @@ if (window.location.pathname.includes("/aanmelden")) {
         copyFormDataCities = JSON.parse(
           JSON.stringify(this.formData["cities"])
         );
-        const indexDelete = copyFormDataCities.findIndex(
-          (city) => city.is_online
-        );
-        if (indexDelete > -1) {
-          copyFormDataCities.splice(indexDelete, 1);
-        }
       } else {
+        copyFormDataCities = [];
+      }
+      if (this.formData["course_type"] === "online") {
         copyFormDataCities = [];
       }
 
       const showLocations =
-        (copyFormDataCities && copyFormDataCities.length > 0) ||
-        (this.formData["cbr_locations"] &&
-          this.formData["cbr_locations"].length > 0);
+        (copyFormDataCities && copyFormDataCities.length > 0) || (this.formData["cbr_locations"] && this.formData["cbr_locations"].length > 0);
 
       const showDates =
         (this.formData["course_names"] &&
@@ -2005,38 +2002,38 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     createEditStepButtons() {
       this.backupFormData();
-      if (!this.isEditButtonsInitialized) {
-        const buttonsData = [
-          { id: "editLocations", callback: () => this.determineLocationStep() },
-          { id: "editDates", callback: () => this.determineDateStep() },
-          { id: "editInputs", callback: () => this.goToStep("stepInputs") },
-          {
-            id: "editOnlinePackages",
-            callback: () => this.goToStep("stepOnlinePackage"),
-          },
-        ];
-        buttonsData.forEach((buttonData) => {
-          const button = document.getElementById(buttonData.id);
-          if (button) {
-            button.addEventListener("click", () => {
-              this.isEditing = true;
-              buttonData.callback();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-              this.initializeEditButtons();
-              this.showEditButtons();
-            });
+      //if (!this.isEditButtonsInitialized) {
+      const buttonsData = [
+        { id: "editLocations", callback: () => this.determineLocationStep() },
+        { id: "editDates", callback: () => this.determineDateStep() },
+        { id: "editInputs", callback: () => this.goToStep("stepInputs") },
+        {
+          id: "editOnlinePackages",
+          callback: () => this.goToStep("stepOnlinePackage"),
+        },
+      ];
+      buttonsData.forEach((buttonData) => {
+        const button = document.getElementById(buttonData.id);
+        if (button) {
+          button.addEventListener("click", () => {
+            this.isEditing = true;
+            buttonData.callback();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            this.initializeEditButtons();
+            this.showEditButtons();
+          });
 
-            if (buttonData.id === "editOnlinePackages") {
-              if (this.formData.course_type === "online") {
-                button.classList.remove("hide");
-              } else {
-                button.classList.add("hide");
-              }
+          if (buttonData.id === "editOnlinePackages") {
+            if (this.formData.course_type === "online") {
+              button.classList.remove("hide");
+            } else {
+              button.classList.add("hide");
             }
           }
-        });
-      }
-      this.isEditButtonsInitialized = true;
+        }
+      });
+      //}
+      //this.isEditButtonsInitialized = true;
     }
 
     backupFormData() {
