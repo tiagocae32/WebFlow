@@ -2744,7 +2744,7 @@ if (window.location.pathname === "/bestellen") {
         this.getCurrentDateTime();
         this.dateCalendar = null;
       });
-      radio2.addEventListener("change", () => this.handleRadioChange());
+      radio2.addEventListener("change", () => this.handleRadioChange(formData));
 
       const label2 = document.createElement("label");
       label2.htmlFor = "radio2";
@@ -2890,7 +2890,7 @@ if (window.location.pathname === "/bestellen") {
       });
     }
 
-    handleRadioChange() {
+    handleRadioChange(formData) {
       this.buttonLink.classList.add("disabled-button");
       const radio2 = document.getElementById("radio2");
       const dateInput = document.getElementById("dateInput");
