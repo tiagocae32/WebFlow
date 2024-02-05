@@ -2908,7 +2908,7 @@ if (window.location.pathname === "/bestellen") {
         }).replace(/\//g, '-');
 
         dateInput.value = currentDateStr;
-        this.dateCalendar = now.toISOString();
+        this.dateCalendar = this.getCurrentDateTime();
         dateInput.style.display = "block";
         calendarIcon.style.display = "block";
         this.chooseDateText.style.display = "block";
