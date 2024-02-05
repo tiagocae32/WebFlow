@@ -455,7 +455,17 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.handleProductMijnReservation();
       this.applySubmissionRules();
       this.checkCityOnline();
+      this.checkMijn();
       this.completeResume();
+    }
+
+    checkMijn() {
+      if (this.isMijnReservation()) {
+        this.formData["course_names"] = this.formData["course_dates"] = [];
+        if (this.formData["course_type"] === "offline") {
+          this.formData["cities"] = [];
+        }
+      }
     }
 
     async checkCityOnline() {
@@ -467,8 +477,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.formData["cities"] = cityOnline;
         this.idOnline = cityOnline;
       } else {
-        const indexDelete = this.formData["cities"].findIndex(city => city === this.idOnline);
-        this.formData["cities"].splice(indexDelete, 1);
+        if (this.idOnline) {
+          const indexDelete = this.formData["cities"].findIndex(city => city === this.idOnline);
+          this.formData["cities"].splice(indexDelete, 1);
+        }
       }
     }
 
@@ -819,7 +831,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     isMijnReservation() {
-      return this.formData.exam_type === "3";
+      return Number(this.formData.exam_type) === 3;
     }
 
     checkEnableNextButton() {
