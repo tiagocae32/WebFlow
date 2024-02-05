@@ -2784,6 +2784,7 @@ if (window.location.pathname === "/bestellen") {
         dateInput.value = "";
         clearButton.style.display = "none";
         calendarIcon.style.display = "block";
+        this.disableButton();
       };
       dateInputContainer.appendChild(clearButton);
 
@@ -2907,10 +2908,13 @@ if (window.location.pathname === "/bestellen") {
         }).replace(/\//g, '-');
 
         dateInput.value = currentDateStr;
+        this.dateCalendar = now.toISOString();
         dateInput.style.display = "block";
         calendarIcon.style.display = "block";
         this.chooseDateText.style.display = "block";
         this.planAvailableUntilText.style.display = "block";
+        this.updatePlanAvailableUntilText(formData);
+        this.enableButton();
       } else {
         dateInput.style.display = "none";
         calendarIcon.style.display = "none";
@@ -2932,6 +2936,10 @@ if (window.location.pathname === "/bestellen") {
       } else {
         this.buttonLink.classList.add("disabled-button");
       }
+    }
+
+    disableButton() {
+      this.buttonLink.classList.add("disabled-button");
     }
 
     formatCalendarDate() {
