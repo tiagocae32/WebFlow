@@ -2693,7 +2693,7 @@ if (window.location.pathname === "/bestellen") {
         this.containerDefault.style.display = "none";
         bestellenMijnPackage.style.display = "block";
         bestellenImage.style.display = "none";
-        this.generateContainerMijn();
+        this.generateContainerMijn(formData);
         this.generatePackage(formData);
       } else {
         this.containerMijn.style.display = "none";
@@ -2703,7 +2703,7 @@ if (window.location.pathname === "/bestellen") {
       }
     }
 
-    generateContainerMijn() {
+    generateContainerMijn(formData) {
       this.buttonLink.classList.add("disabled-button");
       const radioDiv1 = document.createElement("div");
       radioDiv1.classList.add("bestellen_mijn-radio");
@@ -2813,7 +2813,7 @@ if (window.location.pathname === "/bestellen") {
 
       this.planAvailableUntilText = document.createElement("div");
       this.planAvailableUntilText.textContent =
-        "Plan is beschikbaar tot " + this.calculateValidUntilDate();
+        "Plan is beschikbaar tot " + this.calculateValidUntilDate(formData);
       this.planAvailableUntilText.classList.add(
         "text-size-tiny",
         "text-weight-bold"
@@ -2884,7 +2884,7 @@ if (window.location.pathname === "/bestellen") {
             "Y-m-d\\TH:i:00+01:00"
           );
           this.enableButton();
-          this.updatePlanAvailableUntilText();
+          this.updatePlanAvailableUntilText(formData);
         },
       });
     }
@@ -2894,18 +2894,35 @@ if (window.location.pathname === "/bestellen") {
       const radio2 = document.getElementById("radio2");
       const dateInput = document.getElementById("dateInput");
       const calendarIcon = document.getElementById("calendarIcon");
-      dateInput.style.display = radio2.checked ? "block" : "none";
-      calendarIcon.style.display = "block";
-      this.chooseDateText.style.display = radio2.checked ? "block" : "none";
-      this.planAvailableUntilText.style.display = radio2.checked
-        ? "block"
-        : "none";
+
+      if (radio2.checked) {
+        let now = new Date();
+        let currentDateStr = now.toLocaleDateString('nl-NL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).replace(/\//g, '-');
+
+        dateInput.value = currentDateStr;
+        dateInput.style.display = "block";
+        calendarIcon.style.display = "block";
+        this.chooseDateText.style.display = "block";
+        this.planAvailableUntilText.style.display = "block";
+      } else {
+        dateInput.style.display = "none";
+        calendarIcon.style.display = "none";
+        this.chooseDateText.style.display = "none";
+        this.planAvailableUntilText.style.display = "none";
+      }
     }
 
-    updatePlanAvailableUntilText() {
+    updatePlanAvailableUntilText(formData) {
       if (this.dateCalendar) {
         this.planAvailableUntilText.textContent =
-          "Plan is beschikbaar tot " + this.calculateValidUntilDate();
+          "Plan is beschikbaar tot " + this.calculateValidUntilDate(formData);
       }
     }
 
@@ -2924,14 +2941,15 @@ if (window.location.pathname === "/bestellen") {
       return this.getCurrentDateTime();
     }
 
-    calculateValidUntilDate() {
+    calculateValidUntilDate(formData) {
+      const pkg = formData.package_info;
       let validUntilDate;
       if (this.dateCalendar) {
         validUntilDate = new Date(this.dateCalendar);
       } else {
         validUntilDate = new Date();
       }
-      validUntilDate.setDate(validUntilDate.getDate() + 45);
+      validUntilDate.setDate(validUntilDate.getDate() + pkg.duration);
 
       return `${validUntilDate.getDate().toString().padStart(2, "0")}-${(
         validUntilDate.getMonth() + 1
