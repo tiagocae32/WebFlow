@@ -7,6 +7,100 @@ const apiBaseUrls = {
   "webflow.nutheorie.be": urlDevelop,
 };
 
+class Authentication {
+  constructor() {
+    this.expAccessToken = null;
+  }
+
+  async checkAndRefreshToken() {
+    const currentToken = this.getCookiesToken();
+    if (!currentToken || !currentToken.access) {
+      return null;
+    }
+
+    const now = new Date();
+    if (now.getTime() >= this.expAccessToken * 1000) {
+      await this.refreshToken();
+      return this.getCookiesToken();
+    }
+
+    return currentToken;
+  }
+
+  async refreshToken() {
+    const oldToken = this.getCookiesToken();
+
+    let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+    if (oldToken && oldToken.refresh) {
+      try {
+        const respuesta = await fetch(
+          `${apiBaseUrl}authorization/token/refresh/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refresh: oldToken.refresh }),
+          }
+        );
+        const data = await respuesta.json();
+        const encodedTokens = encodeURIComponent(JSON.stringify(data));
+        document.cookie = `tokens=${encodedTokens}`;
+        if (data && data.exp_access) {
+          this.expAccessToken = data.exp_access;
+        }
+      } catch (error) {
+        console.log("Error refreshtoken");
+      }
+    }
+  }
+
+  getCookiesToken() {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const partes = cookie.split("=");
+      if (partes[0].trim() === "tokens") {
+        const encodedTokens = partes[1];
+        try {
+          const decodedTokens = decodeURIComponent(encodedTokens);
+          const tokens = JSON.parse(decodedTokens);
+          return tokens;
+        } catch (error) {
+          console.error("Error al decodificar la cookie tokens:", error);
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  async getUserInfoBack() {
+    const accessToken = this.getCookiesToken();
+    console.log(accessToken);
+    if (accessToken) {
+      this.expAccessToken = accessToken.exp_access;
+      try {
+        const baseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+        const userInfoUrl = `${baseUrl}api/applications/`;
+        const resServer = await fetch(userInfoUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken.access}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const userData = await resServer.json();
+        return userData;
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      return {};
+    }
+  }
+}
+
 if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
@@ -3416,97 +3510,3 @@ class User {
 }
 
 const user = new User();
-
-class Authentication {
-  constructor() {
-    this.expAccessToken = null;
-  }
-
-  async checkAndRefreshToken() {
-    const currentToken = this.getCookiesToken();
-    if (!currentToken || !currentToken.access) {
-      return null;
-    }
-
-    const now = new Date();
-    if (now.getTime() >= this.expAccessToken * 1000) {
-      await this.refreshToken();
-      return this.getCookiesToken();
-    }
-
-    return currentToken;
-  }
-
-  async refreshToken() {
-    const oldToken = this.getCookiesToken();
-
-    let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
-    if (oldToken && oldToken.refresh) {
-      try {
-        const respuesta = await fetch(
-          `${apiBaseUrl}authorization/token/refresh/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ refresh: oldToken.refresh }),
-          }
-        );
-        const data = await respuesta.json();
-        const encodedTokens = encodeURIComponent(JSON.stringify(data));
-        document.cookie = `tokens=${encodedTokens}`;
-        if (data && data.exp_access) {
-          this.expAccessToken = data.exp_access;
-        }
-      } catch (error) {
-        console.log("Error refreshtoken");
-      }
-    }
-  }
-
-  getCookiesToken() {
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i];
-      const partes = cookie.split("=");
-      if (partes[0].trim() === "tokens") {
-        const encodedTokens = partes[1];
-        try {
-          const decodedTokens = decodeURIComponent(encodedTokens);
-          const tokens = JSON.parse(decodedTokens);
-          return tokens;
-        } catch (error) {
-          console.error("Error al decodificar la cookie tokens:", error);
-          return null;
-        }
-      }
-    }
-    return null;
-  }
-
-  async getUserInfoBack() {
-    const accessToken = this.getCookiesToken();
-    console.log(accessToken);
-    if (accessToken) {
-      this.expAccessToken = accessToken.exp_access;
-      try {
-        const baseUrl = apiBaseUrls[window.location.hostname] || urlProd;
-        const userInfoUrl = `${baseUrl}api/applications/`;
-        const resServer = await fetch(userInfoUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken.access}`,
-            "Content-Type": "application/json",
-          },
-        });
-        const userData = await resServer.json();
-        return userData;
-      } catch (error) {
-        console.log(error);
-      }
-    } else {
-      return {};
-    }
-  }
-}
