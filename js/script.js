@@ -22,10 +22,8 @@ class Authentication {
     if (now.getTime() >= this.expAccessToken * 1000) {
       await this.refreshToken();
       const newToken = this.getCookiesToken();
-      console.log(newToken);
       return newToken;
     }
-    console.log(currentToken);
     return currentToken;
   }
 
@@ -79,7 +77,6 @@ class Authentication {
 
   async getUserInfoBack() {
     const accessToken = this.getCookiesToken();
-    console.log(accessToken);
     if (accessToken) {
       this.expAccessToken = accessToken.exp_access;
       try {
