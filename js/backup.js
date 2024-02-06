@@ -2744,7 +2744,7 @@ if (window.location.pathname === "/bestellen") {
         this.getCurrentDateTime();
         this.dateCalendar = null;
       });
-      radio2.addEventListener("change", () => this.handleRadioChange());
+      radio2.addEventListener("change", () => this.handleRadioChange(formData));
 
       const label2 = document.createElement("label");
       label2.htmlFor = "radio2";
@@ -2784,6 +2784,7 @@ if (window.location.pathname === "/bestellen") {
         dateInput.value = "";
         clearButton.style.display = "none";
         calendarIcon.style.display = "block";
+        this.disableButton();
       };
       dateInputContainer.appendChild(clearButton);
 
@@ -2889,7 +2890,7 @@ if (window.location.pathname === "/bestellen") {
       });
     }
 
-    handleRadioChange() {
+    handleRadioChange(formData) {
       this.buttonLink.classList.add("disabled-button");
       const radio2 = document.getElementById("radio2");
       const dateInput = document.getElementById("dateInput");
@@ -2906,11 +2907,21 @@ if (window.location.pathname === "/bestellen") {
           hour12: false
         }).replace(/\//g, '-');
 
+        let year = now.getFullYear();
+        let month = (now.getMonth() + 1).toString().padStart(2, '0');
+        let day = now.getDate().toString().padStart(2, '0');
+        let hours = now.getHours().toString().padStart(2, '0');
+        let minutes = now.getMinutes().toString().padStart(2, '0');
+
+        let formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:00+01:00`;
+        this.dateCalendar = formattedDate;
         dateInput.value = currentDateStr;
         dateInput.style.display = "block";
         calendarIcon.style.display = "block";
         this.chooseDateText.style.display = "block";
         this.planAvailableUntilText.style.display = "block";
+        this.updatePlanAvailableUntilText(formData);
+        this.enableButton();
       } else {
         dateInput.style.display = "none";
         calendarIcon.style.display = "none";
@@ -2934,6 +2945,10 @@ if (window.location.pathname === "/bestellen") {
       }
     }
 
+    disableButton() {
+      this.buttonLink.classList.add("disabled-button");
+    }
+
     formatCalendarDate() {
       if (this.dateCalendar) {
         return this.dateCalendar;
@@ -2942,26 +2957,27 @@ if (window.location.pathname === "/bestellen") {
     }
 
     calculateValidUntilDate(formData) {
-      const pkg = formData.package_info;
-      let validUntilDate;
-      if (this.dateCalendar) {
-        validUntilDate = new Date(this.dateCalendar);
-      } else {
-        validUntilDate = new Date();
+      if (!this.dateCalendar) {
+        return null;
       }
-      validUntilDate.setDate(validUntilDate.getDate() + pkg.duration);
 
-      return `${validUntilDate.getDate().toString().padStart(2, "0")}-${(
-        validUntilDate.getMonth() + 1
-      )
-        .toString()
-        .padStart(2, "0")}-${validUntilDate.getFullYear()} ${validUntilDate
-          .getHours()
-          .toString()
-          .padStart(2, "0")}:${validUntilDate
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
+      const pkg = formData.package_info;
+
+      let [datePart, timePart] = this.dateCalendar.split('T');
+      let [year, month, day] = datePart.split('-').map(num => parseInt(num, 10));
+      let [hours, minutes] = timePart.substring(0, 5).split(':').map(num => parseInt(num, 10));
+
+      let dateFromCalendar = new Date(year, month - 1, day, hours, minutes);
+
+      dateFromCalendar.setDate(dateFromCalendar.getDate() + pkg.duration);
+
+      day = dateFromCalendar.getDate().toString().padStart(2, "0");
+      month = (dateFromCalendar.getMonth() + 1).toString().padStart(2, "0");
+      year = dateFromCalendar.getFullYear();
+      hours = dateFromCalendar.getHours().toString().padStart(2, "0");
+      minutes = dateFromCalendar.getMinutes().toString().padStart(2, "0");
+
+      return `${day}-${month}-${year} ${hours}:${minutes}`;
     }
 
     getCurrentDateTime() {
