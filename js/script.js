@@ -967,23 +967,20 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     // Check if is reapply flow
     checkIsReapplyFlow() {
-      const url = new URL(window.location.href);
-      const isReapply = url.searchParams.get("reapply") === "true";
-      this.isReapplyFlow = isReapply;
+      this.isReapplyFlow = this.userData.is_reapply;
 
-      if (isReapply) {
+      if (this.isReapplyFlow) {
         const planID = url.searchParams.get("planId");
         this.planID = planID ? Number(planID) : null;
       }
     }
 
     async getUserInfo() {
-      if (this.isReapplyFlow) {
-        const token = await this.instanceToken.checkAndRefreshToken();
-        if (token && token.access) {
-          this.userData = await this.instanceToken.getUserInfoBack();
-        }
+      const token = await this.instanceToken.checkAndRefreshToken();
+      if (token && token.access) {
+        this.userData = await this.instanceToken.getUserInfoBack();
       }
+      this.checkIsReapplyFlow();
     }
 
     initializeFormDataCities() {
@@ -998,7 +995,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       const currentStepId = this.getCurrentStepId();
       switch (currentStepId) {
         case "step1":
-          this.checkIsReapplyFlow();
           this.getUserInfo();
           break;
         case "step4Cities":
