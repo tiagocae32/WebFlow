@@ -1782,6 +1782,20 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     setReapplyPackage(plans) {
       const plan = plans.find((plan) => plan.id === this.planID);
+      if (plan) {
+        this.setFormData("package_name", plan.name);
+
+        const packageItems = document.querySelectorAll(".aanmelden_package-item");
+        packageItems.forEach((item) => {
+          item.classList.remove("selected-option");
+
+          if (item.getAttribute("data-package-id") === String(this.planID)) {
+            item.classList.add("selected-option");
+          }
+        });
+        this.checkEnableNextButton();
+        this.packageSelected = plan;
+      }
     }
 
     createPackages(packages) {
@@ -1793,6 +1807,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         let packageItem = document.createElement("div");
         packageItem.className = "aanmelden_package-item";
         packageItem.setAttribute("data-package-name", pkg.name);
+        packageItem.setAttribute("data-package-id", pkg.id);
 
         packageItem.addEventListener("click", () => {
           this.setFormData("package_name", pkg.name);
