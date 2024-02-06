@@ -3423,22 +3423,22 @@ class Authentication {
   }
 
   async checkAndRefreshToken() {
-    const currentToken = getCookiesToken();
+    const currentToken = this.getCookiesToken();
     if (!currentToken || !currentToken.access) {
       return null;
     }
 
     const now = new Date();
     if (now.getTime() >= this.expAccessToken * 1000) {
-      await refreshToken();
-      return getCookiesToken();
+      await this.refreshToken();
+      return this.getCookiesToken();
     }
 
     return currentToken;
   }
 
   async refreshToken() {
-    const oldToken = getCookiesToken();
+    const oldToken = this.getCookiesToken();
 
     let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
     if (oldToken && oldToken.refresh) {
@@ -3486,7 +3486,7 @@ class Authentication {
   }
 
   async getUserInfoBack() {
-    const accessToken = getCookiesToken();
+    const accessToken = this.getCookiesToken();
     console.log(accessToken);
     if (accessToken) {
       this.expAccessToken = accessToken.exp_access;
