@@ -2394,7 +2394,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       };
 
       if (this.isReapplyFlow) {
-        const accessToken = getCookiesToken().access;
+        const accessToken = checkAndRefreshToken().access;
         options.headers["Authorization"] = `Bearer ${accessToken}`;
       }
 
@@ -2622,7 +2622,8 @@ if (window.location.pathname === "/bestellen") {
     async requestLink(formData) {
       const { payment_amount } = formData;
 
-      const access = getCookiesToken();
+      const access = await checkAndRefreshToken();
+      console.log(access);
 
       let payment_link;
       let package_starting_at = this.formatCalendarDate();
@@ -3310,15 +3311,14 @@ if (window.location.pathname === "/bestellen") {
 
 class User {
   constructor() {
+    this.expAccessToken = null;
     this.getUserInfo().then(() => {
       this.initializeLoginButton();
-      this.interval = setInterval(() => this.refreshToken(), 20000);
     });
   }
 
   logout() {
     document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    clearInterval(this.interval);
     window.location.href = "/inloggen";
   }
 
@@ -3327,7 +3327,10 @@ class User {
   }
 
   async getUserInfo() {
-    this.userData = await getUserInfoBack();
+    const token = await checkAndRefreshToken();
+    if (token) {
+      this.userData = await getUserInfoBack();
+    }
   }
 
   updateLoginButtonText() {
@@ -3380,35 +3383,49 @@ class User {
     const token = getCookiesToken();
     return !!token && !!token.access;
   }
-
-  async refreshToken() {
-    const oldToken = getCookiesToken();
-
-    let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
-    if (oldToken && oldToken.refresh) {
-      try {
-        const respuesta = await fetch(
-          `${apiBaseUrl}authorization/token/refresh/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ refresh: oldToken.refresh }),
-          }
-        );
-        const data = await respuesta.json();
-        const encodedTokens = encodeURIComponent(JSON.stringify(data));
-        document.cookie = `tokens=${encodedTokens}`;
-      } catch (error) {
-        console.log("Error refreshtoken");
-      }
-      this.getUserInfo();
-    }
-  }
 }
 
 const user = new User();
+
+async function checkAndRefreshToken() {
+  const currentToken = getCookiesToken();
+  if (!currentToken || !currentToken.access) {
+    return null;
+  }
+
+  const now = new Date();
+  if (now.getTime() >= this.expAccessToken * 1000) {
+    await refreshToken();
+    return getCookiesToken();
+  }
+
+  return currentToken;
+}
+
+async function refreshToken() {
+  const oldToken = getCookiesToken();
+
+  let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+  if (oldToken && oldToken.refresh) {
+    try {
+      const respuesta = await fetch(
+        `${apiBaseUrl}authorization/token/refresh/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh: oldToken.refresh }),
+        }
+      );
+      const data = await respuesta.json();
+      const encodedTokens = encodeURIComponent(JSON.stringify(data));
+      document.cookie = `tokens=${encodedTokens}`;
+    } catch (error) {
+      console.log("Error refreshtoken");
+    }
+  }
+}
 
 function getCookiesToken() {
   const cookies = document.cookie.split(";");
@@ -3433,6 +3450,8 @@ function getCookiesToken() {
 async function getUserInfoBack() {
   const accessToken = getCookiesToken();
   if (accessToken) {
+    this.expAccessToken = accessToken.exp_access;
+    console.log(this.expAccessToken);
     try {
       const baseUrl = apiBaseUrls[window.location.hostname] || urlProd;
       const userInfoUrl = `${baseUrl}api/applications/`;
