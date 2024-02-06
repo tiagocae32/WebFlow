@@ -864,15 +864,22 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     // Check if is reapply flow
     checkIsReapplyFlow() {
-      const url = window.location.href;
-      const isReapply = url.toLowerCase().includes("&reapply=true");
-      if (isReapply) this.isReapplyFlow = true;
-      else this.isReapplyFlow = false;
+      const url = new URL(window.location.href);
+      const isReapply = url.searchParams.get('reapply') === 'true';
+      this.isReapplyFlow = isReapply;
+
+      if (isReapply) {
+        const planID = url.searchParams.get('planId');
+        this.planID = planID ? Number(planID) : null;
+      }
     }
 
     async getUserInfo() {
       if (this.isReapplyFlow) {
-        this.userData = await getUserInfoBack();
+        const token = await checkAndRefreshToken();
+        if (token) {
+          this.userData = await getUserInfoBack();
+        }
       }
     }
 
@@ -1626,6 +1633,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           .sort((a, b) => a.order - b.order)
           .map(
             ({
+              id,
               name,
               description_items,
               price,
@@ -1644,6 +1652,7 @@ if (window.location.pathname.includes("/aanmelden")) {
                 : (old_price = Number(old_price) + nonReapplyValue);
 
               return {
+                id,
                 name,
                 description_items:
                   this.processDescriptionItems(description_items),
@@ -1655,9 +1664,16 @@ if (window.location.pathname.includes("/aanmelden")) {
             }
           );
         this.createPackages(this.allAvailablePlans);
+        if (this.isReapplyFlow) {
+          this.setReapplyPackage(this.allAvailablePlans);
+        }
       } catch (error) {
         console.log(error);
       }
+    }
+
+    setReapplyPackage(plans) {
+      const plan = plans.find(plan => plan.id === this.planID);
     }
 
     createPackages(packages) {
@@ -2394,7 +2410,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       };
 
       if (this.isReapplyFlow) {
-        const accessToken = checkAndRefreshToken().access;
+        const accessToken = await checkAndRefreshToken().access;
+        console.log(accessToken);
         options.headers["Authorization"] = `Bearer ${accessToken}`;
       }
 
@@ -2623,7 +2640,6 @@ if (window.location.pathname === "/bestellen") {
       const { payment_amount } = formData;
 
       const access = await checkAndRefreshToken();
-      console.log(access);
 
       let payment_link;
       let package_starting_at = this.formatCalendarDate();
@@ -3327,9 +3343,9 @@ class User {
   }
 
   async getUserInfo() {
-    const token = await checkAndRefreshToken();
+    const token = await checkAndRefreshToken(this);
     if (token) {
-      this.userData = await getUserInfoBack();
+      this.userData = await getUserInfoBack(this);
     }
   }
 
@@ -3387,22 +3403,22 @@ class User {
 
 const user = new User();
 
-async function checkAndRefreshToken() {
+async function checkAndRefreshToken(userInstance) {
   const currentToken = getCookiesToken();
   if (!currentToken || !currentToken.access) {
     return null;
   }
 
   const now = new Date();
-  if (now.getTime() >= this.expAccessToken * 1000) {
-    await refreshToken();
+  if (now.getTime() >= userInstance.expAccessToken * 1000) {
+    await refreshToken(userInstance);
     return getCookiesToken();
   }
 
   return currentToken;
 }
 
-async function refreshToken() {
+async function refreshToken(userInstance) {
   const oldToken = getCookiesToken();
 
   let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
@@ -3421,6 +3437,9 @@ async function refreshToken() {
       const data = await respuesta.json();
       const encodedTokens = encodeURIComponent(JSON.stringify(data));
       document.cookie = `tokens=${encodedTokens}`;
+      if (data && data.exp_access) {
+        userInstance.expAccessToken = data.exp_access;
+      }
     } catch (error) {
       console.log("Error refreshtoken");
     }
@@ -3447,11 +3466,11 @@ function getCookiesToken() {
   return null;
 }
 
-async function getUserInfoBack() {
+async function getUserInfoBack(userInstance) {
   const accessToken = getCookiesToken();
+  console.log(accessToken);
   if (accessToken) {
-    this.expAccessToken = accessToken.exp_access;
-    console.log(this.expAccessToken);
+    userInstance.expAccessToken = accessToken.exp_access;
     try {
       const baseUrl = apiBaseUrls[window.location.hostname] || urlProd;
       const userInfoUrl = `${baseUrl}api/applications/`;
