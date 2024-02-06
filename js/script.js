@@ -12,6 +12,11 @@ class Authentication {
     this.expAccessToken = null;
   }
 
+  checkToken() {
+    const token = this.getCookiesToken();
+    return !!token && !!token.access;
+  }
+
   async checkAndRefreshToken() {
     const currentToken = this.getCookiesToken();
     if (!currentToken || !currentToken.access) {
@@ -3466,7 +3471,7 @@ class User {
       const buttonTextMap = {
         "/user-profile": "Uitloggen",
         "/bestellen": this.hasPaid() ? "Profiel" : "Uitloggen",
-        default: this.checkToken() ? "Profiel" : "Inloggen",
+        default: this.instanceToken.checkToken() ? "Profiel" : "Inloggen",
       };
 
       loginButton.textContent =
@@ -3488,7 +3493,7 @@ class User {
               ? (window.location.href = "/user-profile")
               : this.logout(),
           default: () => {
-            if (this.checkToken()) {
+            if (this.instanceToken.checkToken()) {
               if (!this.hasPaid()) {
                 window.location.href = "/bestellen";
               } else {
@@ -3503,11 +3508,6 @@ class User {
         (actionMap[currentPath] || actionMap["default"])();
       });
     }
-  }
-
-  checkToken() {
-    const token = this.instanceToken.getCookiesToken();
-    return !!token && !!token.access;
   }
 }
 

@@ -925,8 +925,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1571,9 +1571,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -3279,8 +3278,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
       );
       if (
         formData.cities &&
