@@ -470,16 +470,12 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     async checkCityOnline() {
       if (this.formData["course_type"] === "online") {
-        const data = await this.fetchCities();
-        const cityOnline = data
-          .filter((city) => city.is_online)
-          .map((city) => city.id);
-        this.formData["cities"] = cityOnline;
-        this.idOnline = cityOnline;
+        this.formData["cities"] = [53];
+        this.idOnline = 53;
       } else {
         if (this.idOnline) {
           const indexDelete = this.formData["cities"].findIndex(city => city === this.idOnline);
-          this.formData["cities"].splice(indexDelete, 1);
+          if (indexDelete > -1) this.formData["cities"].splice(indexDelete, 1);
         }
       }
     }
@@ -1344,6 +1340,8 @@ if (window.location.pathname.includes("/aanmelden")) {
         checkbox.checked = this.formData["cbr_locations"]?.includes(element);
         if (!checkbox.checked) {
           checkboxDiv.classList.remove("w--redirected-checked");
+        } else {
+          checkboxDiv.classList.add("w--redirected-checked");
         }
       };
 
@@ -2149,6 +2147,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
       this.completeDataInputs();
       this.updateSvgVisibility();
+      this.updateRowVisibility();
     }
 
     completeField(key) {
@@ -2220,7 +2219,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       } else {
         container.classList.add("hide");
       }
-      this.updateRowVisibility();
     }
 
     completeCbrLocations() {
@@ -2237,7 +2235,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       } else {
         container.classList.add("hide");
       }
-      this.updateRowVisibility();
     }
 
     completeCourseCategory() {
@@ -2275,7 +2272,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       } else if (targetElement) {
         targetElement.classList.add("hide");
       }
-      this.updateRowVisibility();
     }
 
     completeCourseDates() {
@@ -2324,7 +2320,6 @@ if (window.location.pathname.includes("/aanmelden")) {
           container.appendChild(dateElement);
         });
       }
-      this.updateRowVisibility();
     }
 
     completePackage() {
