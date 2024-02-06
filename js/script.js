@@ -3317,7 +3317,7 @@ class User {
   constructor() {
     this.getUserInfo().then(() => {
       this.initializeLoginButton();
-      this.interval = setInterval(() => this.refreshToken(), 240000);
+      this.interval = setInterval(() => this.refreshToken(), 20000);
     });
   }
 
