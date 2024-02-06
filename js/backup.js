@@ -21,9 +21,11 @@ class Authentication {
     const now = new Date();
     if (now.getTime() >= this.expAccessToken * 1000) {
       await this.refreshToken();
-      return this.getCookiesToken();
+      const newToken = this.getCookiesToken();
+      console.log(newToken);
+      return newToken;
     }
-
+    console.log(currentToken);
     return currentToken;
   }
 
@@ -921,8 +923,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -976,7 +978,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     async getUserInfo() {
       if (this.isReapplyFlow) {
         const token = await this.instanceToken.checkAndRefreshToken();
-        if (token) {
+        if (token && token.access) {
           this.userData = await this.instanceToken.getUserInfoBack();
         }
       }
@@ -1567,9 +1569,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -2517,10 +2518,11 @@ if (window.location.pathname.includes("/aanmelden")) {
       };
 
       if (this.isReapplyFlow) {
-        const accessToken = await this.instanceToken.checkAndRefreshToken()
-          .access;
-        console.log(accessToken);
-        options.headers["Authorization"] = `Bearer ${accessToken}`;
+        const accessToken = await this.instanceToken.checkAndRefreshToken();
+        if (accessToken) {
+          const token = accessToken.access;
+          options.headers["Authorization"] = `Bearer ${token}`;
+        }
       }
 
       try {
@@ -2747,8 +2749,11 @@ if (window.location.pathname === "/bestellen") {
 
     async requestLink(formData) {
       const { payment_amount } = formData;
-
+      let token;
       const access = await this.instanceToken.checkAndRefreshToken();
+      if (access && access.access) {
+        token = access.access;
+      }
 
       let payment_link;
       let package_starting_at = this.formatCalendarDate();
@@ -2756,7 +2761,7 @@ if (window.location.pathname === "/bestellen") {
       const objUrlPayloadPackage = {
         url: this.urlPackageStart,
         payload: { package_starting_at },
-        token: access.access,
+        token,
       };
 
       const objUrlPayloadPayment = {
@@ -2767,7 +2772,7 @@ if (window.location.pathname === "/bestellen") {
           final_redirect_url: this.urlFinalRedirect,
           fail_redirect_url: this.urlFailRedirect,
         },
-        token: access.access,
+        token,
       };
       if (this.isMijnOnline) {
         await this.requestLinkPayment(objUrlPayloadPackage);
@@ -3271,8 +3276,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
       );
       if (
         formData.cities &&

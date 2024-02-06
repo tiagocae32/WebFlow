@@ -7,9 +7,106 @@ const apiBaseUrls = {
   "webflow.nutheorie.be": urlDevelop,
 };
 
+class Authentication {
+  constructor() {
+    this.expAccessToken = null;
+  }
+
+  async checkAndRefreshToken() {
+    const currentToken = this.getCookiesToken();
+    if (!currentToken || !currentToken.access) {
+      return null;
+    }
+
+    const now = new Date();
+    if (now.getTime() >= this.expAccessToken * 1000) {
+      await this.refreshToken();
+      const newToken = this.getCookiesToken();
+      console.log(newToken);
+      return newToken;
+    }
+    console.log(currentToken);
+    return currentToken;
+  }
+
+  async refreshToken() {
+    const oldToken = this.getCookiesToken();
+
+    let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+    if (oldToken && oldToken.refresh) {
+      try {
+        const respuesta = await fetch(
+          `${apiBaseUrl}authorization/token/refresh/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refresh: oldToken.refresh }),
+          }
+        );
+        const data = await respuesta.json();
+        const encodedTokens = encodeURIComponent(JSON.stringify(data));
+        document.cookie = `tokens=${encodedTokens}`;
+        if (data && data.exp_access) {
+          this.expAccessToken = data.exp_access;
+        }
+      } catch (error) {
+        console.log("Error refreshtoken");
+      }
+    }
+  }
+
+  getCookiesToken() {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const partes = cookie.split("=");
+      if (partes[0].trim() === "tokens") {
+        const encodedTokens = partes[1];
+        try {
+          const decodedTokens = decodeURIComponent(encodedTokens);
+          const tokens = JSON.parse(decodedTokens);
+          return tokens;
+        } catch (error) {
+          console.error("Error al decodificar la cookie tokens:", error);
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  async getUserInfoBack() {
+    const accessToken = this.getCookiesToken();
+    console.log(accessToken);
+    if (accessToken) {
+      this.expAccessToken = accessToken.exp_access;
+      try {
+        const baseUrl = apiBaseUrls[window.location.hostname] || urlProd;
+        const userInfoUrl = `${baseUrl}api/applications/`;
+        const resServer = await fetch(userInfoUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken.access}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const userData = await resServer.json();
+        return userData;
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      return {};
+    }
+  }
+}
+
 if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
+      this.instanceToken = new Authentication();
       this.userData = {};
       this.steps = steps;
       this.currentStepIndex = 0;
@@ -474,7 +571,9 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.idOnline = 53;
       } else {
         if (this.idOnline) {
-          const indexDelete = this.formData["cities"].findIndex(city => city === this.idOnline);
+          const indexDelete = this.formData["cities"].findIndex(
+            (city) => city === this.idOnline
+          );
           if (indexDelete > -1) this.formData["cities"].splice(indexDelete, 1);
         }
       }
@@ -789,7 +888,9 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     updateStepIndexText(add = false) {
-      let currentStepNumber = add ? this.stepHistory.length + 1 : this.stepHistory.length;
+      let currentStepNumber = add
+        ? this.stepHistory.length + 1
+        : this.stepHistory.length;
 
       if (currentStepNumber === 0) {
         currentStepNumber = 1;
@@ -865,20 +966,20 @@ if (window.location.pathname.includes("/aanmelden")) {
     // Check if is reapply flow
     checkIsReapplyFlow() {
       const url = new URL(window.location.href);
-      const isReapply = url.searchParams.get('reapply') === 'true';
+      const isReapply = url.searchParams.get("reapply") === "true";
       this.isReapplyFlow = isReapply;
 
       if (isReapply) {
-        const planID = url.searchParams.get('planId');
+        const planID = url.searchParams.get("planId");
         this.planID = planID ? Number(planID) : null;
       }
     }
 
     async getUserInfo() {
       if (this.isReapplyFlow) {
-        const token = await checkAndRefreshToken();
-        if (token) {
-          this.userData = await getUserInfoBack();
+        const token = await this.instanceToken.checkAndRefreshToken();
+        if (token && token.access) {
+          this.userData = await this.instanceToken.getUserInfoBack();
         }
       }
     }
@@ -1144,8 +1245,13 @@ if (window.location.pathname.includes("/aanmelden")) {
       const key = isCity ? "cities" : "course_names";
       const value = isCity ? option.id : option;
 
-      const zoSnelOptions = ["Binnen 15 dagen", "Binnen een maand", "Binnen 1.5 maand", "Binnen 2 maanden"];
-      if (zoSnelOptions.some(opt => this.formData[key]?.includes(opt))) {
+      const zoSnelOptions = [
+        "Binnen 15 dagen",
+        "Binnen een maand",
+        "Binnen 1.5 maand",
+        "Binnen 2 maanden",
+      ];
+      if (zoSnelOptions.some((opt) => this.formData[key]?.includes(opt))) {
         this.formData[key].splice(0, 1);
       }
 
@@ -1673,7 +1779,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     setReapplyPackage(plans) {
-      const plan = plans.find(plan => plan.id === this.planID);
+      const plan = plans.find((plan) => plan.id === this.planID);
     }
 
     createPackages(packages) {
@@ -2003,7 +2109,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
 
       const showLocations =
-        (copyFormDataCities && copyFormDataCities.length > 0) || (this.formData["cbr_locations"] && this.formData["cbr_locations"].length > 0);
+        (copyFormDataCities && copyFormDataCities.length > 0) ||
+        (this.formData["cbr_locations"] &&
+          this.formData["cbr_locations"].length > 0);
 
       const showDates =
         (this.formData["course_names"] &&
@@ -2410,9 +2518,11 @@ if (window.location.pathname.includes("/aanmelden")) {
       };
 
       if (this.isReapplyFlow) {
-        const accessToken = await checkAndRefreshToken().access;
-        console.log(accessToken);
-        options.headers["Authorization"] = `Bearer ${accessToken}`;
+        const accessToken = await this.instanceToken.checkAndRefreshToken();
+        if (accessToken) {
+          const token = accessToken.access;
+          options.headers["Authorization"] = `Bearer ${token}`;
+        }
       }
 
       try {
@@ -2481,6 +2591,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 if (window.location.pathname === "/bestellen") {
   class OrderManager {
     constructor() {
+      this.instanceToken = new Authentication();
       this.package_starting_at = null;
       this.isMijnOnline = null;
       this.containerMijn = document.getElementById("bestellenMijn");
@@ -2638,8 +2749,11 @@ if (window.location.pathname === "/bestellen") {
 
     async requestLink(formData) {
       const { payment_amount } = formData;
-
-      const access = await checkAndRefreshToken();
+      let token;
+      const access = await this.instanceToken.checkAndRefreshToken();
+      if (access && access.access) {
+        token = access.access;
+      }
 
       let payment_link;
       let package_starting_at = this.formatCalendarDate();
@@ -2647,7 +2761,7 @@ if (window.location.pathname === "/bestellen") {
       const objUrlPayloadPackage = {
         url: this.urlPackageStart,
         payload: { package_starting_at },
-        token: access.access,
+        token,
       };
 
       const objUrlPayloadPayment = {
@@ -2658,7 +2772,7 @@ if (window.location.pathname === "/bestellen") {
           final_redirect_url: this.urlFinalRedirect,
           fail_redirect_url: this.urlFailRedirect,
         },
-        token: access.access,
+        token,
       };
       if (this.isMijnOnline) {
         await this.requestLinkPayment(objUrlPayloadPackage);
@@ -2910,20 +3024,22 @@ if (window.location.pathname === "/bestellen") {
 
       if (radio2.checked) {
         let now = new Date();
-        let currentDateStr = now.toLocaleDateString('nl-NL', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }).replace(/\//g, '-');
+        let currentDateStr = now
+          .toLocaleDateString("nl-NL", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
+          .replace(/\//g, "-");
 
         let year = now.getFullYear();
-        let month = (now.getMonth() + 1).toString().padStart(2, '0');
-        let day = now.getDate().toString().padStart(2, '0');
-        let hours = now.getHours().toString().padStart(2, '0');
-        let minutes = now.getMinutes().toString().padStart(2, '0');
+        let month = (now.getMonth() + 1).toString().padStart(2, "0");
+        let day = now.getDate().toString().padStart(2, "0");
+        let hours = now.getHours().toString().padStart(2, "0");
+        let minutes = now.getMinutes().toString().padStart(2, "0");
 
         let formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:00+01:00`;
         this.dateCalendar = formattedDate;
@@ -2975,9 +3091,14 @@ if (window.location.pathname === "/bestellen") {
 
       const pkg = formData.package_info;
 
-      let [datePart, timePart] = this.dateCalendar.split('T');
-      let [year, month, day] = datePart.split('-').map(num => parseInt(num, 10));
-      let [hours, minutes] = timePart.substring(0, 5).split(':').map(num => parseInt(num, 10));
+      let [datePart, timePart] = this.dateCalendar.split("T");
+      let [year, month, day] = datePart
+        .split("-")
+        .map((num) => parseInt(num, 10));
+      let [hours, minutes] = timePart
+        .substring(0, 5)
+        .split(":")
+        .map((num) => parseInt(num, 10));
 
       let dateFromCalendar = new Date(year, month - 1, day, hours, minutes);
 
@@ -3327,10 +3448,9 @@ if (window.location.pathname === "/bestellen") {
 
 class User {
   constructor() {
-    this.expAccessToken = null;
-    this.getUserInfo().then(() => {
-      this.initializeLoginButton();
-    });
+    this.instanceToken = new Authentication();
+    this.userData = this.instanceToken.getUserInfoBack();
+    this.initializeLoginButton();
   }
 
   logout() {
@@ -3340,13 +3460,6 @@ class User {
 
   hasPaid() {
     return this.userData?.is_paid;
-  }
-
-  async getUserInfo() {
-    const token = await checkAndRefreshToken(this);
-    if (token) {
-      this.userData = await getUserInfoBack(this);
-    }
   }
 
   updateLoginButtonText() {
@@ -3396,97 +3509,9 @@ class User {
   }
 
   checkToken() {
-    const token = getCookiesToken();
+    const token = this.instanceToken.getCookiesToken();
     return !!token && !!token.access;
   }
 }
 
 const user = new User();
-
-async function checkAndRefreshToken(userInstance) {
-  const currentToken = getCookiesToken();
-  if (!currentToken || !currentToken.access) {
-    return null;
-  }
-
-  const now = new Date();
-  if (now.getTime() >= userInstance.expAccessToken * 1000) {
-    await refreshToken(userInstance);
-    return getCookiesToken();
-  }
-
-  return currentToken;
-}
-
-async function refreshToken(userInstance) {
-  const oldToken = getCookiesToken();
-
-  let apiBaseUrl = apiBaseUrls[window.location.hostname] || urlProd;
-  if (oldToken && oldToken.refresh) {
-    try {
-      const respuesta = await fetch(
-        `${apiBaseUrl}authorization/token/refresh/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh: oldToken.refresh }),
-        }
-      );
-      const data = await respuesta.json();
-      const encodedTokens = encodeURIComponent(JSON.stringify(data));
-      document.cookie = `tokens=${encodedTokens}`;
-      if (data && data.exp_access) {
-        userInstance.expAccessToken = data.exp_access;
-      }
-    } catch (error) {
-      console.log("Error refreshtoken");
-    }
-  }
-}
-
-function getCookiesToken() {
-  const cookies = document.cookie.split(";");
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i];
-    const partes = cookie.split("=");
-    if (partes[0].trim() === "tokens") {
-      const encodedTokens = partes[1];
-      try {
-        const decodedTokens = decodeURIComponent(encodedTokens);
-        const tokens = JSON.parse(decodedTokens);
-        return tokens;
-      } catch (error) {
-        console.error("Error al decodificar la cookie tokens:", error);
-        return null;
-      }
-    }
-  }
-  return null;
-}
-
-async function getUserInfoBack(userInstance) {
-  const accessToken = getCookiesToken();
-  console.log(accessToken);
-  if (accessToken) {
-    userInstance.expAccessToken = accessToken.exp_access;
-    try {
-      const baseUrl = apiBaseUrls[window.location.hostname] || urlProd;
-      const userInfoUrl = `${baseUrl}api/applications/`;
-      const resServer = await fetch(userInfoUrl, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken.access}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const userData = await resServer.json();
-      return userData;
-    } catch (error) {
-      console.log(error);
-    }
-  } else {
-    return {};
-  }
-}
