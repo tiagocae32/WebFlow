@@ -8,8 +8,21 @@ const apiBaseUrls = {
 };
 
 class Authentication {
+  static instance = null;
   constructor() {
+    if (Authentication.instance) {
+      throw new Error(
+        "No puedes crear otra instancia de Authentication. Usa Authentication.getInstance()"
+      );
+    }
     this.expAccessToken = null;
+  }
+
+  static getInstance() {
+    if (!Authentication.instance) {
+      Authentication.instance = new Authentication();
+    }
+    return Authentication.instance;
   }
 
   checkToken() {
@@ -108,7 +121,7 @@ class Authentication {
 if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
-      this.instanceToken = new Authentication();
+      this.instanceToken = Authentication.getInstance();
       this.userData = {};
       this.steps = steps;
       this.currentStepIndex = 0;
@@ -925,8 +938,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -974,7 +987,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         const planID = url.searchParams.get("planId");
         this.planID = planID ? Number(planID) : null;
       }
-
     }
 
     async getUserInfo() {
@@ -1569,8 +1581,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1783,7 +1796,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (plan) {
         this.setFormData("package_name", plan.name);
 
-        const packageItems = document.querySelectorAll(".aanmelden_package-item");
+        const packageItems = document.querySelectorAll(
+          ".aanmelden_package-item"
+        );
         packageItems.forEach((item) => {
           item.classList.remove("selected-option");
 
@@ -2534,7 +2549,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       if (this.isReapplyFlow) {
         const accessToken = await this.instanceToken.checkAndRefreshToken();
-        url = `${url}?is_reapply=true`
+        url = `${url}?is_reapply=true`;
         if (accessToken) {
           const token = accessToken.access;
           options.headers["Authorization"] = `Bearer ${token}`;
@@ -2607,7 +2622,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 if (window.location.pathname === "/bestellen") {
   class OrderManager {
     constructor() {
-      this.instanceToken = new Authentication();
+      this.instanceToken = Authentication.getInstance();
       this.package_starting_at = null;
       this.isMijnOnline = null;
       this.containerMijn = document.getElementById("bestellenMijn");
@@ -3292,8 +3307,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&
@@ -3424,10 +3439,12 @@ if (window.location.pathname === "/bestellen") {
     getTotaalTextContent(formData) {
       if (formData.course_type === "offline" && !formData.is_mijn_reservation) {
         return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
-      } else if (formData.course_type === "offline" && formData.is_mijn_reservation) {
-        return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Aangezien je het examen zelf hebt gereserveerd hoef je deze kosten niet meer aan ons te betalen. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`
-      }
-      else if (formData.course_type === "online") {
+      } else if (
+        formData.course_type === "offline" &&
+        formData.is_mijn_reservation
+      ) {
+        return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Aangezien je het examen zelf hebt gereserveerd hoef je deze kosten niet meer aan ons te betalen. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
+      } else if (formData.course_type === "online") {
         return `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
       }
       return "";
@@ -3436,10 +3453,12 @@ if (window.location.pathname === "/bestellen") {
     getAanbetalingTextContent(formData) {
       if (formData.course_type === "offline" && !formData.is_mijn_reservation) {
         return `We vragen om een aanbetaling om het CBR examen te reserveren en omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v. 29,-. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR.`;
-      } else if (formData.course_type === "offline" && formData.is_mijn_reservation) {
-        return `We vragen om een aanbetaling omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v 29,- en wij jouw plaats op de theoriecursus reserveren.`
-      }
-      else if (formData.course_type === "online") {
+      } else if (
+        formData.course_type === "offline" &&
+        formData.is_mijn_reservation
+      ) {
+        return `We vragen om een aanbetaling omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v 29,- en wij jouw plaats op de theoriecursus reserveren.`;
+      } else if (formData.course_type === "online") {
         return `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
       }
       return "";
@@ -3470,7 +3489,7 @@ if (window.location.pathname === "/bestellen") {
 
 class User {
   constructor() {
-    this.instanceToken = new Authentication();
+    this.instanceToken = Authentication.getInstance();
     this.userData = this.instanceToken.getUserInfoBack();
     this.initializeLoginButton();
   }
