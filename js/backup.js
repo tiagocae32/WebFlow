@@ -967,12 +967,14 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     // Check if is reapply flow
     checkIsReapplyFlow() {
+      const url = new URL(window.location.href);
       this.isReapplyFlow = this.userData.is_reapply;
 
       if (this.isReapplyFlow) {
         const planID = url.searchParams.get("planId");
         this.planID = planID ? Number(planID) : null;
       }
+
     }
 
     async getUserInfo() {
@@ -2520,7 +2522,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     async sendDataBack() {
       const data = this.getFormData();
-      const url = this.urls.urlPostMultiStepForm;
+      let url = this.urls.urlPostMultiStepForm;
 
       const options = {
         method: "POST",
@@ -2532,6 +2534,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       if (this.isReapplyFlow) {
         const accessToken = await this.instanceToken.checkAndRefreshToken();
+        url = `${url}?is_reapply=true`
         if (accessToken) {
           const token = accessToken.access;
           options.headers["Authorization"] = `Bearer ${token}`;
