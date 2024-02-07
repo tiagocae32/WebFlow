@@ -3419,18 +3419,24 @@ if (window.location.pathname === "/bestellen") {
     }
 
     getTotaalTextContent(formData) {
-      if (formData.course_type === "offline") {
+      if (formData.course_type === "offline" && !formData.is_mijn_reservation) {
         return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
-      } else if (formData.course_type === "online") {
+      } else if (formData.course_type === "offline" && formData.is_mijn_reservation) {
+        return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Aangezien je het examen zelf hebt gereserveerd hoef je deze kosten niet meer aan ons te betalen. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`
+      }
+      else if (formData.course_type === "online") {
         return `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
       }
       return "";
     }
 
     getAanbetalingTextContent(formData) {
-      if (formData.course_type === "offline") {
-        return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
-      } else if (formData.course_type === "online") {
+      if (formData.course_type === "offline" && !formData.is_mijn_reservation) {
+        return `We vragen om een aanbetaling om het CBR examen te reserveren en omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v. 29,-. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR.`;
+      } else if (formData.course_type === "offline" && formData.is_mijn_reservation) {
+        return `We vragen om een aanbetaling omdat je na het voldoen hiervan direct twee maanden lang toegang krijgt tot ons online lesmateriaal t.w.v 29,- en wij jouw plaats op de theoriecursus reserveren.`
+      }
+      else if (formData.course_type === "online") {
         return `We vragen om een aanbetaling om enerzijds het CBR examen te reserveren. De kosten van het theorie examen moeten wij namelijk vooruitbetalen aan het CBR. Anderzijds betaal je middels de aanbetaling direct een gedeelte van het pakket om te voorkomen dat er misbruik wordt gemaakt van ons vermogen om snel het CBR examen te kunnen reserveren.`;
       }
       return "";
