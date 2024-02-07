@@ -938,8 +938,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1581,9 +1581,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -2635,6 +2634,8 @@ if (window.location.pathname === "/bestellen") {
       this.urlFailRedirectProd = "https://www.nutheorie.nl/betaling/failed";
       this.urlFailRedirectDevelop =
         "https://develop.nutheorie.be/betaling/failed";
+      this.PLANS_DELTA = 29;
+      this.REAPPLY_PLANS_DELTA = 19;
       this.initAPIUrlVariables();
       this.initialize();
     }
@@ -2766,11 +2767,12 @@ if (window.location.pathname === "/bestellen") {
       });
 
       let priceSubtotalDiv = packageElement.querySelector("#priceSubtotal");
-      priceSubtotalDiv.textContent = pkg.old_price;
+      let priceSubtotal = formData.is_reapply ? Number(pkg.old_price) + this.REAPPLY_PLANS_DELTA : Number(pkg.old_price) + this.PLANS_DELTA;
+      priceSubtotalDiv.textContent = priceSubtotal.toFixed(2);
 
       let priceKortingDiv = packageElement.querySelector("#priceKorting");
       let discount =
-        parseFloat(pkg.old_price) -
+        parseFloat(priceSubtotal) -
         parseFloat(priceBeforeDecimal + "." + priceAfterDecimal);
       priceKortingDiv.textContent = `- ${discount.toFixed(2)}`;
 
@@ -3307,8 +3309,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
       );
       if (
         formData.cities &&
