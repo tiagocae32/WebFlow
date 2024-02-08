@@ -63,6 +63,7 @@ class Authentication {
         );
         const data = await respuesta.json();
         const encodedTokens = encodeURIComponent(JSON.stringify(data));
+        //document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.cookie = `tokens=${encodedTokens}`;
         if (data && data.exp_access) {
           this.expAccessToken = data.exp_access;
@@ -981,10 +982,10 @@ if (window.location.pathname.includes("/aanmelden")) {
     // Check if is reapply flow
     checkIsReapplyFlow() {
       const url = new URL(window.location.href);
-      this.isReapplyFlow = this.userData.is_reapply;
+      this.isReapplyFlow = this.userData.is_reapply_allowed;
 
       if (this.isReapplyFlow) {
-        const planID = url.searchParams.get("planId");
+        const planID = url.searchParams.get("planId") ?? url.searchParams.get("planID");
         this.planID = planID ? Number(planID) : null;
       }
     }
@@ -2767,7 +2768,7 @@ if (window.location.pathname === "/bestellen") {
       });
 
       let priceSubtotalDiv = packageElement.querySelector("#priceSubtotal");
-      let priceSubtotal = formData.is_reapply ? Number(pkg.old_price) + this.REAPPLY_PLANS_DELTA : Number(pkg.old_price) + this.PLANS_DELTA;
+      let priceSubtotal = formData.is_reapply_allowed ? Number(pkg.old_price) + this.REAPPLY_PLANS_DELTA : Number(pkg.old_price) + this.PLANS_DELTA;
       priceSubtotalDiv.textContent = priceSubtotal.toFixed(2);
 
       let priceKortingDiv = packageElement.querySelector("#priceKorting");
@@ -3505,6 +3506,7 @@ class User {
     return this.userData?.is_paid;
   }
 
+
   updateLoginButtonText() {
     const loginButton = document.getElementById("btn-login");
     if (loginButton) {
@@ -3527,6 +3529,10 @@ class User {
 
       loginButton.addEventListener("click", () => {
         const currentPath = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+        const reapply = urlParams.get('reapply') === 'true';
+        const isLoggedIn = this.instanceToken.checkToken();
+
         const actionMap = {
           "/user-profile": () => this.logout(),
           "/bestellen": () =>
@@ -3534,8 +3540,10 @@ class User {
               ? (window.location.href = "/user-profile")
               : this.logout(),
           default: () => {
-            if (this.instanceToken.checkToken()) {
-              if (!this.hasPaid()) {
+            if (isLoggedIn) {
+              if (reapply) {
+                window.location.href = "/user-profile";
+              } else if (!this.hasPaid()) {
                 window.location.href = "/bestellen";
               } else {
                 window.location.href = "/user-profile";
