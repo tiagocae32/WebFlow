@@ -939,8 +939,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -985,7 +985,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.isReapplyFlow = this.userData.is_reapply_allowed;
 
       if (this.isReapplyFlow) {
-        const planID = url.searchParams.get("planId") ?? url.searchParams.get("planID");
+        const planID =
+          url.searchParams.get("planId") ?? url.searchParams.get("planID");
         this.planID = planID ? Number(planID) : null;
       }
     }
@@ -1582,8 +1583,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -2195,7 +2197,6 @@ if (window.location.pathname.includes("/aanmelden")) {
 
           // Mark this button as initialized to prevent adding another listener
           button.initialized = true;
-
         }
         if (buttonData.id === "editOnlinePackages") {
           if (this.formData.course_type === "online") {
@@ -2777,7 +2778,9 @@ if (window.location.pathname === "/bestellen") {
       });
 
       let priceSubtotalDiv = packageElement.querySelector("#priceSubtotal");
-      let priceSubtotal = formData.is_reapply_allowed ? Number(pkg.old_price) + this.REAPPLY_PLANS_DELTA : Number(pkg.old_price) + this.PLANS_DELTA;
+      let priceSubtotal = formData.is_reapply_allowed
+        ? Number(pkg.old_price) + this.REAPPLY_PLANS_DELTA
+        : Number(pkg.old_price) + this.PLANS_DELTA;
       priceSubtotalDiv.textContent = priceSubtotal.toFixed(2);
 
       let priceKortingDiv = packageElement.querySelector("#priceKorting");
@@ -3199,7 +3202,6 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility("datesRow", showDates);
     }
 
-
     toggleElementVisibility(elementId, shouldShow) {
       const element = document.getElementById(elementId);
       if (element) {
@@ -3232,7 +3234,7 @@ if (window.location.pathname === "/bestellen") {
       this.displayCities(formData);
       this.displayCBRLocations(formData);
       this.displayCourseNames(formData);
-      this.displayPakket(formData)
+      this.displayPakket(formData);
       this.updateRowVisibility(formData);
       this.updateSvgVisibility(formData);
       this.updateVragenText(formData);
@@ -3319,8 +3321,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&
@@ -3438,23 +3440,40 @@ if (window.location.pathname === "/bestellen") {
     }
 
     getAanmeldingText(formData) {
-      if (formData.course_type === "offline" && formData.is_mijn_reservation && formData.is_reapply_allowed) {
+      if (
+        formData.course_type === "offline" &&
+        formData.is_mijn_reservation &&
+        formData.is_reapply_allowed
+      ) {
         return `Bedankt voor jouw aanmelding voor een theoriecursus met korting! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je krijgt dan ook direct toegang tot ons online lesmateriaal. Dit bestaat uit samenvatting video’s, een e-book, honderden oefenvragen en CBR oefenexamens. De aanbetaling kun je voldoen via de onderstaande knop.
         `;
-      }
-      else if (formData.course_type === "offline" && formData.is_mijn_reservation && !formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "offline" &&
+        formData.is_mijn_reservation &&
+        !formData.is_reapply_allowed
+      ) {
         return `Bedankt voor jouw aanmelding! We vragen om een aanbetaling omdat je direct daarna toegang krijgt tot ons online lesmateriaal. Dit bestaat uit samenvatting video’s, een e-book, honderden oefenvragen en CBR oefenexamens. Vervolgens ontvangen we graag jouw examengegevens en gaan wij jou inplannen voor een theoriecursus die aansluit op jouw CBR theorie examen. De aanbetaling kun je voldoen via de onderstaande knop.`;
-      }
-      else if (formData.course_type === "offline" && !formData.is_mijn_reservation && formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "offline" &&
+        !formData.is_mijn_reservation &&
+        formData.is_reapply_allowed
+      ) {
         return `Bedankt voor jouw aanmelding voor een theoriecursus met korting! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je krijgt dan ook direct toegang tot ons online lesmateriaal. Dit bestaat uit samenvatting video’s, een e-book, honderden oefenvragen en CBR oefenexamens. De aanbetaling kun je voldoen via de onderstaande knop.`;
-      }
-      else if (formData.course_type === "offline" && !formData.is_mijn_reservation && !formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "offline" &&
+        !formData.is_mijn_reservation &&
+        !formData.is_reapply_allowed
+      ) {
         return `Bedankt voor jouw aanmelding! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je krijgt dan ook direct toegang tot ons online lesmateriaal. Dit bestaat uit samenvatting video’s, een e-book, honderden oefenvragen en CBR oefenexamens. De aanbetaling kun je voldoen via de onderstaande knop.`;
-      }
-      else if (formData.course_type === "offline" && formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "offline" &&
+        formData.is_reapply_allowed
+      ) {
         return `Bedankt voor jouw aanmelding voor een theoriecursus met korting! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je betaalt dan ook direct een gedeelte van het pakket. De aanbetaling kun je voldoen via de onderstaande knop.`;
-      }
-      else if (formData.course_type === "offline" && !formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "offline" &&
+        !formData.is_reapply_allowed
+      ) {
         return `Bedankt voor jouw aanmelding! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je betaalt dan ook direct een gedeelte van het pakket. De aanbetaling kun je voldoen via de onderstaande knop.`;
       }
       return "";
@@ -3492,22 +3511,40 @@ if (window.location.pathname === "/bestellen") {
     }
 
     getTotaalTextContent(formData) {
-      if (formData.course_type === "offline" && !formData.is_mijn_reservation && !formData.is_reapply_allowed) {
+      if (
+        formData.course_type === "offline" &&
+        !formData.is_mijn_reservation &&
+        !formData.is_reapply_allowed
+      ) {
         return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
       } else if (
         formData.course_type === "offline" &&
-        formData.is_mijn_reservation && !formData.is_reapply_allowed
+        formData.is_mijn_reservation &&
+        !formData.is_reapply_allowed
       ) {
         return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten). Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Aangezien je het examen zelf hebt gereserveerd hoef je deze kosten niet meer aan ons te betalen. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
-      } else if (formData.course_type === "offline" &&
-        !formData.is_mijn_reservation && formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "offline" &&
+        !formData.is_mijn_reservation &&
+        formData.is_reapply_allowed
+      ) {
         return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten) maar omdat je reeds klant bij ons bent geweest kun jij de theoriecursus nu met 50% korting volgen waardoor je tijdelijk slechts 49,50 betaalt. Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
         `;
-      } else if (formData.course_type === "offline" && formData.is_mijn_reservation && formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "offline" &&
+        formData.is_mijn_reservation &&
+        formData.is_reapply_allowed
+      ) {
         return `De theoriecursus in 1 dag met aansluitend het CBR examen kost 99,- (exclusief CBR examenkosten) maar omdat je reeds klant bij ons bent geweest kun jij de theoriecursus nu met 50% korting volgen waardoor je tijdelijk slechts 49,50 betaalt. Ons online lesmateriaal t.w.v. 29,- zit hier al bij inbegrepen. Aangezien je het examen zelf hebt gereserveerd hoef je deze kosten niet meer aan ons te betalen. Het bedrag van de theoriecursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
-      } else if (formData.course_type === "online" && !formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "online" &&
+        !formData.is_reapply_allowed
+      ) {
         return `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.`;
-      } else if (formData.course_type === "online" && formData.is_reapply_allowed) {
+      } else if (
+        formData.course_type === "online" &&
+        formData.is_reapply_allowed
+      ) {
         return `De prijzen van onze online theorie pakketten verschillen. Nutheorie online heeft namelijk verschillende pakketten die allemaal een volledige videocursus, een uitgebreid e-book en honderden oefenvragen bevatten maar anders zijn qua duur van toegankelijkheid en het aantal vergelijkbare CBR examens waarmee je kunt oefenen. Aangezien jij reeds klant bij ons bent geweest kun jij tijdelijk een speciaal theoriepakket aanschaffen t.w.v. 63,99 met meer dan 50% korting. Je betaalt voor een theoriepakket van 14 dagen met 15 CBR oefenexamens slechts 29,99 (exclusief CBR examenkosten). Voor het reserveren van het CBR examen hanteren we exact dezelfde tarieven als het CBR die bovenop de kosten van de theoriecursus komen. Een standaard examen kost 48,- en een verlengd examen kost 61,-. Het bedrag van de cursus kun je via iDeal betalen of per bank naar ons overboeken. Voor dit laatste kun je contact met ons opnemen via de telefoon of e-mail.
         `;
       }
@@ -3567,7 +3604,6 @@ class User {
     return this.userData?.is_paid;
   }
 
-
   updateLoginButtonText() {
     const loginButton = document.getElementById("btn-login");
     if (loginButton) {
@@ -3591,7 +3627,7 @@ class User {
       loginButton.addEventListener("click", () => {
         const currentPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
-        const reapply = urlParams.get('reapply') === 'true';
+        const reapply = urlParams.get("reapply") === "true";
         const isLoggedIn = this.instanceToken.checkToken();
 
         const actionMap = {
