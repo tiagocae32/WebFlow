@@ -1821,7 +1821,20 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       this.cleanInterface(packageListElement);
 
-      packages.forEach((pkg) => {
+      const applySelectedClass = (packageItem) => {
+        return new Promise((resolve, reject) => {
+          if (
+            this.packageSelected &&
+            this.packageSelected.id ===
+              packageItem.getAttribute("data-package-id")
+          ) {
+            packageItem.classList.add("selected-option");
+          }
+          resolve();
+        });
+      };
+
+      packages.forEach(async (pkg) => {
         let packageItem = document.createElement("div");
         packageItem.className = "aanmelden_package-item";
         packageItem.setAttribute("data-package-name", pkg.name);
@@ -1844,6 +1857,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           packageItem.classList.add("selected-option");
         });
 
+        await applySelectedClass(packageItem);
         this.addPackageItemElements(packageItem, pkg);
 
         packageListElement.appendChild(packageItem);
