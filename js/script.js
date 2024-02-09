@@ -939,8 +939,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1583,9 +1583,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1732,11 +1731,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getPackages() {
-      /*if (this.formData["package_name"]) {
-        return;
-      }*/
-      console.log("entro");
-
       const url = this.urls.plans;
 
       try {
@@ -1833,8 +1827,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         });
 
         packageItem.classList.add("selected-option");
-
-        this.addPackageItemElements(packageItem, pkg);
       };
 
       packages.forEach((pkg) => {
@@ -1848,9 +1840,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         });
 
         if (this.packageSelected && this.packageSelected.id === pkg.id) {
-          selectPackage(packageItem, pkg);
+          packageItem.classList.add("selected-option");
         }
 
+        this.addPackageItemElements(packageItem, pkg);
         packageListElement.appendChild(packageItem);
       });
     }
@@ -2301,6 +2294,9 @@ if (window.location.pathname.includes("/aanmelden")) {
         this.goToStep("overzicht");
         btnEditWrapper.classList.add("hide");
         btnSendWrapper.classList.remove("hide");
+        if (this.packageSelected) {
+          this.cancelPackage();
+        }
       });
 
       this.btnEditSave.addEventListener("click", () => {
@@ -2308,6 +2304,19 @@ if (window.location.pathname.includes("/aanmelden")) {
         btnEditWrapper.classList.add("hide");
         btnSendWrapper.classList.remove("hide");
       });
+    }
+
+    cancelPackage() {
+      const allPackageItems = document.querySelectorAll(".aanmelden_package-item");
+      allPackageItems.forEach((item) => {
+        item.classList.remove("selected-option");
+      });
+      if (this.prevPackageSelected) {
+        const prevSelectedPackageElement = document.querySelector(`.aanmelden_package-item[data-package-id="${this.prevPackageSelected.id}"]`);
+        if (prevSelectedPackageElement) {
+          prevSelectedPackageElement.classList.add("selected-option");
+        }
+      }
     }
 
     // RESUME
@@ -3326,8 +3335,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
       );
       if (
         formData.cities &&
