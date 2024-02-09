@@ -1730,9 +1730,10 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getPackages() {
-      if (this.formData["package_name"]) {
+      /*if (this.formData["package_name"]) {
         return;
-      }
+      }*/
+      console.log("entro");
 
       const url = this.urls.plans;
 
@@ -1742,47 +1743,49 @@ if (window.location.pathname.includes("/aanmelden")) {
 
         const isReapply = this.isReapplyFlow;
 
-        this.allAvailablePlans = data
-          .filter(
-            (item) =>
-              item.type === (isReapply ? "REAPPLY" : "PUBLIC") &&
-              item.license_type === this.formData.license_type &&
-              item.is_visible
-          )
-          .sort((a, b) => a.order - b.order)
-          .map(
-            ({
-              id,
-              name,
-              description_items,
-              price,
-              old_price,
-              discount_label,
-              order,
-            }) => {
-              const reapplyValue = this.REAPPLY_PLANS_DELTA;
-              const nonReapplyValue = this.PLANS_DELTA;
-
-              const modifiedPrice = isReapply
-                ? (price = Number(price) + reapplyValue)
-                : (price = Number(price) + nonReapplyValue);
-              const modifiedOldPrice = isReapply
-                ? (old_price = Number(old_price) + reapplyValue)
-                : (old_price = Number(old_price) + nonReapplyValue);
-
-              return {
+        if (data) {
+          this.allAvailablePlans = data
+            .filter(
+              (item) =>
+                item.type === (isReapply ? "REAPPLY" : "PUBLIC") &&
+                item.license_type === this.formData.license_type &&
+                item.is_visible
+            )
+            .sort((a, b) => a.order - b.order)
+            .map(
+              ({
                 id,
                 name,
-                description_items:
-                  this.processDescriptionItems(description_items),
-                price: modifiedPrice,
-                old_price: modifiedOldPrice,
+                description_items,
+                price,
+                old_price,
                 discount_label,
                 order,
-              };
-            }
-          );
-        this.createPackages(this.allAvailablePlans);
+              }) => {
+                const reapplyValue = this.REAPPLY_PLANS_DELTA;
+                const nonReapplyValue = this.PLANS_DELTA;
+
+                const modifiedPrice = isReapply
+                  ? (price = Number(price) + reapplyValue)
+                  : (price = Number(price) + nonReapplyValue);
+                const modifiedOldPrice = isReapply
+                  ? (old_price = Number(old_price) + reapplyValue)
+                  : (old_price = Number(old_price) + nonReapplyValue);
+
+                return {
+                  id,
+                  name,
+                  description_items:
+                    this.processDescriptionItems(description_items),
+                  price: modifiedPrice,
+                  old_price: modifiedOldPrice,
+                  discount_label,
+                  order,
+                };
+              }
+            );
+          this.createPackages(this.allAvailablePlans);
+        }
         if (this.isReapplyFlow) {
           this.setReapplyPackage(this.allAvailablePlans);
         }
@@ -1822,9 +1825,13 @@ if (window.location.pathname.includes("/aanmelden")) {
         packageItem.setAttribute("data-package-name", pkg.name);
         packageItem.setAttribute("data-package-id", pkg.id);
 
+        if (this.packageSelected && this.packageSelected.id === pkg.id) {
+          packageItem.classList.add("selected-option");
+        }
+
         packageItem.addEventListener("click", () => {
-          this.setFormData("package_name", pkg.name);
           this.packageSelected = pkg;
+          this.setFormData("package_name", pkg.name);
           const allPackageItems = document.querySelectorAll(
             ".aanmelden_package-item"
           );
@@ -2166,7 +2173,6 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     createEditStepButtons() {
       this.backupFormData();
-      //if (!this.isEditButtonsInitialized) {
       const buttonsData = [
         { id: "editLocations", callback: () => this.determineLocationStep() },
         { id: "editDates", callback: () => this.determineDateStep() },
@@ -2178,7 +2184,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       ];
       buttonsData.forEach((buttonData) => {
         const button = document.getElementById(buttonData.id);
-        if (button) {
+        if (button && !button.initialized) {
           button.addEventListener("click", () => {
             this.isEditing = true;
             buttonData.callback();
@@ -2187,17 +2193,18 @@ if (window.location.pathname.includes("/aanmelden")) {
             this.showEditButtons();
           });
 
-          if (buttonData.id === "editOnlinePackages") {
-            if (this.formData.course_type === "online") {
-              button.classList.remove("hide");
-            } else {
-              button.classList.add("hide");
-            }
+          // Mark this button as initialized to prevent adding another listener
+          button.initialized = true;
+
+        }
+        if (buttonData.id === "editOnlinePackages") {
+          if (this.formData.course_type === "online") {
+            button.classList.remove("hide");
+          } else {
+            button.classList.add("hide");
           }
         }
       });
-      //}
-      //this.isEditButtonsInitialized = true;
     }
 
     backupFormData() {
@@ -2280,9 +2287,11 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       this.btnEditSave.classList.remove("disabled-button");
       const btnEditCancel = document.getElementById("btnEditCancel");
+      this.prevPackageSelected = this.packageSelected;
 
       btnEditCancel.addEventListener("click", () => {
         this.formData = JSON.parse(JSON.stringify(this.originalFormData));
+        this.packageSelected = this.prevPackageSelected;
         this.goToStep("overzicht");
         btnEditWrapper.classList.add("hide");
         btnSendWrapper.classList.remove("hide");
