@@ -1821,40 +1821,35 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       this.cleanInterface(packageListElement);
 
-      const applySelectedClass = (packageItem) => {
-        return new Promise((resolve, reject) => {
-          if (
-            this.packageSelected &&
-            this.packageSelected.id ===
-              packageItem.getAttribute("data-package-id")
-          ) {
-            packageItem.classList.add("selected-option");
-          }
-          resolve();
+      const selectPackage = (packageItem, pkg) => {
+        this.packageSelected = pkg;
+        this.setFormData("package_name", pkg.name);
+
+        const allPackageItems = document.querySelectorAll(
+          ".aanmelden_package-item"
+        );
+        allPackageItems.forEach((item) => {
+          item.classList.remove("selected-option");
         });
+
+        packageItem.classList.add("selected-option");
+
+        this.addPackageItemElements(packageItem, pkg);
       };
 
-      packages.forEach(async (pkg) => {
+      packages.forEach((pkg) => {
         let packageItem = document.createElement("div");
         packageItem.className = "aanmelden_package-item";
         packageItem.setAttribute("data-package-name", pkg.name);
         packageItem.setAttribute("data-package-id", pkg.id);
 
         packageItem.addEventListener("click", () => {
-          this.packageSelected = pkg;
-          this.setFormData("package_name", pkg.name);
-          const allPackageItems = document.querySelectorAll(
-            ".aanmelden_package-item"
-          );
-          allPackageItems.forEach((item) => {
-            item.classList.remove("selected-option");
-          });
-
-          packageItem.classList.add("selected-option");
+          selectPackage(packageItem, pkg);
         });
 
-        await applySelectedClass(packageItem);
-        this.addPackageItemElements(packageItem, pkg);
+        if (this.packageSelected && this.packageSelected.id === pkg.id) {
+          selectPackage(packageItem, pkg);
+        }
 
         packageListElement.appendChild(packageItem);
       });
