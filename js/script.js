@@ -1840,10 +1840,6 @@ if (window.location.pathname.includes("/aanmelden")) {
         packageItem.setAttribute("data-package-name", pkg.name);
         packageItem.setAttribute("data-package-id", pkg.id);
 
-        if (this.packageSelected && this.packageSelected.id === pkg.id) {
-          packageItem.classList.add("selected-option");
-        }
-
         packageItem.addEventListener("click", () => {
           this.packageSelected = pkg;
           this.setFormData("package_name", pkg.name);
