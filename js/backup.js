@@ -628,7 +628,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (this.isLastStep()) {
         this.applyLastStepChanges();
       }
-      this.handleSideEffects();
+      this.handleSpecificStep();
       this.updateProgressBar();
     }
 
@@ -655,11 +655,10 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     handleFormClick(event) {
       const clickedElement = event.target;
-      const formStep = clickedElement.closest(".form-step");
+      const inputsFormStep = clickedElement.closest(".form-step");
 
-      if (formStep) {
-        const { keyBack, attribute, keyArray } =
-          this.steps[this.currentStepIndex];
+      if (inputsFormStep) {
+        const { keyBack, attribute, keyArray } = this.steps[this.currentStepIndex];
         const value = clickedElement.getAttribute(attribute);
 
         if (value) {
@@ -667,11 +666,20 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
       }
       this.checkEnableNextButton();
+
       if (this.getCurrentStepId() === "step6") {
-        const value = this.isReapplyFlow
-          ? this.getCardReapplyChance()
-          : this.getCardChance();
-        this.formData["chance"] = value;
+        if (inputsFormStep) {
+          const selectedOptions = inputsFormStep.querySelectorAll('.selected-option');
+
+          selectedOptions.forEach(element => {
+            element.classList.remove('selected-option');
+          });
+
+          clickedElement.classList.add("selected-option");
+
+          const value = this.isReapplyFlow ? this.getCardReapplyChance() : this.getCardChance();
+          this.formData["chance"] = value;
+        }
       }
     }
 
@@ -967,6 +975,37 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
+    checkSelectedDate() {
+      if (this.formData["course_names"]) {
+        const [valueFormData] = this.formData["course_names"];
+        const courseElements = document.querySelectorAll('[data-course-name]');
+
+        courseElements.forEach(element => {
+          const courseName = element.getAttribute('data-course-name');
+
+          if (courseName === valueFormData) {
+            element.classList.add('selected-option');
+          } else {
+            element.classList.remove('selected-option');
+          }
+        });
+      }
+    }
+
+    removeCourseNames(options) {
+      const zoSnelOptions = [
+        "Binnen 15 dagen",
+        "Binnen een maand",
+        "Binnen 1.5 maand",
+        "Binnen 2 maanden",
+      ];
+      const monthOptions = this.generateDutchMonths(6);
+      const values = options ? monthOptions : zoSnelOptions;
+      if (values.some((opt) => this.formData["course_names"]?.includes(opt))) {
+        this.formData["course_names"] = [];
+      }
+    }
+
     getCardChance() {
       const courseType =
         this.formData["course_type"] === "online" ? "online" : "offline";
@@ -1007,7 +1046,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-    handleSideEffects() {
+    handleSpecificStep() {
       const currentStepId = this.getCurrentStepId();
       switch (currentStepId) {
         case "step1":
@@ -1031,8 +1070,11 @@ if (window.location.pathname.includes("/aanmelden")) {
           break;
         case "step6":
           this.showDates();
+          this.checkSelectedDate();
+          this.removeCourseNames(true);
           break;
         case "stepMonths":
+          this.removeCourseNames(false);
           this.handleStepMonths();
           break;
         case "stepCalendar":
@@ -1197,6 +1239,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     handleStepMonths() {
       const months = this.generateDutchMonths(6);
       this.createOptions(months, "stepMonthsList", false);
+      this.checkChanceText();
     }
 
     handleTextChanceMonths() {
@@ -1234,10 +1277,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.toggleOptionSelection(option, divElement, isCity);
           this.checkEnableNextButton();
           if (!isCity) {
-            const value = this.handleTextChanceMonths();
-            document.getElementById("chanceMonths").textContent =
-              value.length > 0 ? value : "- (selecteer data)";
-            this.formData["chance"] = value;
+            this.checkChanceText();
           }
         });
 
@@ -1290,6 +1330,13 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
         divElement.classList.remove("active");
       }
+    }
+
+    checkChanceText() {
+      const value = this.handleTextChanceMonths();
+      document.getElementById("chanceMonths").textContent =
+        value.length > 0 ? value : "- (selecteer data)";
+      this.formData["chance"] = value;
     }
 
     // CBR LOCATIONS GET
