@@ -1753,6 +1753,7 @@ if (window.location.pathname.includes("/aanmelden")) {
                 id,
                 name,
                 description_items,
+                is_highlighted,
                 price,
                 old_price,
                 discount_label,
@@ -1777,6 +1778,7 @@ if (window.location.pathname.includes("/aanmelden")) {
                   old_price: modifiedOldPrice,
                   discount_label,
                   order,
+                  is_highlighted,
                 };
               }
             );
@@ -1834,6 +1836,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         packageItem.className = "aanmelden_package-item";
         packageItem.setAttribute("data-package-name", pkg.name);
         packageItem.setAttribute("data-package-id", pkg.id);
+
+        if (pkg.is_highlighted) {
+          packageItem.classList.add("package_highlight");
+        }
 
         packageItem.addEventListener("click", () => {
           selectPackage(packageItem, pkg);
@@ -1913,6 +1919,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         "text-size-medium text-weight-bold",
         `${((pkg.price % 1) * 100).toFixed(0).padStart(2, "0")}`
       );
+      if (pkg.is_highlighted) {
+        packagePriceElement.classList.add("text-color-pink");
+        packagePriceSmallElement.classList.add("text-color-pink");
+      }
       const packageNameElement = this.createTextElement(
         "div",
         "packageName",
@@ -3454,6 +3464,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     getAanmeldingText(formData) {
+      const textRecicle = `Bedankt voor jouw aanmelding! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je betaalt dan ook direct een gedeelte van het pakket. De aanbetaling kun je voldoen via de onderstaande knop.`
       if (
         formData.course_type === "offline" &&
         formData.is_mijn_reservation &&
@@ -3488,7 +3499,9 @@ if (window.location.pathname === "/bestellen") {
         formData.course_type === "offline" &&
         !formData.is_reapply_allowed
       ) {
-        return `Bedankt voor jouw aanmelding! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je betaalt dan ook direct een gedeelte van het pakket. De aanbetaling kun je voldoen via de onderstaande knop.`;
+        return textRecicle;
+      } else if (formData.course_type === "online") {
+        return textRecicle;
       }
       return "";
     }
