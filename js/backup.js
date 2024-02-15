@@ -1801,6 +1801,7 @@ if (window.location.pathname.includes("/aanmelden")) {
                 name,
                 description_items,
                 is_highlighted,
+                available_items,
                 price,
                 old_price,
                 discount_label,
@@ -1825,6 +1826,7 @@ if (window.location.pathname.includes("/aanmelden")) {
                   old_price: modifiedOldPrice,
                   discount_label,
                   order,
+                  available_items,
                   is_highlighted,
                 };
               }
@@ -2004,6 +2006,12 @@ if (window.location.pathname.includes("/aanmelden")) {
       );
       packageDescriptionListMargin.appendChild(packageDescriptionList);
 
+      const hasAvailableItemsDescription = pkg.description_items.some(desc => desc.description.includes(`${pkg.available_items} CBR oefenexamens`));
+
+      if (!hasAvailableItemsDescription) {
+        pkg.description_items = [...pkg.description_items, { description: `${pkg.available_items} CBR oefenexamens (Na het inloggen kun je eventueel meer oefenexamens bestellen` }];
+      }
+
       pkg.description_items.forEach((desc) => {
         const packageDescriptionItem = this.createElementWithClass(
           "div",
@@ -2011,7 +2019,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         );
         this.appendSvgToElement(
           packageDescriptionItem,
-          `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+          `<svg class="no-shrink" width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                                               <g clip-path="url(#clip0_410_3698)">
                                               <path fill-rule="evenodd" clip-rule="evenodd" d="M9.65024 2.26327L5.00125 7.41733C4.30025 8.19433 3.16425 8.19433 2.46225 7.41733L0.35025 5.07528C-0.11675 4.55828 -0.11675 3.71929 0.35025 3.20029C0.81725 2.68329 1.57425 2.68329 2.04025 3.20029L2.88425 4.13632C3.35225 4.65532 4.11125 4.65532 4.57925 4.13632L7.95926 0.38925C8.42526 -0.12975 9.18323 -0.12975 9.64923 0.38925C10.1172 0.90625 10.1172 1.74627 9.64923 2.26327H9.65024Z" fill="#E1227A"></path>
                                               </g>
