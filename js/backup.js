@@ -49,6 +49,23 @@ const processDescriptionItems = function (descriptionItems) {
   });
 };
 
+const updateSvgVisibility = function (formData) {
+  const licenseType = formData.license_type;
+  const licenseTypes = ["auto", "scooter", "motor"];
+
+  licenseTypes.forEach((type) => {
+    const svgElement = document.getElementById(`${type}Svg`);
+
+    if (svgElement) {
+      if (type === licenseType) {
+        svgElement.classList.remove("hide");
+      } else {
+        svgElement.classList.add("hide");
+      }
+    }
+  });
+};
+
 // End repeat functions
 
 class Authentication {
@@ -2171,24 +2188,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-    updateSvgVisibility() {
-      const licenseType = this.formData.license_type;
-      const licenseTypes = ["auto", "scooter", "motor"];
-
-      licenseTypes.forEach((type) => {
-        const svgId = `${type}Svg`;
-        const svgElement = document.getElementById(svgId);
-
-        if (svgElement) {
-          if (type === licenseType) {
-            svgElement.classList.remove("hide");
-          } else {
-            svgElement.classList.add("hide");
-          }
-        }
-      });
-    }
-
     updateRowVisibility() {
       const locationsRow = document.getElementById("locationsRow");
       const datesRow = document.getElementById("datesRow");
@@ -2386,7 +2385,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     completeResume() {
       Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
       this.completeDataInputs();
-      this.updateSvgVisibility();
+      updateSvgVisibility(this.formData);
       this.updateRowVisibility();
     }
 
@@ -3200,24 +3199,6 @@ if (window.location.pathname === "/bestellen") {
       return finalDate;
     }
 
-    updateSvgVisibility(formData) {
-      const licenseType = formData.license_type;
-      const licenseTypes = ["auto", "scooter", "motor"];
-
-      licenseTypes.forEach((type) => {
-        const svgId = `${type}Svg`;
-        const svgElement = document.getElementById(svgId);
-
-        if (svgElement) {
-          if (type === licenseType) {
-            svgElement.classList.remove("hide");
-          } else {
-            svgElement.classList.add("hide");
-          }
-        }
-      });
-    }
-
     updateRowVisibility(formData) {
       const showLocations =
         (formData.cities && formData.cities.length > 0) ||
@@ -3264,7 +3245,7 @@ if (window.location.pathname === "/bestellen") {
       this.displayCourseNames(formData);
       this.displayPakket(formData);
       this.updateRowVisibility(formData);
-      this.updateSvgVisibility(formData);
+      updateSvgVisibility(formData);
       this.updateVragenText(formData);
       this.updateAanmeldingText(formData);
     }
