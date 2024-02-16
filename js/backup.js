@@ -658,7 +658,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const inputsFormStep = clickedElement.closest(".form-step");
 
       if (inputsFormStep) {
-        const { keyBack, attribute, keyArray } = this.steps[this.currentStepIndex];
+        const { keyBack, attribute, keyArray } =
+          this.steps[this.currentStepIndex];
         const value = clickedElement.getAttribute(attribute);
 
         if (value) {
@@ -669,15 +670,18 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       if (this.getCurrentStepId() === "step6") {
         if (inputsFormStep) {
-          const selectedOptions = inputsFormStep.querySelectorAll('.selected-option');
+          const selectedOptions =
+            inputsFormStep.querySelectorAll(".selected-option");
 
-          selectedOptions.forEach(element => {
-            element.classList.remove('selected-option');
+          selectedOptions.forEach((element) => {
+            element.classList.remove("selected-option");
           });
 
           clickedElement.classList.add("selected-option");
 
-          const value = this.isReapplyFlow ? this.getCardReapplyChance() : this.getCardChance();
+          const value = this.isReapplyFlow
+            ? this.getCardReapplyChance()
+            : this.getCardChance();
           this.formData["chance"] = value;
         }
       }
@@ -947,8 +951,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -978,15 +982,15 @@ if (window.location.pathname.includes("/aanmelden")) {
     checkSelectedDate() {
       if (this.formData["course_names"]) {
         const [valueFormData] = this.formData["course_names"];
-        const courseElements = document.querySelectorAll('[data-course-name]');
+        const courseElements = document.querySelectorAll("[data-course-name]");
 
-        courseElements.forEach(element => {
-          const courseName = element.getAttribute('data-course-name');
+        courseElements.forEach((element) => {
+          const courseName = element.getAttribute("data-course-name");
 
           if (courseName === valueFormData) {
-            element.classList.add('selected-option');
+            element.classList.add("selected-option");
           } else {
-            element.classList.remove('selected-option');
+            element.classList.remove("selected-option");
           }
         });
       }
@@ -1630,8 +1634,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -2006,10 +2011,17 @@ if (window.location.pathname.includes("/aanmelden")) {
       );
       packageDescriptionListMargin.appendChild(packageDescriptionList);
 
-      const hasAvailableItemsDescription = pkg.description_items.some(desc => desc.description.includes(`${pkg.available_items} CBR oefenexamens`));
+      const hasAvailableItemsDescription = pkg.description_items.some((desc) =>
+        desc.description.includes(`${pkg.available_items} CBR oefenexamens`)
+      );
 
       if (!hasAvailableItemsDescription) {
-        pkg.description_items = [...pkg.description_items, { description: `${pkg.available_items} CBR oefenexamens (Na het inloggen kun je eventueel meer oefenexamens bestellen` }];
+        pkg.description_items = [
+          ...pkg.description_items,
+          {
+            description: `${pkg.available_items} CBR oefenexamens (Na het inloggen kun je eventueel meer oefenexamens bestellen`,
+          },
+        ];
       }
 
       pkg.description_items.forEach((desc) => {
@@ -2372,12 +2384,16 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     cancelPackage() {
-      const allPackageItems = document.querySelectorAll(".aanmelden_package-item");
+      const allPackageItems = document.querySelectorAll(
+        ".aanmelden_package-item"
+      );
       allPackageItems.forEach((item) => {
         item.classList.remove("selected-option");
       });
       if (this.prevPackageSelected) {
-        const prevSelectedPackageElement = document.querySelector(`.aanmelden_package-item[data-package-id="${this.prevPackageSelected.id}"]`);
+        const prevSelectedPackageElement = document.querySelector(
+          `.aanmelden_package-item[data-package-id="${this.prevPackageSelected.id}"]`
+        );
         if (prevSelectedPackageElement) {
           prevSelectedPackageElement.classList.add("selected-option");
         }
@@ -2615,7 +2631,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     async handleFinalStep() {
       const data = await this.sendDataBack();
       if (data) {
-        localStorage.setItem("formData", JSON.stringify(data));
         localStorage.removeItem("fechaGlobalSeleccionada");
         const authTokens = data.auth_tokens;
         const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
@@ -2730,27 +2745,20 @@ if (window.location.pathname === "/bestellen") {
       this.initialize();
     }
 
-    /// START Quick fix
-    async _preloadUserApplicationData() {
-      // This is a duplicated get /application request.
-      // I've added it to make it works and be sure that we have current user application information in every browser, please refactor it later.
-      // because I'm afraid to add any changes to the original code
+    async preloadUserApplicationData() {
       const token = await this.instanceToken.checkAndRefreshToken();
       if (token && token.access) {
         const userDataLoaded = await this.instanceToken.getUserInfoBack();
-        console.log('__userDataLoaded__', userDataLoaded);
-        if (userDataLoaded && userDataLoaded.email) { // just to check if user application data exists
-          localStorage.setItem("formData", JSON.stringify(userDataLoaded));
+        if (userDataLoaded && userDataLoaded.email) {
+          return userDataLoaded;
         }
       }
+      return null;
     }
 
     async initialize() {
-      await this._preloadUserApplicationData();
-      // END Quick fix
-      const storedData = localStorage.getItem("formData");
-      if (storedData) {
-        const formData = JSON.parse(storedData);
+      const formData = await this.preloadUserApplicationData();
+      if (formData) {
         this.displayOrderSummary(formData);
         this.handleStoredData(formData);
         this.isMijnOnline =
@@ -3417,8 +3425,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&
@@ -3536,7 +3544,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     getAanmeldingText(formData) {
-      const textRecicle = `Bedankt voor jouw aanmelding! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je betaalt dan ook direct een gedeelte van het pakket. De aanbetaling kun je voldoen via de onderstaande knop.`
+      const textRecicle = `Bedankt voor jouw aanmelding! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je betaalt dan ook direct een gedeelte van het pakket. De aanbetaling kun je voldoen via de onderstaande knop.`;
       if (
         formData.course_type === "offline" &&
         formData.is_mijn_reservation &&
