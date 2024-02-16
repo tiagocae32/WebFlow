@@ -2730,7 +2730,24 @@ if (window.location.pathname === "/bestellen") {
       this.initialize();
     }
 
-    initialize() {
+    /// START Quick fix
+    async _preloadUserApplicationData() {
+      // This is a duplicated get /application request.
+      // I've added it to make it works and be sure that we have current user application information in every browser, please refactor it later.
+      // because I'm afraid to add any changes to the original code
+      const token = await this.instanceToken.checkAndRefreshToken();
+      if (token && token.access) {
+        const userDataLoaded = await this.instanceToken.getUserInfoBack();
+        console.log('__userDataLoaded__', userDataLoaded);
+        if (userDataLoaded && userDataLoaded.email) { // just to check if user application data exists
+          localStorage.setItem("formData", JSON.stringify(userDataLoaded));
+        }
+      }
+    }
+
+    async initialize() {
+      await this._preloadUserApplicationData();
+      // END Quick fix
       const storedData = localStorage.getItem("formData");
       if (storedData) {
         const formData = JSON.parse(storedData);
