@@ -99,8 +99,8 @@ class Authentication {
 
     const now = new Date();
     if (now.getTime() >= this.expAccessToken * 1000) {
-      await this.refreshToken();
-      const newToken = this.getCookiesToken();
+      const newToken = await this.refreshToken();
+      //const newToken = this.getCookiesToken();
       return newToken;
     }
     return currentToken;
@@ -128,6 +128,7 @@ class Authentication {
         if (data && data.exp_access) {
           this.expAccessToken = data.exp_access;
         }
+        return data;
       } catch (error) {
         console.log("Error refreshtoken");
       }
