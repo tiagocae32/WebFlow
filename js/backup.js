@@ -91,6 +91,17 @@ class Authentication {
     return !!token && !!token.access;
   }
 
+  async preloadUserApplicationData() {
+    const token = await this.checkAndRefreshToken();
+    if (token && token.access) {
+      const userDataLoaded = await this.getUserInfoBack();
+      if (userDataLoaded && userDataLoaded.email) {
+        return userDataLoaded;
+      }
+    }
+    return null;
+  }
+
   async checkAndRefreshToken() {
     const currentToken = this.getCookiesToken();
     if (!currentToken || !currentToken.access) {
@@ -1082,7 +1093,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getUserInfo() {
-      this.userData = await this.instanceToken.getUserInfoBack();
+      this.userData = await this.instanceToken.preloadUserApplicationData();
       this.checkIsReapplyFlow();
     }
 
@@ -2721,19 +2732,8 @@ if (window.location.pathname === "/bestellen") {
       this.initialize();
     }
 
-    async preloadUserApplicationData() {
-      const token = await this.instanceToken.checkAndRefreshToken();
-      if (token && token.access) {
-        const userDataLoaded = await this.instanceToken.getUserInfoBack();
-        if (userDataLoaded && userDataLoaded.email) {
-          return userDataLoaded;
-        }
-      }
-      return null;
-    }
-
     async initialize() {
-      const userData = await this.preloadUserApplicationData();
+      const userData = await this.instanceToken.preloadUserApplicationData();
       if (userData) {
         this.displayOrderSummary(userData);
         this.handleStoredData(userData);
@@ -3614,7 +3614,7 @@ if (window.location.pathname === "/bestellen") {
 class User {
   constructor() {
     this.instanceToken = Authentication.getInstance();
-    this.userData = this.instanceToken.getUserInfoBack();
+    this.userData = this.instanceToken.preloadUserApplicationData();
     this.initializeLoginButton();
   }
 
