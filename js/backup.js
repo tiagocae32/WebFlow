@@ -93,10 +93,8 @@ class Authentication {
 
   async preloadUserApplicationData() {
     const token = await this.checkAndRefreshToken();
-    console.log(token);
     if (token && token.access) {
       const userDataLoaded = await this.getUserInfoBack();
-      console.log(userDataLoaded);
       if (userDataLoaded && userDataLoaded.email) {
         return userDataLoaded;
       }
@@ -112,8 +110,7 @@ class Authentication {
 
     const now = new Date();
     if (now.getTime() >= this.expAccessToken * 1000) {
-      await this.refreshToken();
-      const newToken = this.getCookiesToken();
+      const newToken = await this.refreshToken();
       return newToken;
     }
     return currentToken;
@@ -3616,7 +3613,7 @@ if (window.location.pathname === "/bestellen") {
 class User {
   constructor() {
     this.instanceToken = Authentication.getInstance();
-    this.userData = this.instanceToken.getUserInfoBack();
+    this.userData = this.instanceToken.preloadUserApplicationData();
     this.initializeLoginButton();
   }
 
