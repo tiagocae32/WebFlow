@@ -107,7 +107,6 @@ class Authentication {
     if (!currentToken || !currentToken.access) {
       return null;
     }
-
     const now = new Date();
     if (now.getTime() >= this.expAccessToken * 1000) {
       await this.refreshToken();
@@ -3614,7 +3613,7 @@ if (window.location.pathname === "/bestellen") {
 class User {
   constructor() {
     this.instanceToken = Authentication.getInstance();
-    this.userData = this.instanceToken.getUserInfoBack();
+    this.userData = this.instanceToken.preloadUserApplicationData();
     this.initializeLoginButton();
   }
 
