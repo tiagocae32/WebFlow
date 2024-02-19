@@ -110,7 +110,8 @@ class Authentication {
 
     const now = new Date();
     if (now.getTime() >= this.expAccessToken * 1000) {
-      const newToken = await this.refreshToken();
+      await this.refreshToken();
+      const newToken = this.getCookiesToken();
       return newToken;
     }
     return currentToken;
