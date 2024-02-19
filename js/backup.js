@@ -91,6 +91,17 @@ class Authentication {
     return !!token && !!token.access;
   }
 
+  async preloadUserApplicationData() {
+    const token = await this.checkAndRefreshToken();
+    if (token && token.access) {
+      const userDataLoaded = await this.getUserInfoBack();
+      if (userDataLoaded && userDataLoaded.email) {
+        return userDataLoaded;
+      }
+    }
+    return null;
+  }
+
   async checkAndRefreshToken() {
     const currentToken = this.getCookiesToken();
     if (!currentToken || !currentToken.access) {
@@ -100,7 +111,6 @@ class Authentication {
     const now = new Date();
     if (now.getTime() >= this.expAccessToken * 1000) {
       const newToken = await this.refreshToken();
-      //const newToken = this.getCookiesToken();
       return newToken;
     }
     return currentToken;
@@ -128,7 +138,6 @@ class Authentication {
         if (data && data.exp_access) {
           this.expAccessToken = data.exp_access;
         }
-        return data;
       } catch (error) {
         console.log("Error refreshtoken");
       }
@@ -156,7 +165,7 @@ class Authentication {
   }
 
   async getUserInfoBack() {
-    const accessToken = this.checkAndRefreshToken();
+    const accessToken = this.getCookiesToken();
     if (accessToken) {
       this.expAccessToken = accessToken.exp_access;
       try {
@@ -1083,7 +1092,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getUserInfo() {
-      this.userData = await this.instanceToken.getUserInfoBack();
+      this.userData = await this.instanceToken.preloadUserApplicationData();
       this.checkIsReapplyFlow();
     }
 
@@ -2723,7 +2732,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     async initialize() {
-      const userData = await this.instanceToken.getUserInfoBack();
+      const userData = await this.instanceToken.preloadUserApplicationData();
       if (userData) {
         this.displayOrderSummary(userData);
         this.handleStoredData(userData);
@@ -3604,7 +3613,7 @@ if (window.location.pathname === "/bestellen") {
 class User {
   constructor() {
     this.instanceToken = Authentication.getInstance();
-    this.userData = this.instanceToken.getUserInfoBack();
+    this.userData = this.instanceToken.preloadUserApplicationData();
     this.initializeLoginButton();
   }
 
