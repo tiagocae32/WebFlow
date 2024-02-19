@@ -93,8 +93,10 @@ class Authentication {
 
   async preloadUserApplicationData() {
     const token = await this.checkAndRefreshToken();
+    console.log(token);
     if (token && token.access) {
       const userDataLoaded = await this.getUserInfoBack();
+      console.log(userDataLoaded);
       if (userDataLoaded && userDataLoaded.email) {
         return userDataLoaded;
       }
@@ -109,8 +111,11 @@ class Authentication {
     }
 
     const now = new Date();
+    console.log(this.expAccessToken);
+    console.log(now.getTime(), this.expAccessToken * 1000);
     if (now.getTime() >= this.expAccessToken * 1000) {
-      const newToken = await this.refreshToken();
+      await this.refreshToken();
+      const newToken = this.getCookiesToken();
       return newToken;
     }
     return currentToken;
