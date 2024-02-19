@@ -91,6 +91,19 @@ class Authentication {
     return !!token && !!token.access;
   }
 
+  async preloadUserApplicationData() {
+    const token = await this.checkAndRefreshToken();
+    console.log(token);
+    if (token && token.access) {
+      const userDataLoaded = await this.getUserInfoBack();
+      console.log(userDataLoaded);
+      if (userDataLoaded && userDataLoaded.email) {
+        return userDataLoaded;
+      }
+    }
+    return null;
+  }
+
   async checkAndRefreshToken() {
     const currentToken = this.getCookiesToken();
     if (!currentToken || !currentToken.access) {
@@ -155,7 +168,7 @@ class Authentication {
   }
 
   async getUserInfoBack() {
-    const accessToken = this.checkAndRefreshToken();
+    const accessToken = this.getCookiesToken();
     if (accessToken) {
       this.expAccessToken = accessToken.exp_access;
       try {
@@ -1082,7 +1095,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getUserInfo() {
-      this.userData = await this.instanceToken.getUserInfoBack();
+      this.userData = await this.instanceToken.preloadUserApplicationData();
       this.checkIsReapplyFlow();
     }
 
@@ -2722,7 +2735,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     async initialize() {
-      const userData = await this.instanceToken.getUserInfoBack();
+      const userData = await this.instanceToken.preloadUserApplicationData();
       if (userData) {
         this.displayOrderSummary(userData);
         this.handleStoredData(userData);

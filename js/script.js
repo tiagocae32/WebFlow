@@ -6,6 +6,67 @@ const apiBaseUrls = {
   "webflow.nutheorie.nl": urlProd,
   "webflow.nutheorie.be": urlDevelop,
 };
+const dutchMonths = [
+  "Januari",
+  "Februari",
+  "Maart",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Augustus",
+  "September",
+  "Oktober",
+  "November",
+  "December",
+];
+
+// Repeat functions
+const getLastDayOfMonth = function () {
+  const now = new Date();
+  const lastDayOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0
+  ).getDate();
+  const currentMonthInDutch = dutchMonths[now.getMonth()];
+
+  return `${lastDayOfMonth} ${currentMonthInDutch}`;
+};
+
+const processDescriptionItems = function (descriptionItems) {
+  return descriptionItems.map((item) => {
+    if (typeof item.description === "string") {
+      return {
+        ...item,
+        description: item.description.replace(
+          "{{ getLastDayOfMonth }}",
+          getLastDayOfMonth()
+        ),
+      };
+    }
+    return item;
+  });
+};
+
+const updateSvgVisibility = function (formData) {
+  const licenseType = formData.license_type;
+  const licenseTypes = ["auto", "scooter", "motor"];
+
+  licenseTypes.forEach((type) => {
+    const svgElement = document.getElementById(`${type}Svg`);
+
+    if (svgElement) {
+      if (type === licenseType) {
+        svgElement.classList.remove("hide");
+      } else {
+        svgElement.classList.add("hide");
+      }
+    }
+  });
+};
+
+// End repeat functions
 
 class Authentication {
   static instance = null;
@@ -28,6 +89,19 @@ class Authentication {
   checkToken() {
     const token = this.getCookiesToken();
     return !!token && !!token.access;
+  }
+
+  async preloadUserApplicationData() {
+    const token = await this.checkAndRefreshToken();
+    console.log(token);
+    if (token && token.access) {
+      const userDataLoaded = await this.getUserInfoBack();
+      console.log(userDataLoaded);
+      if (userDataLoaded && userDataLoaded.email) {
+        return userDataLoaded;
+      }
+    }
+    return null;
   }
 
   async checkAndRefreshToken() {
@@ -63,7 +137,6 @@ class Authentication {
         );
         const data = await respuesta.json();
         const encodedTokens = encodeURIComponent(JSON.stringify(data));
-        //document.cookie = "tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.cookie = `tokens=${encodedTokens}`;
         if (data && data.exp_access) {
           this.expAccessToken = data.exp_access;
@@ -144,20 +217,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initAPIUrlVariables();
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
-      this.dutchMonths = [
-        "Januari",
-        "Februari",
-        "Maart",
-        "April",
-        "Mei",
-        "Juni",
-        "Juli",
-        "Augustus",
-        "September",
-        "Oktober",
-        "November",
-        "December",
-      ];
       this.resumeConfig = {
         license_type: {
           elementId: "licenseText",
@@ -244,6 +303,12 @@ if (window.location.pathname.includes("/aanmelden")) {
           "Binnen 1.5 maand": this.CHANCES_TYPES.BIG,
         },
       };
+      this.zoSnelOptions = [
+        "Binnen 15 dagen",
+        "Binnen een maand",
+        "Binnen 1.5 maand",
+        "Binnen 2 maanden",
+      ];
     }
 
     initStepRules() {
@@ -498,7 +563,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       );
       const currentStepKey = currentStepData.keyBack;
       const currentStepValue = this.formData[currentStepKey];
-
       const sectionRuleKey = this.sectionRules[currentStepKey];
 
       if (
@@ -529,7 +593,6 @@ if (window.location.pathname.includes("/aanmelden")) {
           );
         }
       }
-
       return this.steps[this.currentStepIndex + 1]?.id;
     }
     // END
@@ -547,8 +610,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.nextButton.classList.add("disabled-button");
       this.btnEditSave.classList.add("disabled-button");
     }
-
-    //END
 
     isLastStep() {
       return this.getCurrentStepId() === "overzicht";
@@ -658,7 +719,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const inputsFormStep = clickedElement.closest(".form-step");
 
       if (inputsFormStep) {
-        const { keyBack, attribute, keyArray } = this.steps[this.currentStepIndex];
+        const { keyBack, attribute, keyArray } =
+          this.steps[this.currentStepIndex];
         const value = clickedElement.getAttribute(attribute);
 
         if (value) {
@@ -667,19 +729,25 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
       this.checkEnableNextButton();
 
-      if (this.getCurrentStepId() === "step6") {
-        if (inputsFormStep) {
-          const selectedOptions = inputsFormStep.querySelectorAll('.selected-option');
+      if (this.getCurrentStepId() === "step6")
+        this.handleFormClickStepSix(clickedElement, inputsFormStep);
+    }
 
-          selectedOptions.forEach(element => {
-            element.classList.remove('selected-option');
-          });
+    handleFormClickStepSix(clickedElement, inputsFormStep) {
+      if (inputsFormStep) {
+        const selectedOptions =
+          inputsFormStep.querySelectorAll(".selected-option");
 
-          clickedElement.classList.add("selected-option");
+        selectedOptions.forEach((element) => {
+          element.classList.remove("selected-option");
+        });
 
-          const value = this.isReapplyFlow ? this.getCardReapplyChance() : this.getCardChance();
-          this.formData["chance"] = value;
-        }
+        clickedElement.classList.add("selected-option");
+
+        const value = this.isReapplyFlow
+          ? this.getCardReapplyChance()
+          : this.getCardChance();
+        this.formData["chance"] = value;
       }
     }
 
@@ -947,8 +1015,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -978,29 +1046,25 @@ if (window.location.pathname.includes("/aanmelden")) {
     checkSelectedDate() {
       if (this.formData["course_names"]) {
         const [valueFormData] = this.formData["course_names"];
-        const courseElements = document.querySelectorAll('[data-course-name]');
+        const courseElements = document.querySelectorAll("[data-course-name]");
 
-        courseElements.forEach(element => {
-          const courseName = element.getAttribute('data-course-name');
+        courseElements.forEach((element) => {
+          const courseName = element.getAttribute("data-course-name");
 
           if (courseName === valueFormData) {
-            element.classList.add('selected-option');
+            element.classList.add("selected-option");
           } else {
-            element.classList.remove('selected-option');
+            element.classList.remove("selected-option");
           }
         });
       }
     }
 
-    removeCourseNames(options) {
-      const zoSnelOptions = [
-        "Binnen 15 dagen",
-        "Binnen een maand",
-        "Binnen 1.5 maand",
-        "Binnen 2 maanden",
-      ];
-      const monthOptions = this.generateDutchMonths(6);
-      const values = options ? monthOptions : zoSnelOptions;
+    removeCourseNameKey({ typeOptions }) {
+      const values =
+        typeOptions === "months"
+          ? this.generateDutchMonths(6)
+          : this.zoSnelOptions;
       if (values.some((opt) => this.formData["course_names"]?.includes(opt))) {
         this.formData["course_names"] = [];
       }
@@ -1031,10 +1095,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getUserInfo() {
-      const token = await this.instanceToken.checkAndRefreshToken();
-      if (token && token.access) {
-        this.userData = await this.instanceToken.getUserInfoBack();
-      }
+      this.userData = await this.instanceToken.preloadUserApplicationData();
       this.checkIsReapplyFlow();
     }
 
@@ -1071,10 +1132,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         case "step6":
           this.showDates();
           this.checkSelectedDate();
-          this.removeCourseNames(true);
+          this.removeCourseNameKey({ typeOptions: "dates" });
           break;
         case "stepMonths":
-          this.removeCourseNames(false);
+          this.removeCourseNameKey({ typeOptions: "months" });
           this.handleStepMonths();
           break;
         case "stepCalendar":
@@ -1093,17 +1154,19 @@ if (window.location.pathname.includes("/aanmelden")) {
           break;
       }
     }
-    //END
 
     // GET/SET DATA
     getFormData() {
       return this.formData;
     }
 
+    getFormDataKey(key) {
+      return this.formData[key];
+    }
+
     setFormData(key, value) {
       this.formData[key] = value;
     }
-    //END
 
     // PROGRESS BAR
 
@@ -1126,7 +1189,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       const percentage = this.calculateProgressPercentage();
       progressBar.style.width = `${percentage}%`;
     }
-    //END
 
     //PRODUCT MIJN RESERVATION
     handleProductMijnReservation() {
@@ -1175,7 +1237,6 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       return product;
     }
-    //END
 
     // CITIES
     async fetchCities() {
@@ -1222,13 +1283,11 @@ if (window.location.pathname.includes("/aanmelden")) {
         }
       }
     }
-    // END CITIES
 
     // MONTHS
-
     generateDutchMonths(months) {
       const currentMonth = new Date().getMonth();
-      const monthsToShow = this.dutchMonths.slice(
+      const monthsToShow = dutchMonths.slice(
         currentMonth,
         currentMonth + months
       );
@@ -1245,12 +1304,12 @@ if (window.location.pathname.includes("/aanmelden")) {
     handleTextChanceMonths() {
       const minLength = 1;
       const data = this.formData["course_names"];
-      if (!data || data.length === 0) return "";
+      if (!data || data.length === 0) return "- (selecteer data)";
       if (data.length > minLength) return this.CHANCES_TYPES.AVERAGE_BIG;
       else {
         const currentMonth = new Date().getMonth();
         const [selectedMonth] = data;
-        const selectedMonthIndex = this.dutchMonths.findIndex(
+        const selectedMonthIndex = dutchMonths.findIndex(
           (month) => month === selectedMonth
         );
         return selectedMonthIndex === currentMonth
@@ -1260,10 +1319,8 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     isActualMonth(month) {
-      return this.dutchMonths.indexOf(month) === new Date().getMonth();
+      return dutchMonths.indexOf(month) === new Date().getMonth();
     }
-
-    // END MONTHS
 
     createOptions(options, containerId, isCity = true) {
       const newContainer = document.getElementById(containerId);
@@ -1299,13 +1356,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       const key = isCity ? "cities" : "course_names";
       const value = isCity ? option.id : option;
 
-      const zoSnelOptions = [
-        "Binnen 15 dagen",
-        "Binnen een maand",
-        "Binnen 1.5 maand",
-        "Binnen 2 maanden",
-      ];
-      if (zoSnelOptions.some((opt) => this.formData[key]?.includes(opt))) {
+      if (this.zoSnelOptions.some((opt) => this.formData[key]?.includes(opt))) {
         this.formData[key].splice(0, 1);
       }
 
@@ -1334,8 +1385,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     checkChanceText() {
       const value = this.handleTextChanceMonths();
-      document.getElementById("chanceMonths").textContent =
-        value.length > 0 ? value : "- (selecteer data)";
+      document.getElementById("chanceMonths").textContent = value;
       this.formData["chance"] = value;
     }
 
@@ -1612,7 +1662,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     renderCalendarForMonthYear(month, year) {
-      this.monthLabel.textContent = this.dutchMonths[month];
+      this.monthLabel.textContent = dutchMonths[month];
       this.yearLabel.textContent = year.toString();
 
       const dayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
@@ -1630,8 +1680,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1723,8 +1774,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     updateChanceText() {
       const value = this.getCalendarChances();
-      this.chanceElement.textContent =
-        value.length > 0 ? value : "- (selecteer data)";
+      this.chanceElement.textContent = value;
       this.formData["course_dates"] = [...this.selectedDates].sort(
         (a, b) => new Date(a) - new Date(b)
       );
@@ -1733,7 +1783,7 @@ if (window.location.pathname.includes("/aanmelden")) {
 
     getCalendarChances() {
       const size = this.selectedDates.size;
-      if (!size) return "";
+      if (!size) return "- (selecteer data)";
       if (this.formData["course_type"] === "online") {
         if (size >= 9) return this.CHANCES_TYPES.BIG;
         else if (size >= 5) return this.CHANCES_TYPES.AVERAGE_BIG;
@@ -1746,36 +1796,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       return this.CHANCES_TYPES.LOWER;
     }
 
-    // END CALENDAR
-
     // PACKAGES
-
-    getLastDayOfMonth() {
-      const now = new Date();
-      const lastDayOfMonth = new Date(
-        now.getFullYear(),
-        now.getMonth() + 1,
-        0
-      ).getDate();
-      const currentMonthInDutch = this.dutchMonths[now.getMonth()];
-
-      return `${lastDayOfMonth} ${currentMonthInDutch}`;
-    }
-
-    processDescriptionItems(descriptionItems) {
-      return descriptionItems.map((item) => {
-        if (typeof item.description === "string") {
-          return {
-            ...item,
-            description: item.description.replace(
-              "{{ getLastDayOfMonth }}",
-              this.getLastDayOfMonth()
-            ),
-          };
-        }
-        return item;
-      });
-    }
 
     async getPackages() {
       const url = this.urls.plans;
@@ -1820,8 +1841,7 @@ if (window.location.pathname.includes("/aanmelden")) {
                 return {
                   id,
                   name,
-                  description_items:
-                    this.processDescriptionItems(description_items),
+                  description_items: processDescriptionItems(description_items),
                   price: modifiedPrice,
                   old_price: modifiedOldPrice,
                   discount_label,
@@ -2006,10 +2026,17 @@ if (window.location.pathname.includes("/aanmelden")) {
       );
       packageDescriptionListMargin.appendChild(packageDescriptionList);
 
-      const hasAvailableItemsDescription = pkg.description_items.some(desc => desc.description.includes(`${pkg.available_items} CBR oefenexamens`));
+      const hasAvailableItemsDescription = pkg.description_items.some((desc) =>
+        desc.description.includes(`${pkg.available_items} CBR oefenexamens`)
+      );
 
       if (!hasAvailableItemsDescription) {
-        pkg.description_items = [...pkg.description_items, { description: `${pkg.available_items} CBR oefenexamens (Na het inloggen kun je eventueel meer oefenexamens bestellen` }];
+        pkg.description_items = [
+          ...pkg.description_items,
+          {
+            description: `${pkg.available_items} CBR oefenexamens (Na het inloggen kun je eventueel meer oefenexamens bestellen`,
+          },
+        ];
       }
 
       pkg.description_items.forEach((desc) => {
@@ -2174,26 +2201,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-    // END PACKAGES
-
-    updateSvgVisibility() {
-      const licenseType = this.formData.license_type;
-      const licenseTypes = ["auto", "scooter", "motor"];
-
-      licenseTypes.forEach((type) => {
-        const svgId = `${type}Svg`;
-        const svgElement = document.getElementById(svgId);
-
-        if (svgElement) {
-          if (type === licenseType) {
-            svgElement.classList.remove("hide");
-          } else {
-            svgElement.classList.add("hide");
-          }
-        }
-      });
-    }
-
     updateRowVisibility() {
       const locationsRow = document.getElementById("locationsRow");
       const datesRow = document.getElementById("datesRow");
@@ -2333,8 +2340,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.updateStepIndexText();
     }
 
-    // End edit information
-
     // Cancel edit of the data and save new data
 
     showEditButtons() {
@@ -2372,12 +2377,16 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     cancelPackage() {
-      const allPackageItems = document.querySelectorAll(".aanmelden_package-item");
+      const allPackageItems = document.querySelectorAll(
+        ".aanmelden_package-item"
+      );
       allPackageItems.forEach((item) => {
         item.classList.remove("selected-option");
       });
       if (this.prevPackageSelected) {
-        const prevSelectedPackageElement = document.querySelector(`.aanmelden_package-item[data-package-id="${this.prevPackageSelected.id}"]`);
+        const prevSelectedPackageElement = document.querySelector(
+          `.aanmelden_package-item[data-package-id="${this.prevPackageSelected.id}"]`
+        );
         if (prevSelectedPackageElement) {
           prevSelectedPackageElement.classList.add("selected-option");
         }
@@ -2389,7 +2398,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     completeResume() {
       Object.keys(this.resumeConfig).forEach((key) => this.completeField(key));
       this.completeDataInputs();
-      this.updateSvgVisibility();
+      updateSvgVisibility(this.formData);
       this.updateRowVisibility();
     }
 
@@ -2594,8 +2603,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-    //END RESUME
-
     applySubmissionRules() {
       Object.keys(this.submissionRules).forEach((key) => {
         const value = this.formData[key];
@@ -2615,7 +2622,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     async handleFinalStep() {
       const data = await this.sendDataBack();
       if (data) {
-        localStorage.setItem("formData", JSON.stringify(data));
         localStorage.removeItem("fechaGlobalSeleccionada");
         const authTokens = data.auth_tokens;
         const encodedTokens = encodeURIComponent(JSON.stringify(authTokens));
@@ -2702,8 +2708,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     },
     { id: "overzicht", form: "Resume" },
   ];
-  //END STEPS
-
   const formManager = new FormManager(steps);
   formManager.initialize();
 }
@@ -2730,37 +2734,19 @@ if (window.location.pathname === "/bestellen") {
       this.initialize();
     }
 
-    /// START Quick fix
-    async _preloadUserApplicationData() {
-      // This is a duplicated get /application request.
-      // I've added it to make it works and be sure that we have current user application information in every browser, please refactor it later.
-      // because I'm afraid to add any changes to the original code
-      const token = await this.instanceToken.checkAndRefreshToken();
-      if (token && token.access) {
-        const userDataLoaded = await this.instanceToken.getUserInfoBack();
-        console.log('__userDataLoaded__', userDataLoaded);
-        if (userDataLoaded && userDataLoaded.email) { // just to check if user application data exists
-          localStorage.setItem("formData", JSON.stringify(userDataLoaded));
-        }
-      }
-    }
-
     async initialize() {
-      await this._preloadUserApplicationData();
-      // END Quick fix
-      const storedData = localStorage.getItem("formData");
-      if (storedData) {
-        const formData = JSON.parse(storedData);
-        this.displayOrderSummary(formData);
-        this.handleStoredData(formData);
+      const userData = await this.instanceToken.preloadUserApplicationData();
+      if (userData) {
+        this.displayOrderSummary(userData);
+        this.handleStoredData(userData);
         this.isMijnOnline =
-          formData.course_type === "online" && formData.is_mijn_reservation;
+          userData.course_type === "online" && userData.is_mijn_reservation;
         this.buttonText.textContent = this.isMijnOnline
           ? "Betalen"
           : "Aanbetaling";
-        this.handleContainer(formData);
+        this.handleContainer(userData);
         this.buttonLink.addEventListener("click", () =>
-          this.requestLink(formData)
+          this.requestLink(userData)
         );
         this.dateCalendar = null;
       }
@@ -2790,48 +2776,6 @@ if (window.location.pathname === "/bestellen") {
       this.urlFailRedirect =
         failRedirectUrls[window.location.hostname] || failRedirectUrls.default;
     }
-
-    getLastDayOfMonth() {
-      const now = new Date();
-      const lastDayOfMonth = new Date(
-        now.getFullYear(),
-        now.getMonth() + 1,
-        0
-      ).getDate();
-      const dutchMonths = [
-        "januari",
-        "februari",
-        "maart",
-        "april",
-        "mei",
-        "juni",
-        "juli",
-        "augustus",
-        "september",
-        "oktober",
-        "november",
-        "december",
-      ];
-      const currentMonthInDutch = dutchMonths[now.getMonth()];
-
-      return `${lastDayOfMonth} ${currentMonthInDutch}`;
-    }
-
-    processDescriptionItems(descriptionItems) {
-      return descriptionItems.map((item) => {
-        if (typeof item.description === "string") {
-          return {
-            ...item,
-            description: item.description.replace(
-              "{{ getLastDayOfMonth }}",
-              this.getLastDayOfMonth()
-            ),
-          };
-        }
-        return item;
-      });
-    }
-
     generatePackage(formData) {
       const packageElement = document.querySelector(".overzicht_package-item");
       const pkg = formData.package_info;
@@ -2850,7 +2794,7 @@ if (window.location.pathname === "/bestellen") {
       let packageNameDiv = packageElement.querySelector("#packageName");
       packageNameDiv.textContent = formData.package_name;
 
-      const processedDescriptions = this.processDescriptionItems(
+      const processedDescriptions = processDescriptionItems(
         pkg.description_items
       );
 
@@ -3268,24 +3212,6 @@ if (window.location.pathname === "/bestellen") {
       return finalDate;
     }
 
-    updateSvgVisibility(formData) {
-      const licenseType = formData.license_type;
-      const licenseTypes = ["auto", "scooter", "motor"];
-
-      licenseTypes.forEach((type) => {
-        const svgId = `${type}Svg`;
-        const svgElement = document.getElementById(svgId);
-
-        if (svgElement) {
-          if (type === licenseType) {
-            svgElement.classList.remove("hide");
-          } else {
-            svgElement.classList.add("hide");
-          }
-        }
-      });
-    }
-
     updateRowVisibility(formData) {
       const showLocations =
         (formData.cities && formData.cities.length > 0) ||
@@ -3332,7 +3258,7 @@ if (window.location.pathname === "/bestellen") {
       this.displayCourseNames(formData);
       this.displayPakket(formData);
       this.updateRowVisibility(formData);
-      this.updateSvgVisibility(formData);
+      updateSvgVisibility(formData);
       this.updateVragenText(formData);
       this.updateAanmeldingText(formData);
     }
@@ -3417,8 +3343,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&
@@ -3536,7 +3462,7 @@ if (window.location.pathname === "/bestellen") {
     }
 
     getAanmeldingText(formData) {
-      const textRecicle = `Bedankt voor jouw aanmelding! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je betaalt dan ook direct een gedeelte van het pakket. De aanbetaling kun je voldoen via de onderstaande knop.`
+      const textRecicle = `Bedankt voor jouw aanmelding! Om het CBR examen voor jou te reserveren vragen wij jou eerst om een aanbetaling te voldoen. De kosten van het examen moeten we namelijk vooruitbetalen aan het CBR. Je betaalt dan ook direct een gedeelte van het pakket. De aanbetaling kun je voldoen via de onderstaande knop.`;
       if (
         formData.course_type === "offline" &&
         formData.is_mijn_reservation &&
