@@ -93,10 +93,8 @@ class Authentication {
 
   async preloadUserApplicationData() {
     const token = await this.checkAndRefreshToken();
-    console.log(token);
     if (token && token.access) {
       const userDataLoaded = await this.getUserInfoBack();
-      console.log(userDataLoaded);
       if (userDataLoaded && userDataLoaded.email) {
         return userDataLoaded;
       }
