@@ -1057,12 +1057,10 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-    removeCourseNameKey({ typeOptions }) {
-      const values =
-        typeOptions === "months"
-          ? this.generateDutchMonths(6)
-          : this.zoSnelOptions;
-      if (values.some((opt) => this.formData["course_names"]?.includes(opt))) {
+    removeCourseNameKey() {
+      const options = this.getCurrentStepId() === 'step6' ? this.generateDutchMonths(6) : this.zoSnelOptions;
+
+      if (options.some(opt => this.formData["course_names"]?.includes(opt))) {
         this.formData["course_names"] = [];
       }
     }
@@ -1129,10 +1127,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         case "step6":
           this.showDates();
           this.checkSelectedDate();
-          this.removeCourseNameKey({ typeOptions: "dates" });
+          this.removeCourseNameKey();
           break;
         case "stepMonths":
-          this.removeCourseNameKey({ typeOptions: "months" });
+          this.removeCourseNameKey();
           this.handleStepMonths();
           break;
         case "stepCalendar":
