@@ -214,6 +214,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initAPIUrlVariables();
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
+      this.preSavedForAnalyticsData = {};
       this.resumeConfig = {
         license_type: {
           elementId: "licenseText",
@@ -391,6 +392,11 @@ if (window.location.pathname.includes("/aanmelden")) {
         AMTH_VE: "amth_ve", //scooter
         MIJN: "mijn",
       };
+      this.preferred_date_option = {
+        per_dates: "zo snel mogelijk",
+        per_month: "maand",
+        calendar: "specifieke datums"
+      };
     }
 
     initElements() {
@@ -428,6 +434,92 @@ if (window.location.pathname.includes("/aanmelden")) {
         plans: `${apiBaseUrl}api/applications/online_plans/`,
         urlPostMultiStepForm: `${apiBaseUrl}api/applications/`,
       };
+    }
+
+    // Google Analytics
+
+    pushStepToDataLayer(currentStepNumber, eventData) {
+      console.log(eventData);
+      let data = {
+        ...this.preSavedForAnalyticsData,
+        event: 'signup_funnel_step',
+        funnel_step_number: currentStepNumber
+      };
+      if (eventData.license_type) {//s1
+        const licenseTypeFound = this.LicenseTypesEnum[eventData.license_type.toUpperCase()];
+        if (licenseTypeFound) {
+          data.license_type = licenseTypeFound;
+        }
+      }
+      if (eventData.course_type) {//s2
+        data.course_type = eventData.course_type;
+      }
+      if (eventData.exam_type) {//s3
+        data.exam_type = eventData.exam_type;
+      }
+
+      if (eventData.cities) {//s4
+        const selectedCityNames = eventData.cities.map((cityId) => {
+          const city = this.citiesList.find((c) => c.id === cityId);
+          return city.name;
+        });
+        data.course_location = selectedCityNames.join(', ');
+      }
+      if (eventData.cbr_locations) {//s4 online
+        data.course_location = eventData.cbr_locations.join(', ');
+      }
+      if (eventData.course_category) {//s5
+        const courseCategoryFound = this.preferred_date_option[eventData.course_category];
+        if (courseCategoryFound) {
+          data.preferred_date_option = courseCategoryFound;
+        }
+      }
+      if (eventData.course_names) {//s6
+        data.preferred_date_time = Array.isArray(eventData.course_names) ? eventData.course_names.join(', ') : eventData.course_names;
+      }
+      if (eventData.course_dates) {//s6
+        const formattedDates = Array.from(this.selectedDates).map(date => {
+          return date.replace(/-/g, '');
+        });
+        data.preferred_date_time = formattedDates.join(', ');
+      }
+
+      if (eventData.mijn_exam_location) {// online/location -self reserve s4
+        data.cbr_location = eventData.mijn_exam_location;
+      }
+      if (eventData.mijn_exam_datetime) {// online/location -self reserve s4
+        const examDate = new Date(eventData.mijn_exam_datetime);
+
+        const day = examDate.getDate().toString().padStart(2, '0');
+        const month = (examDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = examDate.getFullYear();
+        const hours = examDate.getHours().toString().padStart(2, '0');
+        const minutes = examDate.getMinutes().toString().padStart(2, '0');
+
+        data.cbr_date_time = `${day}${month}${year} - ${hours}:${minutes}`;
+      }
+
+
+      if (eventData.package_name) { // online -self reserve s5
+        data.package_name = eventData.package_name;
+        data.package_price = parseFloat(Number(this.packagePrice).toFixed(2))
+      }
+
+      if (eventData.email) {//s8 or 4(for location -self reserve funnel) or 6(for online -self reserve funnel)
+        data.sha_256_email = eventData.email;
+      }
+
+      this.preSavedForAnalyticsData = { ...data };
+
+      Object.keys(data).forEach(key => {
+        const val = typeof data[key] === 'number' ? data[key].toString() : data[key];
+        if (typeof val === 'string') {
+          data[key] = val.toLowerCase();
+        }
+      });
+      console.log(data);
+
+      //this.$analytics.event(data.event, data); // send event after every step finished
     }
 
     // HELPERS
@@ -518,6 +610,20 @@ if (window.location.pathname.includes("/aanmelden")) {
     nextStep() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       const currentStepId = this.getCurrentStepId();
+
+      const currentStepData = this.steps.find(
+        (step) => step.id === currentStepId
+      );
+
+      const keyBack = currentStepData.keyBack ?? currentStepData.keyGA;
+      if (currentStepData.keysBack) {
+        currentStepData.keysBack.forEach(keyBack => {
+          this.pushStepToDataLayer(this.currentStepNumber, { [keyBack]: this.formData[keyBack] });
+        });
+      } else {
+        this.pushStepToDataLayer(this.currentStepNumber, { [keyBack]: this.formData[keyBack] });
+      }
+
       const nextStepId = this.getNextStepId(currentStepId);
 
       const nextStepIndex = this.steps.findIndex(
@@ -1001,6 +1107,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (stepIndexTextElementMobile) {
         stepIndexTextElementMobile.textContent = `${currentStepNumber} van ${totalSteps}`;
       }
+      this.currentStepNumber = currentStepNumber;
     }
 
     calculateTotalSteps() {
@@ -1057,12 +1164,10 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-    removeCourseNameKey({ typeOptions }) {
-      const values =
-        typeOptions === "months"
-          ? this.generateDutchMonths(6)
-          : this.zoSnelOptions;
-      if (values.some((opt) => this.formData["course_names"]?.includes(opt))) {
+    removeCourseNameKey() {
+      const options = this.getCurrentStepId() === 'step6' ? this.generateDutchMonths(6) : this.zoSnelOptions;
+
+      if (options.some(opt => this.formData["course_names"]?.includes(opt))) {
         this.formData["course_names"] = [];
       }
     }
@@ -1129,10 +1234,10 @@ if (window.location.pathname.includes("/aanmelden")) {
         case "step6":
           this.showDates();
           this.checkSelectedDate();
-          this.removeCourseNameKey({ typeOptions: "dates" });
+          this.removeCourseNameKey();
           break;
         case "stepMonths":
-          this.removeCourseNameKey({ typeOptions: "months" });
+          this.removeCourseNameKey();
           this.handleStepMonths();
           break;
         case "stepCalendar":
@@ -1885,6 +1990,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       const selectPackage = (packageItem, pkg) => {
         this.packageSelected = pkg;
         this.setFormData("package_name", pkg.name);
+        this.packagePrice = pkg.price;
 
         const allPackageItems = document.querySelectorAll(
           ".aanmelden_package-item"
@@ -2701,6 +2807,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     {
       id: "stepInputs",
       form: "allInputs",
+      keyGA: "email",
     },
     { id: "overzicht", form: "Resume" },
   ];
