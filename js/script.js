@@ -395,7 +395,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.preferred_date_option = {
         per_dates: "zo snel mogelijk",
         per_month: "maand",
-        calendar: "specifieke datums"
+        calendar: "specifieke datums",
       };
     }
 
@@ -442,78 +442,90 @@ if (window.location.pathname.includes("/aanmelden")) {
       console.log(eventData);
       let data = {
         ...this.preSavedForAnalyticsData,
-        event: 'signup_funnel_step',
-        funnel_step_number: currentStepNumber
+        event: "signup_funnel_step",
+        funnel_step_number: currentStepNumber,
       };
-      if (eventData.license_type) {//s1
-        const licenseTypeFound = this.LicenseTypesEnum[eventData.license_type.toUpperCase()];
+      if (eventData.license_type) {
+        //s1
+        const licenseTypeFound =
+          this.LicenseTypesEnum[eventData.license_type.toUpperCase()];
         if (licenseTypeFound) {
           data.license_type = licenseTypeFound;
         }
       }
-      if (eventData.course_type) {//s2
+      if (eventData.course_type) {
+        //s2
         data.course_type = eventData.course_type;
       }
-      if (eventData.exam_type) {//s3
+      if (eventData.exam_type) {
+        //s3
         data.exam_type = eventData.exam_type;
       }
 
-      if (eventData.cities) {//s4
-        const selectedCityNames = eventData.cities.map((cityId) => {
-          const city = this.citiesList.find((c) => c.id === cityId);
-          return city.name;
-        });
-        data.course_location = selectedCityNames.join(', ');
+      if (eventData.cities) {
+        //s4
+        data.course_location = this.parseCityNames(eventData.cities).join(", ");
       }
-      if (eventData.cbr_locations) {//s4 online
-        data.course_location = eventData.cbr_locations.join(', ');
+      if (eventData.cbr_locations) {
+        //s4 online
+        data.course_location = eventData.cbr_locations.join(", ");
       }
-      if (eventData.course_category) {//s5
-        const courseCategoryFound = this.preferred_date_option[eventData.course_category];
+      if (eventData.course_category) {
+        //s5
+        const courseCategoryFound =
+          this.preferred_date_option[eventData.course_category];
         if (courseCategoryFound) {
           data.preferred_date_option = courseCategoryFound;
         }
       }
-      if (eventData.course_names) {//s6
-        data.preferred_date_time = Array.isArray(eventData.course_names) ? eventData.course_names.join(', ') : eventData.course_names;
+      if (eventData.course_names) {
+        //s6
+        data.preferred_date_time = Array.isArray(eventData.course_names)
+          ? eventData.course_names.join(", ")
+          : eventData.course_names;
       }
-      if (eventData.course_dates) {//s6
-        const formattedDates = Array.from(this.selectedDates).map(date => {
-          return date.replace(/-/g, '');
+      if (eventData.course_dates) {
+        //s6
+        const formattedDates = Array.from(this.selectedDates).map((date) => {
+          return date.replace(/-/g, "");
         });
-        data.preferred_date_time = formattedDates.join(', ');
+        data.preferred_date_time = formattedDates.join(", ");
       }
 
-      if (eventData.mijn_exam_location) {// online/location -self reserve s4
+      if (eventData.mijn_exam_location) {
+        // online/location -self reserve s4
         data.cbr_location = eventData.mijn_exam_location;
       }
-      if (eventData.mijn_exam_datetime) {// online/location -self reserve s4
+      if (eventData.mijn_exam_datetime) {
+        // online/location -self reserve s4
         const examDate = new Date(eventData.mijn_exam_datetime);
 
-        const day = examDate.getDate().toString().padStart(2, '0');
-        const month = (examDate.getMonth() + 1).toString().padStart(2, '0');
+        const day = examDate.getDate().toString().padStart(2, "0");
+        const month = (examDate.getMonth() + 1).toString().padStart(2, "0");
         const year = examDate.getFullYear();
-        const hours = examDate.getHours().toString().padStart(2, '0');
-        const minutes = examDate.getMinutes().toString().padStart(2, '0');
+        const hours = examDate.getHours().toString().padStart(2, "0");
+        const minutes = examDate.getMinutes().toString().padStart(2, "0");
 
         data.cbr_date_time = `${day}${month}${year} - ${hours}:${minutes}`;
       }
 
-
-      if (eventData.package_name) { // online -self reserve s5
+      if (eventData.package_name) {
+        // online -self reserve s5
         data.package_name = eventData.package_name;
-        data.package_price = parseFloat(Number(this.packagePrice).toFixed(2))
+        data.package_price = parseFloat(Number(this.packagePrice).toFixed(2));
       }
 
-      if (eventData.email) {//s8 or 4(for location -self reserve funnel) or 6(for online -self reserve funnel)
+      if (eventData.email) {
+        //s8 or 4(for location -self reserve funnel) or 6(for online -self reserve funnel)
         data.sha_256_email = eventData.email;
       }
 
       this.preSavedForAnalyticsData = { ...data };
 
-      Object.keys(data).forEach(key => {
-        const val = typeof data[key] === 'number' ? data[key].toString() : data[key];
-        if (typeof val === 'string') {
+      Object.keys(data).forEach((key) => {
+        const val =
+          typeof data[key] === "number" ? data[key].toString() : data[key];
+        if (typeof val === "string") {
           data[key] = val.toLowerCase();
         }
       });
@@ -611,17 +623,19 @@ if (window.location.pathname.includes("/aanmelden")) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       const currentStepId = this.getCurrentStepId();
 
-      const currentStepData = this.steps.find(
-        (step) => step.id === currentStepId
-      );
+      const currentStepData = this.getCurrentStepData(currentStepId);
 
       const keyBack = currentStepData.keyBack ?? currentStepData.keyGA;
       if (currentStepData.keysBack) {
-        currentStepData.keysBack.forEach(keyBack => {
-          this.pushStepToDataLayer(this.currentStepNumber, { [keyBack]: this.formData[keyBack] });
+        currentStepData.keysBack.forEach((keyBack) => {
+          this.pushStepToDataLayer(this.currentStepNumber, {
+            [keyBack]: this.formData[keyBack],
+          });
         });
       } else {
-        this.pushStepToDataLayer(this.currentStepNumber, { [keyBack]: this.formData[keyBack] });
+        this.pushStepToDataLayer(this.currentStepNumber, {
+          [keyBack]: this.formData[keyBack],
+        });
       }
 
       const nextStepId = this.getNextStepId(currentStepId);
@@ -660,10 +674,13 @@ if (window.location.pathname.includes("/aanmelden")) {
       return this.stepHistory[this.stepHistory.length - 1];
     }
 
+    getCurrentStepData(currentStepId) {
+      const stepData = this.steps.find((step) => step.id === currentStepId);
+      return stepData;
+    }
+
     getNextStepId(currentStepId) {
-      const currentStepData = this.steps.find(
-        (step) => step.id === currentStepId
-      );
+      const currentStepData = this.getCurrentStepData(currentStepId);
       const currentStepKey = currentStepData.keyBack;
       const currentStepValue = this.formData[currentStepKey];
       const sectionRuleKey = this.sectionRules[currentStepKey];
@@ -1119,8 +1136,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -1165,9 +1182,12 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     removeCourseNameKey() {
-      const options = this.getCurrentStepId() === 'step6' ? this.generateDutchMonths(6) : this.zoSnelOptions;
+      const options =
+        this.getCurrentStepId() === "step6"
+          ? this.generateDutchMonths(6)
+          : this.zoSnelOptions;
 
-      if (options.some(opt => this.formData["course_names"]?.includes(opt))) {
+      if (options.some((opt) => this.formData["course_names"]?.includes(opt))) {
         this.formData["course_names"] = [];
       }
     }
@@ -1782,8 +1802,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -2555,6 +2576,14 @@ if (window.location.pathname.includes("/aanmelden")) {
       });
     }
 
+    parseCityNames(sourceData) {
+      const selectedCityNames = sourceData.map((cityId) => {
+        const city = this.citiesList.find((c) => c.id === cityId);
+        return city.name;
+      });
+      return selectedCityNames;
+    }
+
     completeCities() {
       const container = document.getElementById("citiesColumn");
       if (this.formData["course_type"] === "offline") {
@@ -2562,12 +2591,9 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.resumeConfig["cities"].elementId
         );
         if (this.formData["cities"].length > 0) {
-          const selectedCityNames = this.formData["cities"].map((cityId) => {
-            const city = this.citiesList.find((c) => c.id === cityId);
-            return city ? city.name : "";
-          });
-
-          text.textContent = selectedCityNames.join(", ");
+          text.textContent = this.parseCityNames(this.formData["cities"]).join(
+            ", "
+          );
           container.classList.remove("hide");
         }
       } else {
@@ -3446,8 +3472,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&
