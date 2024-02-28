@@ -215,6 +215,151 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
       this.preSavedForAnalyticsData = {};
+      this.analytics = {
+        /**
+         * Init ecommerce object.
+         */
+        initEcommerce() {
+          window.dataLayer = window.dataLayer || []
+
+          dataLayer.push({
+            'event': 'init',
+            'cart': this.cart
+          })
+        },
+
+        /**
+             * Clear the previous ecommerce object.
+             */
+        resetEcommerce() {
+          if (!window.dataLayer) return
+          try {
+            dataLayer.push({ ecommerce: null })
+          } catch (e) {
+            console.log(e)
+          }
+        },
+
+        /**
+             * Update cart item details
+             */
+        updateCartItem(data) {
+          this.cart = { ...this.cart, ...data }
+        },
+
+        /**
+             * Send event to analytics
+             */
+        sendEvent(category, action, eventLabel, eventValue = undefined, additionalParams = {}) {
+          let label = eventLabel
+          if (eventValue) label = eventLabel + '-' + eventValue
+          if (!window.dataLayer) return
+
+          try {
+            dataLayer.push({
+              'event': 'GAEvent',
+              'eventCategory': category,
+              'eventAction': action,
+              'eventLabel': label,
+              ...additionalParams
+            })
+          } catch (e) {
+            console.log(e)
+          }
+        },
+
+        /**
+             * Send event to analytics
+             */
+        event(eventName, data) { // You already familiar with this method
+          if (!window.dataLayer) return
+
+          try {
+            console.log('pushed', data);
+            dataLayer.push({
+              event: eventName,
+              ...data
+            })
+          } catch (e) {
+            console.log(e)
+          }
+        },
+
+        /**
+             * Add item to datalayer object
+             */
+        async addToCart(data) {
+          await this.updateCartItem(data)
+
+          try {
+            dataLayer.push({
+              'event': 'addToCart',
+              'ecommerce': {
+                'currencyCode': this.currencyCode,
+                'add': {
+                  'products': [{
+                    'name': this.cart.name,
+                    'id': this.cart.id,
+                    'price': this.cart.price,
+                    'category': this.cart.category,
+                    'variant': this.cart.variant,
+                    'quantity': 1
+                  }]
+                }
+              }
+            })
+          } catch (e) {
+            console.log(e)
+          }
+        },
+
+        /**
+             * Change item properties in datalayer object
+             */
+        async changeItem(step, data) {
+          await this.updateCartItem(data)
+
+          try {
+            dataLayer.push({
+              'event': 'checkout',
+              'ecommerce': {
+                'currencyCode': this.currencyCode,
+                'checkout': {
+                  'actionField': { 'step': step },
+                  'products': [{
+                    'name': this.cart.name,
+                    'id': this.cart.id,
+                    'price': this.cart.price,
+                    'category': this.cart.category,
+                    'variant': this.cart.variant,
+                    'quantity': 1
+                  }]
+                }
+              }
+            })
+          } catch (e) {
+            console.log(e)
+          }
+        },
+
+        /**
+             * Send payment method
+             */
+        checkoutItem(payment) {
+          try {
+            dataLayer.push({
+              'event': 'checkoutOption',
+              'ecommerce': {
+                'checkout_option': {
+                  'actionField': { 'step': 6, 'option': payment }
+                }
+              }
+            })
+          } catch (e) {
+            console.log(e)
+          }
+        },
+      }
       this.resumeConfig = {
         license_type: {
           elementId: "licenseText",
@@ -437,152 +582,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     // Google Analytics
-
-    const analytics = {
-      /**
-       * Init ecommerce object.
-       */
-      initEcommerce() {
-        window.dataLayer = window.dataLayer || []
-
-        dataLayer.push({
-          'event': 'init',
-          'cart': this.cart
-        })
-      },
-
-      /**
-           * Clear the previous ecommerce object.
-           */
-      resetEcommerce() {
-        if (!window.dataLayer) return
-        try {
-          dataLayer.push({ ecommerce: null })
-        } catch (e) {
-          console.log(e)
-        }
-      },
-
-      /**
-           * Update cart item details
-           */
-      updateCartItem(data) {
-        this.cart = { ...this.cart, ...data }
-      },
-
-      /**
-           * Send event to analytics
-           */
-      sendEvent(category, action, eventLabel, eventValue = undefined, additionalParams = {}) {
-        let label = eventLabel
-        if (eventValue) label = eventLabel + '-' + eventValue
-        if (!window.dataLayer) return
-
-        try {
-          dataLayer.push({
-            'event': 'GAEvent',
-            'eventCategory': category,
-            'eventAction': action,
-            'eventLabel': label,
-            ...additionalParams
-          })
-        } catch (e) {
-          console.log(e)
-        }
-      },
-
-      /**
-           * Send event to analytics
-           */
-      event(eventName, data) { // You already familiar with this method
-        if (!window.dataLayer) return
-
-        try {
-          console.log('pushed', data);
-          dataLayer.push({
-            event: eventName,
-            ...data
-          })
-        } catch (e) {
-          console.log(e)
-        }
-      },
-
-      /**
-           * Add item to datalayer object
-           */
-      async addToCart(data) {
-        await this.updateCartItem(data)
-
-        try {
-          dataLayer.push({
-            'event': 'addToCart',
-            'ecommerce': {
-              'currencyCode': this.currencyCode,
-              'add': {
-                'products': [{
-                  'name': this.cart.name,
-                  'id': this.cart.id,
-                  'price': this.cart.price,
-                  'category': this.cart.category,
-                  'variant': this.cart.variant,
-                  'quantity': 1
-                }]
-              }
-            }
-          })
-        } catch (e) {
-          console.log(e)
-        }
-      },
-
-      /**
-           * Change item properties in datalayer object
-           */
-      async changeItem(step, data) {
-        await this.updateCartItem(data)
-
-        try {
-          dataLayer.push({
-            'event': 'checkout',
-            'ecommerce': {
-              'currencyCode': this.currencyCode,
-              'checkout': {
-                'actionField': { 'step': step },
-                'products': [{
-                  'name': this.cart.name,
-                  'id': this.cart.id,
-                  'price': this.cart.price,
-                  'category': this.cart.category,
-                  'variant': this.cart.variant,
-                  'quantity': 1
-                }]
-              }
-            }
-          })
-        } catch (e) {
-          console.log(e)
-        }
-      },
-
-      /**
-           * Send payment method
-           */
-      checkoutItem(payment) {
-        try {
-          dataLayer.push({
-            'event': 'checkoutOption',
-            'ecommerce': {
-              'checkout_option': {
-                'actionField': { 'step': 6, 'option': payment }
-              }
-            }
-          })
-        } catch (e) {
-          console.log(e)
-        }
-      },
-    }
 
     pushStepToDataLayer(currentStepNumber, eventData) {
       console.log(eventData);
