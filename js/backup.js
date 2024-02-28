@@ -214,7 +214,16 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.initAPIUrlVariables();
       this.PLANS_DELTA = 29;
       this.REAPPLY_PLANS_DELTA = 19;
+      // Google Analytics init
       this.preSavedForAnalyticsData = {};
+      this.cart = {
+        'name': '',
+        'id': '',
+        'price': '',
+        'category': '',
+        'variant': ''
+      }
+      this.currencyCode = 'EUR';
       this.analytics = {
         /**
          * Init ecommerce object.
@@ -271,7 +280,7 @@ if (window.location.pathname.includes("/aanmelden")) {
         /**
              * Send event to analytics
              */
-        event(eventName, data) { // You already familiar with this method
+        event(eventName, data) {
           if (!window.dataLayer) return
 
           try {
@@ -679,6 +688,30 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.analytics.event(data.event, data); // send event after every step finished
     }
 
+    getCourseTypeID() {
+      return this.formData['course_type'] === 'offline' ? 0 : 1;
+    }
+
+    getExamType() {
+      let _type = this.PRODUCTS_LIST.BTH;
+      const examType = Number(this.formData.exam_type);
+      if (examType === 3) {
+        _type = this.PRODUCTS_LIST.MIJN;
+      } else {
+        if (this.formData && this.formData.license_type === this.LicenseTypesEnum.MOTOR) {
+          if (examType === 1) _type = this.PRODUCTS_LIST.ATH
+          if (examType === 2) _type = this.PRODUCTS_LIST.ATH_VE
+        } else if (this.formData && this.formData.license_type === this.LicenseTypesEnum.SCOOTER) {
+          if (examType === 1) _type = this.PRODUCTS_LIST.AMTH
+          if (examType === 2) _type = this.PRODUCTS_LIST.AMTH_VE
+        } else {
+          if (examType === 1) _type = this.PRODUCTS_LIST.BTH
+          if (examType === 2) _type = this.PRODUCTS_LIST.BTH_VE
+        }
+      }
+      return _type;
+    }
+
     // HELPERS
 
     convertDate() {
@@ -779,6 +812,39 @@ if (window.location.pathname.includes("/aanmelden")) {
           [key]: this.formData[key],
         });
       });
+
+      if (currentStepData.keysDataLayerGA) {
+        currentStepData.keysDataLayerGA.forEach(key => {
+          dataLayer.push({ [key]: this.formData[key] })
+        });
+      }
+
+      if (currentStepId === 'step2') {
+        this.analytics.resetEcommerce()
+        this.analytics.event('courseType', { course_type: this.formData.course_type })
+        this.analytics.addToCart({ name: this.formData.course_type, id: this.getCourseTypeID() })
+        this.analytics.changeItem(1, { name: this.formData.course_type, id: this.getCourseTypeID() })
+      }
+
+      if (currentStepId === 'step3') {
+        this.analytics.changeItem(2, { category: this.getExamType() })
+        this.analytics.event('examType', { exam_type: this.getExamType() })
+      }
+
+      if (currentStepId === 'step4Cities') {
+        this.analytics.event('locationsByCity', { locations_by_city: this.formData.cities })
+      }
+
+      if (currentStepId === 'step4Cbr') {
+        this.analytics.event('locationsByCbr', { locations_by_cbr: this.formData.cbr_locations })
+      }
+
+      if (currentStepId === 'step5') {
+        this.analytics.event('courseCategory', { course_category: this.formData.course_category })
+      }
+      if (currentStepId === 'stepOnlinePackage') {
+        this.analytics.changeItem(this.currentStepNumber, { variant: this.formData.package_name, price: this.packagePrice })
+      }
 
       const nextStepId = this.getNextStepId(currentStepId);
 
@@ -2889,6 +2955,9 @@ if (window.location.pathname.includes("/aanmelden")) {
     //SEND DATA
 
     async handleFinalStep() {
+      ["phone", "email"].forEach(key => {
+        dataLayer.push({ [key]: this.formData[key] })
+      });
       const data = await this.sendDataBack();
       if (data) {
         localStorage.removeItem("fechaGlobalSeleccionada");
@@ -2975,6 +3044,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       id: "stepInputs",
       form: "allInputs",
       keyGA: "email",
+      keysDataLayerGA: ["phone", "email"],
     },
     { id: "overzicht", form: "Resume" },
   ];
@@ -3105,6 +3175,11 @@ if (window.location.pathname === "/bestellen") {
 
     async requestLink(formData) {
       const { payment_amount } = formData;
+      ["phone", "email"].forEach(key => {
+        dataLayer.push({ [key]: formData[key] })
+      });
+      this.analytics.sendEvent('Aanmelding by step', '1: Aanmelding by step', this.analytics.checkoutItem("IDEAL"))
+      console.log(dataLayer);
       let token;
       const access = await this.instanceToken.checkAndRefreshToken();
       if (access && access.access) {
