@@ -625,18 +625,15 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       const currentStepData = this.getCurrentStepData(currentStepId);
 
-      const keyBack = currentStepData.keyBack ?? currentStepData.keyGA;
-      if (currentStepData.keysBack) {
-        currentStepData.keysBack.forEach((keyBack) => {
-          this.pushStepToDataLayer(this.currentStepNumber, {
-            [keyBack]: this.formData[keyBack],
-          });
-        });
-      } else {
+      const keysToPush = currentStepData.keysBack ?? [
+        currentStepData.keyBack ?? currentStepData.keyGA,
+      ];
+
+      keysToPush.forEach((key) => {
         this.pushStepToDataLayer(this.currentStepNumber, {
-          [keyBack]: this.formData[keyBack],
+          [key]: this.formData[key],
         });
-      }
+      });
 
       const nextStepId = this.getNextStepId(currentStepId);
 
