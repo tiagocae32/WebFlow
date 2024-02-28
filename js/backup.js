@@ -697,6 +697,71 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.analytics.event(data.event, data); // send event after every step finished
     }
 
+    executeGAOne(currentStepId) {
+      const currentStepData = this.getCurrentStepData(currentStepId);
+
+      const keysToPush = currentStepData.keysBack ?? [
+        currentStepData.keyBack ?? currentStepData.keyGA,
+      ];
+
+      keysToPush.forEach((key) => {
+        this.pushStepToDataLayer(this.currentStepNumber, {
+          [key]: this.formData[key],
+        });
+      });
+
+      if (currentStepData.keysDataLayerGA) {
+        currentStepData.keysDataLayerGA.forEach((key) => {
+          dataLayer.push({ [key]: this.formData[key] });
+        });
+      }
+    }
+    executeGATwo(currentStepId) {
+      if (currentStepId === "step2") {
+        this.instanceGA.resetEcommerce();
+        this.instanceGA.event("courseType", {
+          course_type: this.formData.course_type,
+        });
+        this.instanceGA.addToCart({
+          name: this.formData.course_type,
+          id: this.getCourseTypeID(),
+        });
+        this.instanceGA.changeItem(1, {
+          name: this.formData.course_type,
+          id: this.getCourseTypeID(),
+        });
+      }
+
+      if (currentStepId === "step3") {
+        this.instanceGA.changeItem(2, { category: this.getExamType() });
+        this.instanceGA.event("examType", { exam_type: this.getExamType() });
+      }
+
+      if (currentStepId === "step4Cities") {
+        this.instanceGA.event("locationsByCity", {
+          locations_by_city: this.formData.cities,
+        });
+      }
+
+      if (currentStepId === "step4Cbr") {
+        this.instanceGA.event("locationsByCbr", {
+          locations_by_cbr: this.formData.cbr_locations,
+        });
+      }
+
+      if (currentStepId === "step5") {
+        this.instanceGA.event("courseCategory", {
+          course_category: this.formData.course_category,
+        });
+      }
+      if (currentStepId === "stepOnlinePackage") {
+        this.instanceGA.changeItem(this.currentStepNumber, {
+          variant: this.formData.package_name,
+          price: this.packagePrice,
+        });
+      }
+    }
+
     getCourseTypeID() {
       return this.formData["course_type"] === "offline" ? 0 : 1;
     }
@@ -816,67 +881,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       const currentStepId = this.getCurrentStepId();
 
-      const currentStepData = this.getCurrentStepData(currentStepId);
-
-      const keysToPush = currentStepData.keysBack ?? [
-        currentStepData.keyBack ?? currentStepData.keyGA,
-      ];
-
-      keysToPush.forEach((key) => {
-        this.pushStepToDataLayer(this.currentStepNumber, {
-          [key]: this.formData[key],
-        });
-      });
-
-      if (currentStepData.keysDataLayerGA) {
-        currentStepData.keysDataLayerGA.forEach((key) => {
-          dataLayer.push({ [key]: this.formData[key] });
-        });
-      }
-
-      if (currentStepId === "step2") {
-        this.instanceGA.resetEcommerce();
-        this.instanceGA.event("courseType", {
-          course_type: this.formData.course_type,
-        });
-        this.instanceGA.addToCart({
-          name: this.formData.course_type,
-          id: this.getCourseTypeID(),
-        });
-        this.instanceGA.changeItem(1, {
-          name: this.formData.course_type,
-          id: this.getCourseTypeID(),
-        });
-      }
-
-      if (currentStepId === "step3") {
-        this.instanceGA.changeItem(2, { category: this.getExamType() });
-        this.instanceGA.event("examType", { exam_type: this.getExamType() });
-      }
-
-      if (currentStepId === "step4Cities") {
-        this.instanceGA.event("locationsByCity", {
-          locations_by_city: this.formData.cities,
-        });
-      }
-
-      if (currentStepId === "step4Cbr") {
-        this.instanceGA.event("locationsByCbr", {
-          locations_by_cbr: this.formData.cbr_locations,
-        });
-      }
-
-      if (currentStepId === "step5") {
-        this.instanceGA.event("courseCategory", {
-          course_category: this.formData.course_category,
-        });
-      }
-      if (currentStepId === "stepOnlinePackage") {
-        this.instanceGA.changeItem(this.currentStepNumber, {
-          variant: this.formData.package_name,
-          price: this.packagePrice,
-        });
-      }
+      this.executeGAOne(currentStepId);
+      this.executeGATwo(currentStepId);
 
       const nextStepId = this.getNextStepId(currentStepId);
 
