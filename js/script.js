@@ -625,18 +625,15 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       const currentStepData = this.getCurrentStepData(currentStepId);
 
-      const keyBack = currentStepData.keyBack ?? currentStepData.keyGA;
-      if (currentStepData.keysBack) {
-        currentStepData.keysBack.forEach((keyBack) => {
-          this.pushStepToDataLayer(this.currentStepNumber, {
-            [keyBack]: this.formData[keyBack],
-          });
-        });
-      } else {
+      const keysToPush = currentStepData.keysBack ?? [
+        currentStepData.keyBack ?? currentStepData.keyGA,
+      ];
+
+      keysToPush.forEach((key) => {
         this.pushStepToDataLayer(this.currentStepNumber, {
-          [keyBack]: this.formData[keyBack],
+          [key]: this.formData[key],
         });
-      }
+      });
 
       const nextStepId = this.getNextStepId(currentStepId);
 
@@ -1136,8 +1133,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -1802,9 +1799,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -3472,8 +3468,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
       );
       if (
         formData.cities &&
