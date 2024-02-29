@@ -260,7 +260,7 @@ class Authentication {
         return userDataLoaded;
       }
     }
-    return null;
+    return {};
   }
 
   async checkAndRefreshToken() {
