@@ -68,13 +68,174 @@ const updateSvgVisibility = function (formData) {
 
 // End repeat functions
 
+class GA {
+  static instance = null;
+
+  constructor() {
+    if (GA.instance) {
+      throw new Error("No puedes crear otra instancia de GA.");
+    }
+    this.cart = {
+      name: "",
+      id: "",
+      price: "",
+      category: "",
+      variant: "",
+    };
+    this.currencyCode = "EUR";
+    this.initEcommerce();
+  }
+
+  static getInstance() {
+    if (!GA.instance) {
+      GA.instance = new GA();
+    }
+    return GA.instance;
+  }
+  // Init ecommerce object //
+  initEcommerce() {
+    window.dataLayer = window.dataLayer || [];
+
+    dataLayer.push({
+      event: "init",
+      cart: this.cart,
+    });
+  }
+
+  // Clear the previous ecommerce object //
+  resetEcommerce() {
+    if (!window.dataLayer) return;
+    try {
+      dataLayer.push({ ecommerce: null });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  // Update cart item details //
+  updateCartItem(data) {
+    this.cart = { ...this.cart, ...data };
+  }
+
+  // Send event to analytics //
+  sendEvent(
+    category,
+    action,
+    eventLabel,
+    eventValue = undefined,
+    additionalParams = {}
+  ) {
+    let label = eventLabel;
+    if (eventValue) label = eventLabel + "-" + eventValue;
+    if (!window.dataLayer) return;
+
+    try {
+      dataLayer.push({
+        event: "GAEvent",
+        eventCategory: category,
+        eventAction: action,
+        eventLabel: label,
+        ...additionalParams,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  // Send event to analytics //
+  event(eventName, data) {
+    if (!window.dataLayer) return;
+
+    try {
+      console.log("pushed", data);
+      dataLayer.push({
+        event: eventName,
+        ...data,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  // Add item to datalayer object //
+  async addToCart(data) {
+    this.updateCartItem(data);
+
+    try {
+      dataLayer.push({
+        event: "addToCart",
+        ecommerce: {
+          currencyCode: this.currencyCode,
+          add: {
+            products: [
+              {
+                name: this.cart.name,
+                id: this.cart.id,
+                price: this.cart.price,
+                category: this.cart.category,
+                variant: this.cart.variant,
+                quantity: 1,
+              },
+            ],
+          },
+        },
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  // Change item properties in datalayer object //
+  changeItem(step, data) {
+    this.updateCartItem(data);
+
+    try {
+      dataLayer.push({
+        event: "checkout",
+        ecommerce: {
+          currencyCode: this.currencyCode,
+          checkout: {
+            actionField: { step: step },
+            products: [
+              {
+                name: this.cart.name,
+                id: this.cart.id,
+                price: this.cart.price,
+                category: this.cart.category,
+                variant: this.cart.variant,
+                quantity: 1,
+              },
+            ],
+          },
+        },
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  // Send payment method //
+  checkoutItem(payment) {
+    try {
+      dataLayer.push({
+        event: "checkoutOption",
+        ecommerce: {
+          checkout_option: {
+            actionField: { step: 6, option: payment },
+          },
+        },
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+}
+
 class Authentication {
   static instance = null;
   constructor() {
     if (Authentication.instance) {
-      throw new Error(
-        "No puedes crear otra instancia de Authentication. Usa Authentication.getInstance()"
-      );
+      throw new Error("No puedes crear otra instancia de Authentication.");
     }
     this.expAccessToken = null;
   }
@@ -193,6 +354,7 @@ if (window.location.pathname.includes("/aanmelden")) {
   class FormManager {
     constructor(steps) {
       this.instanceToken = Authentication.getInstance();
+      this.instanceGA = GA.getInstance();
       this.userData = {};
       this.steps = steps;
       this.currentStepIndex = 0;
@@ -216,159 +378,6 @@ if (window.location.pathname.includes("/aanmelden")) {
       this.REAPPLY_PLANS_DELTA = 19;
       // Google Analytics init
       this.preSavedForAnalyticsData = {};
-      this.cart = {
-        'name': '',
-        'id': '',
-        'price': '',
-        'category': '',
-        'variant': ''
-      }
-      this.currencyCode = 'EUR';
-      this.analytics = {
-        /**
-         * Init ecommerce object.
-         */
-        initEcommerce() {
-          window.dataLayer = window.dataLayer || []
-
-          dataLayer.push({
-            'event': 'init',
-            'cart': this.cart
-          })
-        },
-
-        /**
-             * Clear the previous ecommerce object.
-             */
-        resetEcommerce() {
-          if (!window.dataLayer) return
-          try {
-            dataLayer.push({ ecommerce: null })
-          } catch (e) {
-            console.log(e)
-          }
-        },
-
-        /**
-             * Update cart item details
-             */
-        updateCartItem(data) {
-          this.cart = { ...this.cart, ...data }
-        },
-
-        /**
-             * Send event to analytics
-             */
-        sendEvent(category, action, eventLabel, eventValue = undefined, additionalParams = {}) {
-          let label = eventLabel
-          if (eventValue) label = eventLabel + '-' + eventValue
-          if (!window.dataLayer) return
-
-          try {
-            dataLayer.push({
-              'event': 'GAEvent',
-              'eventCategory': category,
-              'eventAction': action,
-              'eventLabel': label,
-              ...additionalParams
-            })
-          } catch (e) {
-            console.log(e)
-          }
-        },
-
-        /**
-             * Send event to analytics
-             */
-        event(eventName, data) {
-          if (!window.dataLayer) return
-
-          try {
-            console.log('pushed', data);
-            dataLayer.push({
-              event: eventName,
-              ...data
-            })
-          } catch (e) {
-            console.log(e)
-          }
-        },
-
-        /**
-             * Add item to datalayer object
-             */
-        async addToCart(data) {
-          await this.updateCartItem(data)
-
-          try {
-            dataLayer.push({
-              'event': 'addToCart',
-              'ecommerce': {
-                'currencyCode': this.currencyCode,
-                'add': {
-                  'products': [{
-                    'name': this.cart.name,
-                    'id': this.cart.id,
-                    'price': this.cart.price,
-                    'category': this.cart.category,
-                    'variant': this.cart.variant,
-                    'quantity': 1
-                  }]
-                }
-              }
-            })
-          } catch (e) {
-            console.log(e)
-          }
-        },
-
-        /**
-             * Change item properties in datalayer object
-             */
-        async changeItem(step, data) {
-          await this.updateCartItem(data)
-
-          try {
-            dataLayer.push({
-              'event': 'checkout',
-              'ecommerce': {
-                'currencyCode': this.currencyCode,
-                'checkout': {
-                  'actionField': { 'step': step },
-                  'products': [{
-                    'name': this.cart.name,
-                    'id': this.cart.id,
-                    'price': this.cart.price,
-                    'category': this.cart.category,
-                    'variant': this.cart.variant,
-                    'quantity': 1
-                  }]
-                }
-              }
-            })
-          } catch (e) {
-            console.log(e)
-          }
-        },
-
-        /**
-             * Send payment method
-             */
-        checkoutItem(payment) {
-          try {
-            dataLayer.push({
-              'event': 'checkoutOption',
-              'ecommerce': {
-                'checkout_option': {
-                  'actionField': { 'step': 6, 'option': payment }
-                }
-              }
-            })
-          } catch (e) {
-            console.log(e)
-          }
-        },
-      }
       this.resumeConfig = {
         license_type: {
           elementId: "licenseText",
@@ -685,11 +694,76 @@ if (window.location.pathname.includes("/aanmelden")) {
       });
       console.log(data);
 
-      this.analytics.event(data.event, data); // send event after every step finished
+      this.instanceGA.event(data.event, data); // send event after every step finished
+    }
+
+    executeGAOne(currentStepId) {
+      const currentStepData = this.getCurrentStepData(currentStepId);
+
+      const keysToPush = currentStepData.keysBack ?? [
+        currentStepData.keyBack ?? currentStepData.keyGA,
+      ];
+
+      keysToPush.forEach((key) => {
+        this.pushStepToDataLayer(this.currentStepNumber, {
+          [key]: this.formData[key],
+        });
+      });
+
+      if (currentStepData.keysDataLayerGA) {
+        currentStepData.keysDataLayerGA.forEach((key) => {
+          dataLayer.push({ [key]: this.formData[key] });
+        });
+      }
+    }
+    executeGATwo(currentStepId) {
+      if (currentStepId === "step2") {
+        this.instanceGA.resetEcommerce();
+        this.instanceGA.event("courseType", {
+          course_type: this.formData.course_type,
+        });
+        this.instanceGA.addToCart({
+          name: this.formData.course_type,
+          id: this.getCourseTypeID(),
+        });
+        this.instanceGA.changeItem(1, {
+          name: this.formData.course_type,
+          id: this.getCourseTypeID(),
+        });
+      }
+
+      if (currentStepId === "step3") {
+        this.instanceGA.changeItem(2, { category: this.getExamType() });
+        this.instanceGA.event("examType", { exam_type: this.getExamType() });
+      }
+
+      if (currentStepId === "step4Cities") {
+        this.instanceGA.event("locationsByCity", {
+          locations_by_city: this.formData.cities,
+        });
+      }
+
+      if (currentStepId === "step4Cbr") {
+        this.instanceGA.event("locationsByCbr", {
+          locations_by_cbr: this.formData.cbr_locations,
+        });
+      }
+
+      if (currentStepId === "step5") {
+        this.instanceGA.event("courseCategory", {
+          course_category: this.formData.course_category,
+        });
+      }
+      if (currentStepId === "stepOnlinePackage") {
+        this.instanceGA.changeItem(this.currentStepNumber, {
+          variant: this.formData.package_name,
+          price: this.packagePrice,
+        });
+      }
     }
 
     getCourseTypeID() {
-      return this.formData['course_type'] === 'offline' ? 0 : 1;
+      return this.formData["course_type"] === "offline" ? 0 : 1;
     }
 
     getExamType() {
@@ -698,15 +772,21 @@ if (window.location.pathname.includes("/aanmelden")) {
       if (examType === 3) {
         _type = this.PRODUCTS_LIST.MIJN;
       } else {
-        if (this.formData && this.formData.license_type === this.LicenseTypesEnum.MOTOR) {
-          if (examType === 1) _type = this.PRODUCTS_LIST.ATH
-          if (examType === 2) _type = this.PRODUCTS_LIST.ATH_VE
-        } else if (this.formData && this.formData.license_type === this.LicenseTypesEnum.SCOOTER) {
-          if (examType === 1) _type = this.PRODUCTS_LIST.AMTH
-          if (examType === 2) _type = this.PRODUCTS_LIST.AMTH_VE
+        if (
+          this.formData &&
+          this.formData.license_type === this.LicenseTypesEnum.MOTOR
+        ) {
+          if (examType === 1) _type = this.PRODUCTS_LIST.ATH;
+          if (examType === 2) _type = this.PRODUCTS_LIST.ATH_VE;
+        } else if (
+          this.formData &&
+          this.formData.license_type === this.LicenseTypesEnum.SCOOTER
+        ) {
+          if (examType === 1) _type = this.PRODUCTS_LIST.AMTH;
+          if (examType === 2) _type = this.PRODUCTS_LIST.AMTH_VE;
         } else {
-          if (examType === 1) _type = this.PRODUCTS_LIST.BTH
-          if (examType === 2) _type = this.PRODUCTS_LIST.BTH_VE
+          if (examType === 1) _type = this.PRODUCTS_LIST.BTH;
+          if (examType === 2) _type = this.PRODUCTS_LIST.BTH_VE;
         }
       }
       return _type;
@@ -801,50 +881,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       const currentStepId = this.getCurrentStepId();
 
-      const currentStepData = this.getCurrentStepData(currentStepId);
-
-      const keysToPush = currentStepData.keysBack ?? [
-        currentStepData.keyBack ?? currentStepData.keyGA,
-      ];
-
-      keysToPush.forEach((key) => {
-        this.pushStepToDataLayer(this.currentStepNumber, {
-          [key]: this.formData[key],
-        });
-      });
-
-      if (currentStepData.keysDataLayerGA) {
-        currentStepData.keysDataLayerGA.forEach(key => {
-          dataLayer.push({ [key]: this.formData[key] })
-        });
-      }
-
-      if (currentStepId === 'step2') {
-        this.analytics.resetEcommerce()
-        this.analytics.event('courseType', { course_type: this.formData.course_type })
-        this.analytics.addToCart({ name: this.formData.course_type, id: this.getCourseTypeID() })
-        this.analytics.changeItem(1, { name: this.formData.course_type, id: this.getCourseTypeID() })
-      }
-
-      if (currentStepId === 'step3') {
-        this.analytics.changeItem(2, { category: this.getExamType() })
-        this.analytics.event('examType', { exam_type: this.getExamType() })
-      }
-
-      if (currentStepId === 'step4Cities') {
-        this.analytics.event('locationsByCity', { locations_by_city: this.formData.cities })
-      }
-
-      if (currentStepId === 'step4Cbr') {
-        this.analytics.event('locationsByCbr', { locations_by_cbr: this.formData.cbr_locations })
-      }
-
-      if (currentStepId === 'step5') {
-        this.analytics.event('courseCategory', { course_category: this.formData.course_category })
-      }
-      if (currentStepId === 'stepOnlinePackage') {
-        this.analytics.changeItem(this.currentStepNumber, { variant: this.formData.package_name, price: this.packagePrice })
-      }
+      this.executeGAOne(currentStepId);
+      this.executeGATwo(currentStepId);
 
       const nextStepId = this.getNextStepId(currentStepId);
 
@@ -2955,8 +2993,8 @@ if (window.location.pathname.includes("/aanmelden")) {
     //SEND DATA
 
     async handleFinalStep() {
-      ["phone", "email"].forEach(key => {
-        dataLayer.push({ [key]: this.formData[key] })
+      ["phone", "email"].forEach((key) => {
+        dataLayer.push({ [key]: this.formData[key] });
       });
       const data = await this.sendDataBack();
       if (data) {
@@ -3056,6 +3094,7 @@ if (window.location.pathname === "/bestellen") {
   class OrderManager {
     constructor() {
       this.instanceToken = Authentication.getInstance();
+      this.instanceGA = GA.getInstance();
       this.package_starting_at = null;
       this.isMijnOnline = null;
       this.containerMijn = document.getElementById("bestellenMijn");
@@ -3175,10 +3214,14 @@ if (window.location.pathname === "/bestellen") {
 
     async requestLink(formData) {
       const { payment_amount } = formData;
-      ["phone", "email"].forEach(key => {
-        dataLayer.push({ [key]: formData[key] })
+      ["phone", "email"].forEach((key) => {
+        dataLayer.push({ [key]: formData[key] });
       });
-      this.analytics.sendEvent('Aanmelding by step', '1: Aanmelding by step', this.analytics.checkoutItem("IDEAL"))
+      this.instanceGA.sendEvent(
+        "Aanmelding by step",
+        "1: Aanmelding by step",
+        this.instanceGA.checkoutItem("IDEAL")
+      );
       console.log(dataLayer);
       let token;
       const access = await this.instanceToken.checkAndRefreshToken();
