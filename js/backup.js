@@ -602,7 +602,6 @@ if (window.location.pathname.includes("/aanmelden")) {
     // Google Analytics
 
     pushStepToDataLayer(currentStepNumber, eventData) {
-      console.log(eventData);
       let data = {
         ...this.preSavedForAnalyticsData,
         event: "signup_funnel_step",
@@ -613,12 +612,11 @@ if (window.location.pathname.includes("/aanmelden")) {
         const licenseTypeFound =
           this.LicenseTypesEnum[eventData.license_type.toUpperCase()];
         if (licenseTypeFound) {
-          data.license_type = licenseTypeFound;
+          data.license_type = `${licenseTypeFound}theorie`;
         }
       }
       if (eventData.course_type) {
-        //s2
-        data.course_type = eventData.course_type;
+        data.course_type = this.convertCourseType();
       }
       if (eventData.exam_type) {
         //s3
@@ -679,8 +677,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
 
       if (eventData.email) {
-        //s8 or 4(for location -self reserve funnel) or 6(for online -self reserve funnel)
-        data.sha_256_email = eventData.email;
+        // Usa CryptoJS para calcular el hash SHA-256 del email
+        data.sha_256_email = CryptoJS.SHA256(eventData.email).toString(CryptoJS.enc.Hex);
       }
 
       this.preSavedForAnalyticsData = { ...data };
@@ -760,6 +758,15 @@ if (window.location.pathname.includes("/aanmelden")) {
           price: this.packagePrice,
         });
       }
+    }
+
+    convertCourseType() {
+      const courseTypeMap = {
+        offline: 'theoriecursus op locatie',
+        online: 'online theoriecursus'
+      };
+
+      return courseTypeMap[this.formData.course_type] || this.formData.course_type;
     }
 
     getCourseTypeID() {

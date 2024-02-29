@@ -602,29 +602,21 @@ if (window.location.pathname.includes("/aanmelden")) {
     // Google Analytics
 
     pushStepToDataLayer(currentStepNumber, eventData) {
-      console.log(eventData);
       let data = {
         ...this.preSavedForAnalyticsData,
         event: "signup_funnel_step",
         funnel_step_number: currentStepNumber,
       };
       if (eventData.license_type) {
-        if (this.licenseTypeGA) {
-          data.license_type = this.licenseTypeGA;
-        } else {
-          // Opcional: Manejar el caso donde this.licenseTypeGA no esté establecido o no sea válido
-          // Esto podría implicar llamar a convertLicenseType() aquí, o manejar el error de alguna manera
+        //s1
+        const licenseTypeFound =
+          this.LicenseTypesEnum[eventData.license_type.toUpperCase()];
+        if (licenseTypeFound) {
+          data.license_type = `${licenseTypeFound}theorie`;
         }
       }
       if (eventData.course_type) {
-        // Asegúrate de que convertCourseType() se haya llamado antes para establecer this.courseTypeGA adecuadamente
-        // Verifica que this.courseTypeGA tenga un valor válido
-        if (this.courseTypeGA) {
-          data.course_type = this.courseTypeGA;
-        } else {
-          // Opcional: Manejar el caso donde this.courseTypeGA no esté establecido o no sea válido
-          // Esto podría implicar llamar a convertCourseType() aquí, o manejar el error de alguna manera
-        }
+        data.course_type = this.convertCourseType();
       }
       if (eventData.exam_type) {
         //s3
@@ -685,8 +677,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
 
       if (eventData.email) {
-        //s8 or 4(for location -self reserve funnel) or 6(for online -self reserve funnel)
-        data.sha_256_email = eventData.email;
+        // Usa CryptoJS para calcular el hash SHA-256 del email
+        data.sha_256_email = CryptoJS.SHA256(eventData.email).toString(CryptoJS.enc.Hex);
       }
 
       this.preSavedForAnalyticsData = { ...data };
@@ -768,28 +760,13 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
-    convertLicenseType() {
-      // Mapa para convertir los nombres de los license types a los textos deseados
-      const licenseTypeMap = {
-        [this.LicenseTypesEnum.AUTO]: 'autotheorie',
-        [this.LicenseTypesEnum.SCOOTER]: 'scootertheorie',
-        [this.LicenseTypesEnum.MOTOR]: 'motortheorie',
-      };
-
-      // Usa this.formData.license_type para obtener el valor convertido
-      this.licenseTypeGA = licenseTypeMap[this.formData.license_type] || this.formData.license_type;
-    }
-
-
     convertCourseType() {
-      // Mapa para convertir los nombres de los course types
       const courseTypeMap = {
         offline: 'theoriecursus op locatie',
         online: 'online theoriecursus'
       };
 
-      // Asigna el valor convertido a courseTypeGA, o el valor original si no se encuentra en el mapa
-      this.courseTypeGA = courseTypeMap[this.formData.course_type] || this.formData.course_type;
+      return courseTypeMap[this.formData.course_type] || this.formData.course_type;
     }
 
     getCourseTypeID() {
