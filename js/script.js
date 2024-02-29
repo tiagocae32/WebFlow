@@ -881,9 +881,11 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.currentStepIndex = 2;
           this.calculateTotalSteps();
           this.updateStepIndexText(true);
-          this.pushStepToDataLayer(this.currentStepNumber, {
-            course_type: this.formData.course_type,
+          this.pushStepToDataLayer(1, {
             license_type: this.formData.license_type,
+          });
+          this.pushStepToDataLayer(2, {
+            course_type: this.formData.course_type,
           });
           this.pushCourseTypeDataLayer();
         }
