@@ -716,18 +716,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
     executeGATwo(currentStepId) {
       if (currentStepId === "step2") {
-        this.instanceGA.resetEcommerce();
-        this.instanceGA.event("courseType", {
-          course_type: this.formData.course_type,
-        });
-        this.instanceGA.addToCart({
-          name: this.formData.course_type,
-          id: this.getCourseTypeID(),
-        });
-        this.instanceGA.changeItem(1, {
-          name: this.formData.course_type,
-          id: this.getCourseTypeID(),
-        });
+        this.pushCourseTypeDataLayer();
       }
 
       if (currentStepId === "step3") {
@@ -760,6 +749,23 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
     }
 
+    // Push to Data Layer GA course type events
+    pushCourseTypeDataLayer() {
+      this.instanceGA.resetEcommerce();
+      this.instanceGA.event("courseType", {
+        course_type: this.formData.course_type,
+      });
+      this.instanceGA.addToCart({
+        name: this.formData.course_type,
+        id: this.getCourseTypeID(),
+      });
+      this.instanceGA.changeItem(1, {
+        name: this.formData.course_type,
+        id: this.getCourseTypeID(),
+      });
+    }
+
+    // Convert text for GA
     convertCourseType() {
       const courseTypeMap = {
         offline: 'theoriecursus op locatie',
@@ -858,6 +864,11 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.currentStepIndex = 2;
           this.calculateTotalSteps();
           this.updateStepIndexText(true);
+          this.pushStepToDataLayer(this.currentStepNumber, {
+            course_type: this.formData.course_type,
+            license_type: this.formData.license_type
+          });
+          this.pushCourseTypeDataLayer();
         }
       }
     }
