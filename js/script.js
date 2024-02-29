@@ -260,7 +260,7 @@ class Authentication {
         return userDataLoaded;
       }
     }
-    return {};
+    return null;
   }
 
   async checkAndRefreshToken() {
@@ -1481,7 +1481,10 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getUserInfo() {
-      this.userData = await this.instanceToken.preloadUserApplicationData();
+      const userData = await this.instanceToken.preloadUserApplicationData();
+      if (userData) {
+        this.userData = await this.instanceToken.preloadUserApplicationData();
+      }
       this.checkIsReapplyFlow();
     }
 
