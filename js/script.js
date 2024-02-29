@@ -620,7 +620,7 @@ if (window.location.pathname.includes("/aanmelden")) {
       }
       if (eventData.exam_type) {
         //s3
-        data.exam_type = eventData.exam_type;
+        data.exam_type = this.convertExamType();
       }
 
       if (eventData.cities) {
@@ -678,7 +678,9 @@ if (window.location.pathname.includes("/aanmelden")) {
 
       if (eventData.email) {
         // Usa CryptoJS para calcular el hash SHA-256 del email
-        data.sha_256_email = CryptoJS.SHA256(eventData.email).toString(CryptoJS.enc.Hex);
+        data.sha_256_email = CryptoJS.SHA256(eventData.email).toString(
+          CryptoJS.enc.Hex
+        );
       }
 
       this.preSavedForAnalyticsData = { ...data };
@@ -765,14 +767,28 @@ if (window.location.pathname.includes("/aanmelden")) {
       });
     }
 
-    // Convert text for GA
+    // Convert text for key course_type (GA)
     convertCourseType() {
       const courseTypeMap = {
-        offline: 'theoriecursus op locatie',
-        online: 'online theoriecursus'
+        offline: "theoriecursus op locatie",
+        online: "online theoriecursus",
       };
 
-      return courseTypeMap[this.formData.course_type] || this.formData.course_type;
+      return (
+        courseTypeMap[this.formData.course_type] ?? this.formData.course_type
+      );
+    }
+
+    // Convert text for key exam_type (GA)
+    convertExamType() {
+      const examTypeMap = {
+        1: "standaard examen",
+        2: "verlengd examen",
+        3: "zelf al examen gereserveerd",
+      };
+      return (
+        examTypeMap[Number(this.formData.exam_type)] ?? this.formData.exam_type
+      );
     }
 
     getCourseTypeID() {
@@ -866,7 +882,7 @@ if (window.location.pathname.includes("/aanmelden")) {
           this.updateStepIndexText(true);
           this.pushStepToDataLayer(this.currentStepNumber, {
             course_type: this.formData.course_type,
-            license_type: this.formData.license_type
+            license_type: this.formData.license_type,
           });
           this.pushCourseTypeDataLayer();
         }
@@ -1400,8 +1416,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-          ? 6
-          : 8;
+        ? 6
+        : 8;
     }
 
     isMijnReservation() {
@@ -2069,8 +2085,9 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
-          }</td>`;
+        calendar += `<td class="not-current-month disabled">${
+          previousMonthDays - firstDayAdjusted + i + 1
+        }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -3752,8 +3769,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-        formData.cities.length > 0 &&
-        formData.course_type === "offline"
+          formData.cities.length > 0 &&
+          formData.course_type === "offline"
       );
       if (
         formData.cities &&
