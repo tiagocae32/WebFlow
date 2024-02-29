@@ -253,14 +253,15 @@ class Authentication {
   }
 
   async preloadUserApplicationData() {
+    let userData;
     const token = await this.checkAndRefreshToken();
     if (token && token.access) {
       const userDataLoaded = await this.getUserInfoBack();
       if (userDataLoaded && userDataLoaded.email) {
-        return userDataLoaded;
+        userData = userDataLoaded;
       }
     }
-    return null;
+    return userData ?? {};
   }
 
   async checkAndRefreshToken() {
@@ -1497,10 +1498,7 @@ if (window.location.pathname.includes("/aanmelden")) {
     }
 
     async getUserInfo() {
-      const userData = await this.instanceToken.preloadUserApplicationData();
-      if (userData) {
-        this.userData = await this.instanceToken.preloadUserApplicationData();
-      }
+      this.userData = await this.instanceToken.preloadUserApplicationData();
       this.checkIsReapplyFlow();
     }
 
@@ -3153,20 +3151,18 @@ if (window.location.pathname === "/bestellen") {
 
     async initialize() {
       const userData = await this.instanceToken.preloadUserApplicationData();
-      if (userData) {
-        this.displayOrderSummary(userData);
-        this.handleStoredData(userData);
-        this.isMijnOnline =
-          userData.course_type === "online" && userData.is_mijn_reservation;
-        this.buttonText.textContent = this.isMijnOnline
-          ? "Betalen"
-          : "Aanbetaling";
-        this.handleContainer(userData);
-        this.buttonLink.addEventListener("click", () =>
-          this.requestLink(userData)
-        );
-        this.dateCalendar = null;
-      }
+      this.displayOrderSummary(userData);
+      this.handleStoredData(userData);
+      this.isMijnOnline =
+        userData.course_type === "online" && userData.is_mijn_reservation;
+      this.buttonText.textContent = this.isMijnOnline
+        ? "Betalen"
+        : "Aanbetaling";
+      this.handleContainer(userData);
+      this.buttonLink.addEventListener("click", () =>
+        this.requestLink(userData)
+      );
+      this.dateCalendar = null;
     }
 
     initAPIUrlVariables() {
