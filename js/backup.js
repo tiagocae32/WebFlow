@@ -658,15 +658,16 @@ if (window.location.pathname.includes("/aanmelden")) {
         // online/location -self reserve s4
         data.cbr_location = eventData.mijn_exam_location;
       }
+
       if (eventData.mijn_exam_datetime) {
         // online/location -self reserve s4
-        const examDate = new Date(eventData.mijn_exam_datetime);
+        const [datePart, timePartWithZone] = eventData.mijn_exam_datetime.split('T');
+        const [year, month, day] = datePart.split('-').map(num => String(num).padStart(2, '0'));
+        const [timePart] = timePartWithZone.split('+');
+        let [hours, minutes] = timePart.split(':');
 
-        const day = examDate.getDate().toString().padStart(2, "0");
-        const month = (examDate.getMonth() + 1).toString().padStart(2, "0");
-        const year = examDate.getFullYear();
-        const hours = examDate.getHours().toString().padStart(2, "0");
-        const minutes = examDate.getMinutes().toString().padStart(2, "0");
+        hours = hours.padStart(2, '0');
+        minutes = minutes.padStart(2, '0');
 
         data.cbr_date_time = `${day}${month}${year} - ${hours}:${minutes}`;
       }
@@ -1419,8 +1420,8 @@ if (window.location.pathname.includes("/aanmelden")) {
           ? 5
           : 7
         : isMijnReservation
-        ? 6
-        : 8;
+          ? 6
+          : 8;
     }
 
     isMijnReservation() {
@@ -2085,9 +2086,8 @@ if (window.location.pathname.includes("/aanmelden")) {
       const previousMonthDays = previousMonth.getDate();
 
       for (let i = 0; i < firstDayAdjusted; i++) {
-        calendar += `<td class="not-current-month disabled">${
-          previousMonthDays - firstDayAdjusted + i + 1
-        }</td>`;
+        calendar += `<td class="not-current-month disabled">${previousMonthDays - firstDayAdjusted + i + 1
+          }</td>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -3767,8 +3767,8 @@ if (window.location.pathname === "/bestellen") {
       this.toggleElementVisibility(
         "citiesColumn",
         formData.cities &&
-          formData.cities.length > 0 &&
-          formData.course_type === "offline"
+        formData.cities.length > 0 &&
+        formData.course_type === "offline"
       );
       if (
         formData.cities &&
