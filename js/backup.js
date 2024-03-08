@@ -3034,6 +3034,11 @@ if (window.location.pathname.includes("/aanmelden")) {
       ["phone", "email"].forEach((key) => {
         dataLayer.push({ [key]: this.formData[key] });
       });
+      this.instanceGA.sendEvent(
+        "Aanmelding by step",
+        "1: Aanmelding by step",
+        "send"
+      );
       const data = await this.sendDataBack();
       if (data) {
         localStorage.removeItem("fechaGlobalSeleccionada");
@@ -3253,11 +3258,7 @@ if (window.location.pathname === "/bestellen") {
       ["phone", "email"].forEach((key) => {
         dataLayer.push({ [key]: formData[key] });
       });
-      this.instanceGA.sendEvent(
-        "Aanmelding by step",
-        "1: Aanmelding by step",
-        this.instanceGA.checkoutItem("IDEAL")
-      );
+      this.instanceGA.checkoutItem("IDEAL");
       console.log(dataLayer);
       let token;
       const access = await this.instanceToken.checkAndRefreshToken();
@@ -3285,6 +3286,11 @@ if (window.location.pathname === "/bestellen") {
         token,
       };
       if (this.isMijnOnline) {
+        this.instanceGA.sendEvent(
+          "Aanmelding by step",
+          "1: Aanmelding by step",
+          "PrePayment"
+        );
         await this.requestLinkPayment(objUrlPayloadPackage);
         payment_link = await this.requestLinkPayment(objUrlPayloadPayment);
       } else {
